@@ -406,19 +406,6 @@ async def passenger_date(message: Message, state: FSMContext):
         "⏰ Qaysi vaqtda ketmoqchisiz?\n\n"
         "Masalan: 08:00"
     )
-
-
-@dp.message(PassengerState.time)
-async def passenger_time(message: Message, state: FSMContext):
-    await state.update_data(time=message.text)
-    await state.set_state(PassengerState.passengers)
-
-    await message.answer(
-        "👥 Nechta yo‘lovchi bor?\n\n"
-        "Masalan: 2"
-    )
-
-
 @dp.message(PassengerState.passengers)
 async def passenger_finish(message: Message, state: FSMContext):
     await state.update_data(passengers=message.text)
@@ -456,6 +443,19 @@ async def passenger_finish(message: Message, state: FSMContext):
         reply_markup=main_menu,
         parse_mode="HTML"
     )
+
+@dp.message(PassengerState.time)
+async def passenger_time(message: Message, state: FSMContext):
+    await state.update_data(time=message.text)
+    await state.set_state(PassengerState.passengers)
+
+    await message.answer(
+        "👥 Nechta yo‘lovchi bor?\n\n"
+        "Masalan: 2"
+    )
+
+
+HTML
 
 
 # =========================
