@@ -159,6 +159,7 @@ async def start(message: Message, state: FSMContext):
 @dp.message(F.text == "🚕 Haydovchi bo‘lish")
 async def driver_start(message: Message, state: FSMContext):
     await state.set_state(DriverState.name)
+
     await message.answer(
         "🚕 <b>Haydovchi e’loni</b>\n\n"
         "Ismingizni yozing:",
@@ -406,12 +407,30 @@ async def passenger_date(message: Message, state: FSMContext):
         "⏰ Qaysi vaqtda ketmoqchisiz?\n\n"
         "Masalan: 08:00"
     )
+
+
+@dp.message(PassengerState.time)
+async def passenger_time(message: Message, state: FSMContext):
+    await state.update_data(time=message.text)
+    await state.set_state(PassengerState.passengers)
+
+    await message.answer(
+        "👥 Nechta yo‘lovchi bor?\n\n"
+        "Masalan: 2"
+    )
+
+
+# =========================
+# PASSENGER FINISH + AUTO MATCH
+# =========================
+
 @dp.message(PassengerState.passengers)
 async def passenger_finish(message: Message, state: FSMContext):
     await state.update_data(passengers=message.text)
 
     data = await state.get_data()
 
+    # Avval yo‘lovchi so‘rovini saqlaymiz
     async with aiosqlite.connect(DB) as db:
         await db.execute("""
             INSERT INTO rides
@@ -431,31 +450,78 @@ async def passenger_finish(message: Message, state: FSMContext):
         ))
         await db.commit()
 
+        # Shu yo‘nalish va shu sana bo‘yicha haydovchilarni qidiramiz
+        cursor = await db.execute("""
+            SELECT name, phone, from_city, to_city,
+                   date, time, car, seats, price
+            FROM rides
+            WHERE role = 'driver'
+            AND from_city = ?
+            AND to_city = ?
+            AND date = ?
+        """, (
+            data["from_city"],
+            data["to_city"],
+            data["date"]
+        ))
+
+        drivers = await cursor.fetchall()
+
     await state.clear()
 
-    await message.answer(
+    # Haydovchi topilmasa
+    if not drivers:
+        await message.answer(
+            "✅ <b>Safar so‘rovingiz saqlandi!</b>\n\n"
+            f"📍 {data['from_city']} → {data['to_city']}\n"
+            f"📅 {data['date']}\n"
+            f"⏰ {data['time']}\n"
+            f"👥 Yo‘lovchilar: {data['passengers']}\n\n"
+            "😔 Hozircha shu yo‘nalishda mos haydovchi topilmadi.\n"
+            "Keyinroq yana tekshirib ko‘ring.",
+            reply_markup=main_menu,
+            parse_mode="HTML"
+        )
+        return
+
+    # Haydovchilar topilsa
+    text = (
         "✅ <b>Safar so‘rovingiz saqlandi!</b>\n\n"
         f"📍 {data['from_city']} → {data['to_city']}\n"
         f"📅 {data['date']}\n"
         f"⏰ {data['time']}\n"
         f"👥 Yo‘lovchilar: {data['passengers']}\n\n"
-        "🔎 Endi «Safar qidirish» orqali mos haydovchilarni topishingiz mumkin.",
+        "🚕 <b>Sizga mos haydovchilar:</b>\n\n"
+    )
+
+    for i, driver in enumerate(drivers, 1):
+        (
+            name,
+            phone,
+            from_city,
+            to_city,
+            date,
+            time,
+            car,
+            seats,
+            price
+        ) = driver
+
+        text += (
+            f"<b>{i}. {name}</b>\n"
+            f"📍 {from_city} → {to_city}\n"
+            f"📅 {date} | ⏰ {time}\n"
+            f"🚗 {car}\n"
+            f"💺 Bo‘sh joy: {seats}\n"
+            f"💰 Narx: {price}\n"
+            f"📱 {phone}\n\n"
+        )
+
+    await message.answer(
+        text,
         reply_markup=main_menu,
         parse_mode="HTML"
     )
-
-@dp.message(PassengerState.time)
-async def passenger_time(message: Message, state: FSMContext):
-    await state.update_data(time=message.text)
-    await state.set_state(PassengerState.passengers)
-
-    await message.answer(
-        "👥 Nechta yo‘lovchi bor?\n\n"
-        "Masalan: 2"
-    )
-
-
-
 
 
 # =========================
@@ -493,7 +559,9 @@ async def search_to(message: Message, state: FSMContext):
     await message.answer(
         "📅 Safar sanasi?",
         reply_markup=ReplyKeyboardMarkup(
-            keyboard=[[KeyboardButton(text="⬅️ Bekor qilish")]],
+            keyboard=[
+                [KeyboardButton(text="⬅️ Bekor qilish")]
+            ],
             resize_keyboard=True
         )
     )
@@ -503,6 +571,7 @@ async def search_to(message: Message, state: FSMContext):
 async def search_date(message: Message, state: FSMContext):
     if message.text == "⬅️ Bekor qilish":
         await state.clear()
+
         await message.answer(
             "Bekor qilindi.",
             reply_markup=main_menu
@@ -541,7 +610,17 @@ async def search_date(message: Message, state: FSMContext):
     text = "🚕 <b>Topilgan haydovchilar:</b>\n\n"
 
     for i, ride in enumerate(rides, 1):
-        name, phone, from_city, to_city, date, time, car, seats, price = ride
+        (
+            name,
+            phone,
+            from_city,
+            to_city,
+            date,
+            time,
+            car,
+            seats,
+            price
+        ) = ride
 
         text += (
             f"<b>{i}. {name}</b>\n"
@@ -607,8 +686,7 @@ async def my_rides(message: Message):
 
     await message.answer(
         text,
-        reply_markup=main_menu,
-        parse_mode="HTML"
+        reply_markup=main_menu
     )
 
 
@@ -667,7 +745,9 @@ async def help_message(message: Message):
 
 async def main():
     await init_db()
+
     print("OPER TAXI bot ishga tushdi...")
+
     await dp.start_polling(bot)
 
 
