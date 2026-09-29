@@ -172,11 +172,16 @@ async def driver_name(message: Message, state: FSMContext):
     await state.update_data(name=message.text)
 
     async with aiosqlite.connect(DB) as db:
-        await db.execute(
-            "UPDATE users SET name = ? WHERE telegram_id = ?",
-            (message.text, message.from_user.id)
-        )
-        await db.commit()
+    await db.execute("""
+        INSERT INTO users (telegram_id, name)
+        VALUES (?, ?)
+        ON CONFLICT(telegram_id)
+        DO UPDATE SET name = excluded.name
+    """, (
+        message.from_user.id,
+        message.text
+    ))
+    await db.commit()
 
     await state.set_state(DriverState.phone)
 
