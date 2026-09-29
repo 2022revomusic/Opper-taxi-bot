@@ -170,6 +170,14 @@ async def driver_start(message: Message, state: FSMContext):
 @dp.message(DriverState.name)
 async def driver_name(message: Message, state: FSMContext):
     await state.update_data(name=message.text)
+
+    async with aiosqlite.connect(DB) as db:
+        await db.execute(
+            "UPDATE users SET name = ? WHERE telegram_id = ?",
+            (message.text, message.from_user.id)
+        )
+        await db.commit()
+
     await state.set_state(DriverState.phone)
 
     await message.answer(
@@ -190,7 +198,17 @@ async def driver_name(message: Message, state: FSMContext):
 
 @dp.message(DriverState.phone, F.contact)
 async def driver_phone_contact(message: Message, state: FSMContext):
-    await state.update_data(phone=message.contact.phone_number)
+    phone = message.contact.phone_number
+
+    await state.update_data(phone=phone)
+
+    async with aiosqlite.connect(DB) as db:
+        await db.execute(
+            "UPDATE users SET phone = ? WHERE telegram_id = ?",
+            (phone, message.from_user.id)
+        )
+        await db.commit()
+
     await state.set_state(DriverState.from_city)
 
     await message.answer(
@@ -201,7 +219,17 @@ async def driver_phone_contact(message: Message, state: FSMContext):
 
 @dp.message(DriverState.phone)
 async def driver_phone_text(message: Message, state: FSMContext):
-    await state.update_data(phone=message.text)
+    phone = message.text
+
+    await state.update_data(phone=phone)
+
+    async with aiosqlite.connect(DB) as db:
+        await db.execute(
+            "UPDATE users SET phone = ? WHERE telegram_id = ?",
+            (phone, message.from_user.id)
+        )
+        await db.commit()
+
     await state.set_state(DriverState.from_city)
 
     await message.answer(
@@ -336,6 +364,14 @@ async def passenger_start(message: Message, state: FSMContext):
 @dp.message(PassengerState.name)
 async def passenger_name(message: Message, state: FSMContext):
     await state.update_data(name=message.text)
+
+    async with aiosqlite.connect(DB) as db:
+        await db.execute(
+            "UPDATE users SET name = ? WHERE telegram_id = ?",
+            (message.text, message.from_user.id)
+        )
+        await db.commit()
+
     await state.set_state(PassengerState.phone)
 
     await message.answer(
@@ -356,7 +392,17 @@ async def passenger_name(message: Message, state: FSMContext):
 
 @dp.message(PassengerState.phone, F.contact)
 async def passenger_phone_contact(message: Message, state: FSMContext):
-    await state.update_data(phone=message.contact.phone_number)
+    phone = message.contact.phone_number
+
+    await state.update_data(phone=phone)
+
+    async with aiosqlite.connect(DB) as db:
+        await db.execute(
+            "UPDATE users SET phone = ? WHERE telegram_id = ?",
+            (phone, message.from_user.id)
+        )
+        await db.commit()
+
     await state.set_state(PassengerState.from_city)
 
     await message.answer(
@@ -367,7 +413,17 @@ async def passenger_phone_contact(message: Message, state: FSMContext):
 
 @dp.message(PassengerState.phone)
 async def passenger_phone_text(message: Message, state: FSMContext):
-    await state.update_data(phone=message.text)
+    phone = message.text
+
+    await state.update_data(phone=phone)
+
+    async with aiosqlite.connect(DB) as db:
+        await db.execute(
+            "UPDATE users SET phone = ? WHERE telegram_id = ?",
+            (phone, message.from_user.id)
+        )
+        await db.commit()
+
     await state.set_state(PassengerState.from_city)
 
     await message.answer(
@@ -430,7 +486,6 @@ async def passenger_finish(message: Message, state: FSMContext):
 
     data = await state.get_data()
 
-    # Avval yo‘lovchi so‘rovini saqlaymiz
     async with aiosqlite.connect(DB) as db:
         await db.execute("""
             INSERT INTO rides
@@ -450,7 +505,6 @@ async def passenger_finish(message: Message, state: FSMContext):
         ))
         await db.commit()
 
-        # Shu yo‘nalish va shu sana bo‘yicha haydovchilarni qidiramiz
         cursor = await db.execute("""
             SELECT name, phone, from_city, to_city,
                    date, time, car, seats, price
@@ -469,7 +523,6 @@ async def passenger_finish(message: Message, state: FSMContext):
 
     await state.clear()
 
-    # Haydovchi topilmasa
     if not drivers:
         await message.answer(
             "✅ <b>Safar so‘rovingiz saqlandi!</b>\n\n"
@@ -484,7 +537,6 @@ async def passenger_finish(message: Message, state: FSMContext):
         )
         return
 
-    # Haydovchilar topilsa
     text = (
         "✅ <b>Safar so‘rovingiz saqlandi!</b>\n\n"
         f"📍 {data['from_city']} → {data['to_city']}\n"
