@@ -510,7 +510,7 @@ async def passenger_finish(message: Message, state: FSMContext):
         ))
         await db.commit()
 
-        cursor = await db.execute("""
+                cursor = await db.execute("""
             SELECT name, phone, from_city, to_city,
                    date, time, car, seats, price
             FROM rides
@@ -523,6 +523,29 @@ async def passenger_finish(message: Message, state: FSMContext):
             data["to_city"],
             data["date"]
         ))
+
+        all_drivers = await cursor.fetchall()
+
+    try:
+        passenger_count = int(data["passengers"])
+    except ValueError:
+        await state.clear()
+        await message.answer(
+            "❗ Yo‘lovchilar sonini raqam bilan kiriting.\n\n"
+            "Masalan: 2",
+            reply_markup=main_menu
+        )
+        return
+
+    drivers = []
+
+    for driver in all_drivers:
+        try:
+            driver_seats = int(driver[7])
+            if driver_seats >= passenger_count:
+                drivers.append(driver)
+        except (ValueError, TypeError):
+            continue
 
         drivers = await cursor.fetchall()
 
