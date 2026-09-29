@@ -491,6 +491,17 @@ async def passenger_finish(message: Message, state: FSMContext):
 
     data = await state.get_data()
 
+    try:
+        passenger_count = int(data["passengers"])
+    except ValueError:
+        await state.clear()
+        await message.answer(
+            "❗ Yo‘lovchilar sonini faqat raqam bilan yozing.\n\n"
+            "Masalan: 2",
+            reply_markup=main_menu
+        )
+        return
+
     async with aiosqlite.connect(DB) as db:
         await db.execute("""
             INSERT INTO rides
@@ -510,7 +521,7 @@ async def passenger_finish(message: Message, state: FSMContext):
         ))
         await db.commit()
 
-                cursor = await db.execute("""
+        cursor = await db.execute("""
             SELECT name, phone, from_city, to_city,
                    date, time, car, seats, price
             FROM rides
@@ -526,28 +537,17 @@ async def passenger_finish(message: Message, state: FSMContext):
 
         all_drivers = await cursor.fetchall()
 
-    try:
-        passenger_count = int(data["passengers"])
-    except ValueError:
-        await state.clear()
-        await message.answer(
-            "❗ Yo‘lovchilar sonini raqam bilan kiriting.\n\n"
-            "Masalan: 2",
-            reply_markup=main_menu
-        )
-        return
-
     drivers = []
 
     for driver in all_drivers:
         try:
             driver_seats = int(driver[7])
+
             if driver_seats >= passenger_count:
                 drivers.append(driver)
+
         except (ValueError, TypeError):
             continue
-
-        drivers = await cursor.fetchall()
 
     await state.clear()
 
@@ -558,7 +558,7 @@ async def passenger_finish(message: Message, state: FSMContext):
             f"📅 {data['date']}\n"
             f"⏰ {data['time']}\n"
             f"👥 Yo‘lovchilar: {data['passengers']}\n\n"
-            "😔 Hozircha shu yo‘nalishda mos haydovchi topilmadi.\n"
+            "😔 Hozircha sizga mos bo‘sh joyga ega haydovchi topilmadi.\n"
             "Keyinroq yana tekshirib ko‘ring.",
             reply_markup=main_menu,
             parse_mode="HTML"
