@@ -220,7 +220,91 @@ async def driver_phone_contact(message: Message, state: FSMContext):
         "📍 Qayerdan yo‘lga chiqasiz?",
         reply_markup=cities
     )
+@dp.message(DriverState.phone)
+async def driver_phone_text(message: Message, state: FSMContext):
+    phone = message.text
 
+    await state.update_data(phone=phone)
+
+    async with aiosqlite.connect(DB) as db:
+        await db.execute(
+            "UPDATE users SET phone = ? WHERE telegram_id = ?",
+            (phone, message.from_user.id)
+        )
+        await db.commit()
+
+    await state.set_state(DriverState.from_city)
+
+    await message.answer(
+        "📍 Qayerdan yo‘lga chiqasiz?",
+        reply_markup=cities
+    )
+
+
+@dp.message(DriverState.from_city)
+async def driver_from(message: Message, state: FSMContext):
+    await state.update_data(from_city=message.text)
+    await state.set_state(DriverState.to_city)
+
+    await message.answer(
+        "📍 Qayerga borasiz?",
+        reply_markup=cities
+    )
+
+
+@dp.message(DriverState.to_city)
+async def driver_to(message: Message, state: FSMContext):
+    await state.update_data(to_city=message.text)
+    await state.set_state(DriverState.date)
+
+    await message.answer(
+        "📅 Safar sanasini yozing.\n\n"
+        "Masalan: 30.09.2026"
+    )
+
+
+@dp.message(DriverState.date)
+async def driver_date(message: Message, state: FSMContext):
+    await state.update_data(date=message.text)
+    await state.set_state(DriverState.time)
+
+    await message.answer(
+        "⏰ Jo‘nash vaqtini yozing.\n\n"
+        "Masalan: 08:00"
+    )
+
+
+@dp.message(DriverState.time)
+async def driver_time(message: Message, state: FSMContext):
+    await state.update_data(time=message.text)
+    await state.set_state(DriverState.car)
+
+    await message.answer(
+        "🚗 Mashinangizni yozing.\n\n"
+        "Masalan: Cobalt, Nexia 3, Malibu"
+    )
+
+
+@dp.message(DriverState.car)
+async def driver_car(message: Message, state: FSMContext):
+    await state.update_data(car=message.text)
+    await state.set_state(DriverState.seats)
+
+    await message.answer(
+        "💺 Nechta bo‘sh joy bor?\n\n"
+        "Masalan: 3"
+    )
+
+
+@dp.message(DriverState.seats)
+async def driver_seats(message: Message, state: FSMContext):
+    await state.update_data(seats=message.text)
+    await state.set_state(DriverState.price)
+
+    await message.answer(
+        "💰 Bir yo‘lovchi uchun narx qancha?\n\n"
+        "Masalan: 150000 so‘m"
+    )
 
 @dp.message(DriverState.price)
 async def driver_price(message: Message, state: FSMContext):
