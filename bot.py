@@ -1,14 +1,13 @@
 import os
 import asyncio
-import html
-from datetime import datetime, timedelta
-from math import radians, sin, cos, sqrt, atan2
+import re
+from datetime import datetime
 
-import aiohttp
 import aiosqlite
+from aiohttp import web
 
 from aiogram import Bot, Dispatcher, F
-from aiogram.filters import CommandStart, Command
+from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import (
@@ -16,40 +15,27 @@ from aiogram.types import (
     CallbackQuery,
     ReplyKeyboardMarkup,
     KeyboardButton,
-    ReplyKeyboardRemove,
     InlineKeyboardMarkup,
     InlineKeyboardButton,
 )
 
 
-# =========================================================
+# ============================================================
 # CONFIG
-# =========================================================
+# ============================================================
 
-TOKEN = os.getenv("BOT_TOKEN")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-if not TOKEN:
-    raise RuntimeError("BOT_TOKEN Railway Variables ichida topilmadi.")
+if not BOT_TOKEN:
+    raise RuntimeError("BOT_TOKEN topilmadi")
 
-DEFAULT_ADMIN_ID = 653914246
-
-env_admin_ids = {
+ADMIN_IDS = {
     int(x.strip())
-    for x in os.getenv("ADMIN_IDS", "").split(",")
+    for x in os.getenv("ADMIN_IDS", "653914246").split(",")
     if x.strip().isdigit()
 }
 
-ADMIN_IDS = env_admin_ids or {DEFAULT_ADMIN_ID}
-
-DB = "oper_taxi.db"
-
-bot = Bot(token=TOKEN)
-dp = Dispatcher()
-
-
-# =========================================================
-# CONSTANTS
-# =========================================================
+DB_PATH = "oper_taxi.db"
 
 CITIES = [
     "Toshkent",
@@ -60,71 +46,138 @@ CITIES = [
     "Marg‘ilon",
 ]
 
-DRIVER_PENDING = "pending"
-DRIVER_VERIFIED = "verified"
-DRIVER_REJECTED = "rejected"
-DRIVER_BLOCKED = "blocked"
+TIMES = [
+    "06:00",
+    "07:00",
+    "08:00",
+    "09:00",
+    "10:00",
+    "11:00",
+    "12:00",
+    "13:00",
+    "14:00",
+    "15:00",
+    "16:00",
+    "17:00",
+    "18:00",
+    "19:00",
+    "20:00",
+    "21:00",
+    "22:00",
+    "23:00",
+]
 
-RIDE_ACTIVE = "active"
-RIDE_CANCELLED = "cancelled"
-RIDE_COMPLETED = "completed"
-
-BOOKING_PENDING = "pending_driver"
-BOOKING_ACCEPTED = "accepted"
-BOOKING_REJECTED = "rejected"
-BOOKING_CANCELLED = "cancelled"
-BOOKING_ARRIVING = "arriving"
-BOOKING_ARRIVED = "arrived"
-BOOKING_ONBOARD = "onboard"
-BOOKING_IN_PROGRESS = "in_progress"
-BOOKING_COMPLETED = "completed"
+PASSENGER_LIMIT = 4
 
 
-# =========================================================
+# ============================================================
+# BOT
+# ============================================================
+
+bot = Bot(BOT_TOKEN)
+dp = Dispatcher()
+
+
+# ============================================================
+# STATES
+# ============================================================
+
+class PassengerState(StatesGroup):
+    from_city = State()
+    to_city = State()
+    time = State()
+    seats = State()
+    name = State()
+    phone = State()
+    location = State()
+
+
+class DriverRegisterState(StatesGroup):
+    name = State()
+    phone = State()
+    car_model = State()
+    car_number = State()
+
+
+class DriverRideState(StatesGroup):
+    from_city = State()
+    to_city = State()
+    time = State()
+    seats = State()
+
+
+# ============================================================
 # KEYBOARDS
-# =========================================================
+# ============================================================
 
 def main_menu():
     return ReplyKeyboardMarkup(
         keyboard=[
             [
-                KeyboardButton(text="🚕 Haydovchi bo‘lish"),
-                KeyboardButton(text="👤 Yo‘lovchi bo‘lish"),
+                KeyboardButton(text="🚕 Taksi chaqirish"),
+                KeyboardButton(text="🚗 Haydovchi bo‘lish"),
             ],
             [
-                KeyboardButton(text="🔎 Safar qidirish"),
-                KeyboardButton(text="📋 Mening safarlarim"),
+                KeyboardButton(text="🔎 Taksilarni qidirish"),
+                KeyboardButton(text="📋 Buyurtmalarim"),
             ],
             [
-                KeyboardButton(text="✏️ Safarni tahrirlash"),
-                KeyboardButton(text="❌ Safarni bekor qilish"),
-            ],
-            [
-                KeyboardButton(text="📍 Lokatsiyam"),
-                KeyboardButton(text="👤 Profilim"),
-            ],
-            [
-                KeyboardButton(text="⭐ Haydovchini baholash"),
-                KeyboardButton(text="📞 Yordam"),
+                KeyboardButton(text="👤 Profil"),
+                KeyboardButton(text="ℹ️ Yordam"),
             ],
         ],
         resize_keyboard=True,
     )
 
 
-def phone_keyboard():
+def cancel_keyboard():
     return ReplyKeyboardMarkup(
         keyboard=[
-            [
-                KeyboardButton(
-                    text="📱 Telefon raqamimni yuborish",
-                    request_contact=True,
-                )
-            ],
-            [KeyboardButton(text="⬅️ Bekor qilish")],
+            [KeyboardButton(text="❌ Bekor qilish")]
         ],
         resize_keyboard=True,
-        one_time_keyboard=True,
+    )
+
+
+def city_keyboard():
+    rows = []
+
+    for i in range(0, len(CITIES), 2):
+        rows.append(
+            [
+                KeyboardButton(text=city)
+                for city in CITIES[i:i + 2]
+            ]
+        )
+
+    rows.append(
+        [KeyboardButton(text="❌ Bekor qilish")]
+    )
+
+    return ReplyKeyboardMarkup(
+        keyboard=rows,
+        resize_keyboard=True,
+    )
+
+
+def time_keyboard():
+    rows = []
+
+    for i in range(0, len(TIMES), 4):
+        rows.append(
+            [
+                KeyboardButton(text=t)
+                for t in TIMES[i:i + 4]
+            ]
+        )
+
+    rows.append(
+        [KeyboardButton(text="❌ Bekor qilish")]
+    )
+
+    return ReplyKeyboardMarkup(
+        keyboard=rows,
+        resize_keyboard=True,
     )
 
 
@@ -137,193 +190,52 @@ def location_keyboard():
                     request_location=True,
                 )
             ],
-            [KeyboardButton(text="⏭ Lokatsiyasiz davom etish")],
-            [KeyboardButton(text="⬅️ Bekor qilish")],
+            [
+                KeyboardButton(
+                    text="⏭ Lokatsiyasiz davom etish"
+                )
+            ],
+            [
+                KeyboardButton(
+                    text="❌ Bekor qilish"
+                )
+            ],
         ],
         resize_keyboard=True,
-        one_time_keyboard=True,
     )
 
 
-def city_keyboard(prefix=""):
-    rows = []
-    row = []
-
-    for city in CITIES:
-        row.append(KeyboardButton(text=prefix + city))
-        if len(row) == 2:
-            rows.append(row)
-            row = []
-
-    if row:
-        rows.append(row)
-
-    rows.append([KeyboardButton(text="⬅️ Bekor qilish")])
-
-    return ReplyKeyboardMarkup(
-        keyboard=rows,
-        resize_keyboard=True,
-        one_time_keyboard=True,
-    )
-
-
-def date_keyboard():
-    today = datetime.now().date()
-    rows = []
-
-    for i in range(8):
-        d = today + timedelta(days=i)
-
-        if i == 0:
-            label = f"Bugun ({d.strftime('%d.%m')})"
-        elif i == 1:
-            label = f"Ertaga ({d.strftime('%d.%m')})"
-        else:
-            label = d.strftime("%d.%m.%Y")
-
-        rows.append([KeyboardButton(text=label)])
-
-    rows.append([KeyboardButton(text="⬅️ Bekor qilish")])
-
-    return ReplyKeyboardMarkup(
-        keyboard=rows,
-        resize_keyboard=True,
-        one_time_keyboard=True,
-    )
-
-
-def time_keyboard():
-    times = [
-        "06:00", "07:00", "08:00", "09:00",
-        "10:00", "11:00", "12:00", "13:00",
-        "14:00", "15:00", "16:00", "17:00",
-        "18:00", "19:00", "20:00", "21:00",
-        "22:00",
-    ]
-
-    rows = []
-    row = []
-
-    for t in times:
-        row.append(KeyboardButton(text=t))
-
-        if len(row) == 3:
-            rows.append(row)
-            row = []
-
-    if row:
-        rows.append(row)
-
-    rows.append([KeyboardButton(text="⬅️ Bekor qilish")])
-
-    return ReplyKeyboardMarkup(
-        keyboard=rows,
-        resize_keyboard=True,
-        one_time_keyboard=True,
-    )
-
-
-def passenger_count_keyboard():
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [
-                KeyboardButton(text="1"),
-                KeyboardButton(text="2"),
-            ],
-            [
-                KeyboardButton(text="3"),
-                KeyboardButton(text="4"),
-            ],
-            [KeyboardButton(text="⬅️ Bekor qilish")],
-        ],
-        resize_keyboard=True,
-        one_time_keyboard=True,
-    )
-
-
-def seats_keyboard():
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [
-                KeyboardButton(text="1"),
-                KeyboardButton(text="2"),
-            ],
-            [
-                KeyboardButton(text="3"),
-                KeyboardButton(text="4"),
-            ],
-            [KeyboardButton(text="⬅️ Bekor qilish")],
-        ],
-        resize_keyboard=True,
-        one_time_keyboard=True,
-    )
-
-
-def gender_keyboard():
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [
-                KeyboardButton(text="👨 Erkak"),
-                KeyboardButton(text="👩 Ayol"),
-            ],
-            [KeyboardButton(text="⬅️ Bekor qilish")],
-        ],
-        resize_keyboard=True,
-        one_time_keyboard=True,
-    )
-
-
-def age_keyboard():
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [
-                KeyboardButton(text="18-25"),
-                KeyboardButton(text="26-35"),
-            ],
-            [
-                KeyboardButton(text="36-50"),
-                KeyboardButton(text="51+"),
-            ],
-            [KeyboardButton(text="⬅️ Bekor qilish")],
-        ],
-        resize_keyboard=True,
-        one_time_keyboard=True,
-    )
-
-
-def driver_booking_keyboard(booking_id: int):
+def driver_request_keyboard(request_id: int):
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="✅ Buyurtmani qabul qilish",
-                    callback_data=f"accept_booking:{booking_id}",
-                )
-            ],
-            [
+                    text="✅ QABUL QILISH",
+                    callback_data=f"accept_request:{request_id}",
+                ),
                 InlineKeyboardButton(
-                    text="❌ Rad etish",
-                    callback_data=f"reject_booking:{booking_id}",
-                )
-            ],
+                    text="❌ RAD ETISH",
+                    callback_data=f"reject_request:{request_id}",
+                ),
+            ]
         ]
     )
 
 
-def passenger_taxi_keyboard(booking_id: int):
+def passenger_cancel_keyboard(request_id: int):
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
                     text="❌ Buyurtmani bekor qilish",
-                    callback_data=f"cancel_booking:{booking_id}",
+                    callback_data=f"cancel_request:{request_id}",
                 )
             ]
         ]
     )
 
 
-def driver_active_keyboard(booking_id: int):
+def booking_driver_keyboard(booking_id: int):
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
@@ -334,25 +246,25 @@ def driver_active_keyboard(booking_id: int):
             ],
             [
                 InlineKeyboardButton(
-                    text="🚕 Manzilga keldim",
-                    callback_data=f"arrived:{booking_id}",
+                    text="🚕 Yetib keldim",
+                    callback_data=f"driver_arrived:{booking_id}",
                 )
             ],
             [
                 InlineKeyboardButton(
                     text="👤 Yo‘lovchini oldim",
-                    callback_data=f"onboard:{booking_id}",
+                    callback_data=f"driver_onboard:{booking_id}",
                 )
             ],
             [
                 InlineKeyboardButton(
-                    text="🏁 Safarni yakunlash",
-                    callback_data=f"complete:{booking_id}",
+                    text="🏁 Safarni tugatish",
+                    callback_data=f"driver_complete:{booking_id}",
                 )
             ],
             [
                 InlineKeyboardButton(
-                    text="❌ Buyurtmani bekor qilish",
+                    text="❌ Safarni bekor qilish",
                     callback_data=f"driver_cancel:{booking_id}",
                 )
             ],
@@ -360,469 +272,858 @@ def driver_active_keyboard(booking_id: int):
     )
 
 
-def passenger_active_keyboard(booking_id: int):
+def passenger_booking_keyboard(booking_id: int):
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="📍 Haydovchi lokatsiyasi",
-                    callback_data=f"track:{booking_id}",
+                    text="📍 Haydovchini ko‘rish",
+                    callback_data=f"track_driver:{booking_id}",
                 )
             ],
             [
                 InlineKeyboardButton(
-                    text="❌ Buyurtmani bekor qilish",
-                    callback_data=f"cancel_booking:{booking_id}",
+                    text="❌ Safarni bekor qilish",
+                    callback_data=f"passenger_cancel:{booking_id}",
                 )
             ],
         ]
     )
 
 
-def admin_driver_keyboard(driver_id: int):
+def admin_driver_keyboard(user_id: int):
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
                     text="✅ Tasdiqlash",
-                    callback_data=f"admin_verify:{driver_id}",
+                    callback_data=f"admin_approve:{user_id}",
                 ),
                 InlineKeyboardButton(
                     text="❌ Rad etish",
-                    callback_data=f"admin_reject:{driver_id}",
+                    callback_data=f"admin_reject:{user_id}",
                 ),
-            ],
-            [
-                InlineKeyboardButton(
-                    text="🚫 Bloklash",
-                    callback_data=f"admin_block:{driver_id}",
-                )
-            ],
+            ]
         ]
     )
 
 
-def rating_keyboard(booking_id: int):
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(text="⭐ 1", callback_data=f"rating:{booking_id}:1"),
-                InlineKeyboardButton(text="⭐ 2", callback_data=f"rating:{booking_id}:2"),
-                InlineKeyboardButton(text="⭐ 3", callback_data=f"rating:{booking_id}:3"),
-            ],
-            [
-                InlineKeyboardButton(text="⭐ 4", callback_data=f"rating:{booking_id}:4"),
-                InlineKeyboardButton(text="⭐ 5", callback_data=f"rating:{booking_id}:5"),
-            ],
-        ]
-    )
-
-
-# =========================================================
-# FSM
-# =========================================================
-
-class DriverState(StatesGroup):
-    name = State()
-    phone = State()
-    car = State()
-    car_number = State()
-    license = State()
-    vehicle_doc = State()
-    vehicle_photo = State()
-
-
-class DriverRideState(StatesGroup):
-    from_city = State()
-    to_city = State()
-    date = State()
-    time = State()
-    seats = State()
-    price = State()
-
-
-class PassengerState(StatesGroup):
-    name = State()
-    phone = State()
-    gender = State()
-    age_category = State()
-    from_city = State()
-    to_city = State()
-    date = State()
-    time = State()
-    passengers = State()
-    location = State()
-
-
-class SearchState(StatesGroup):
-    from_city = State()
-    to_city = State()
-    date = State()
-    time = State()
-    passengers = State()
-
-
-class RatingState(StatesGroup):
-    comment = State()
-
-
-# =========================================================
+# ============================================================
 # DATABASE
-# =========================================================
+# ============================================================
 
-async def db_execute(query, params=(), fetchone=False, fetchall=False, commit=True):
-    async with aiosqlite.connect(DB) as db:
+async def db_execute(
+    query,
+    params=(),
+    fetch=False,
+    fetchone=False,
+):
+    async with aiosqlite.connect(DB_PATH) as db:
+
         db.row_factory = aiosqlite.Row
 
-        cursor = await db.execute(query, params)
-
-        if commit:
-            await db.commit()
+        cursor = await db.execute(
+            query,
+            params,
+        )
 
         if fetchone:
             return await cursor.fetchone()
 
-        if fetchall:
+        if fetch:
             return await cursor.fetchall()
 
-        return cursor
+        await db.commit()
+
+        return cursor.lastrowid
+
+
+async def column_exists(table_name, column_name):
+
+    rows = await db_execute(
+        f"PRAGMA table_info({table_name})",
+        fetch=True,
+    )
+
+    return any(
+        row["name"] == column_name
+        for row in rows
+    )
+
+
+async def add_column_if_missing(
+    table_name,
+    column_name,
+    column_type,
+):
+
+    if not await column_exists(
+        table_name,
+        column_name,
+    ):
+
+        async with aiosqlite.connect(DB_PATH) as db:
+
+            await db.execute(
+                f"""
+                ALTER TABLE {table_name}
+                ADD COLUMN {column_name} {column_type}
+                """
+            )
+
+            await db.commit()
 
 
 async def init_db():
-    async with aiosqlite.connect(DB) as db:
+
+    async with aiosqlite.connect(DB_PATH) as db:
 
         await db.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                telegram_id INTEGER PRIMARY KEY,
-                name TEXT,
-                phone TEXT,
-                gender TEXT,
-                age_category TEXT,
-                latitude REAL,
-                longitude REAL,
-                location_updated TEXT
-            )
-        """)
-
-        await db.execute("""
-            CREATE TABLE IF NOT EXISTS driver_profiles (
-                telegram_id INTEGER PRIMARY KEY,
-                car TEXT,
-                car_number TEXT,
-                license_file_id TEXT,
-                vehicle_doc_file_id TEXT,
-                vehicle_photo_file_id TEXT,
-                status TEXT DEFAULT 'pending',
-                rating REAL DEFAULT 0,
-                rating_count INTEGER DEFAULT 0,
-                created_at TEXT
-            )
-        """)
-
-        await db.execute("""
-            CREATE TABLE IF NOT EXISTS rides (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                telegram_id INTEGER NOT NULL,
-                name TEXT,
-                phone TEXT,
-                role TEXT DEFAULT 'driver',
-                from_city TEXT,
-                to_city TEXT,
-                date TEXT,
-                time TEXT,
-                car TEXT,
-                car_number TEXT,
-                seats INTEGER DEFAULT 1,
-                price INTEGER DEFAULT 0,
-                original_seats INTEGER DEFAULT 1,
-                available_seats INTEGER DEFAULT 1,
-                reserved_seats INTEGER DEFAULT 0,
-                status TEXT DEFAULT 'active',
-                latitude REAL,
-                longitude REAL,
-                created_at TEXT
-            )
-        """)
-
-        await db.execute("""
-            CREATE TABLE IF NOT EXISTS passenger_requests (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                telegram_id INTEGER NOT NULL,
-                name TEXT,
-                phone TEXT,
-                gender TEXT,
-                age_category TEXT,
-                from_city TEXT,
-                to_city TEXT,
-                date TEXT,
-                time TEXT,
-                passengers INTEGER DEFAULT 1,
-                pickup_latitude REAL,
-                pickup_longitude REAL,
-                status TEXT DEFAULT 'active',
-                created_at TEXT
-            )
-        """)
-
-        await db.execute("""
-            CREATE TABLE IF NOT EXISTS bookings (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                request_id INTEGER NOT NULL,
-                ride_id INTEGER NOT NULL,
-                passenger_id INTEGER NOT NULL,
-                passenger_count INTEGER DEFAULT 1,
-
-                pickup_latitude REAL,
-                pickup_longitude REAL,
-
-                driver_latitude REAL,
-                driver_longitude REAL,
-
-                status TEXT DEFAULT 'pending_driver',
-
-                created_at TEXT,
-                accepted_at TEXT,
-                arrived_at TEXT,
-                started_at TEXT,
-                completed_at TEXT
-            )
-        """)
-
-        await db.execute("""
-            CREATE TABLE IF NOT EXISTS ratings (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                booking_id INTEGER,
-                ride_id INTEGER,
-                driver_id INTEGER,
-                passenger_id INTEGER,
-                rating INTEGER,
-                comment TEXT,
-                created_at TEXT
-            )
-        """)
-
-        # Migration
-        columns = await db.execute_fetchall(
-            "PRAGMA table_info(rides)"
+        CREATE TABLE IF NOT EXISTS users (
+            user_id INTEGER PRIMARY KEY,
+            full_name TEXT,
+            username TEXT,
+            phone TEXT,
+            created_at TEXT
         )
-
-        existing_columns = {row[1] for row in columns}
-
-        if "reserved_seats" not in existing_columns:
-            await db.execute(
-                "ALTER TABLE rides ADD COLUMN reserved_seats INTEGER DEFAULT 0"
-            )
+        """)
 
         await db.execute("""
-            CREATE UNIQUE INDEX IF NOT EXISTS idx_booking_active
-            ON bookings(ride_id, passenger_id)
-            WHERE status NOT IN (
-                'rejected',
-                'cancelled',
-                'completed'
-            )
+        CREATE TABLE IF NOT EXISTS driver_profiles (
+            user_id INTEGER PRIMARY KEY,
+            full_name TEXT,
+            phone TEXT,
+            car_model TEXT,
+            car_number TEXT,
+            seats INTEGER DEFAULT 4,
+            status TEXT DEFAULT 'pending',
+            rating REAL DEFAULT 5.0,
+            trips INTEGER DEFAULT 0,
+            latitude REAL,
+            longitude REAL,
+            created_at TEXT
+        )
+        """)
+
+        await db.execute("""
+        CREATE TABLE IF NOT EXISTS rides (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            driver_id INTEGER,
+            from_city TEXT,
+            to_city TEXT,
+            ride_time TEXT,
+            seats INTEGER,
+            available_seats INTEGER,
+            reserved_seats INTEGER DEFAULT 0,
+            status TEXT DEFAULT 'active',
+            created_at TEXT
+        )
+        """)
+
+        await db.execute("""
+        CREATE TABLE IF NOT EXISTS passenger_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            passenger_id INTEGER,
+            from_city TEXT,
+            to_city TEXT,
+            ride_time TEXT,
+            seats INTEGER,
+            name TEXT,
+            phone TEXT,
+            latitude REAL,
+            longitude REAL,
+            status TEXT DEFAULT 'searching',
+            created_at TEXT
+        )
+        """)
+
+        await db.execute("""
+        CREATE TABLE IF NOT EXISTS bookings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            request_id INTEGER,
+            ride_id INTEGER,
+            passenger_id INTEGER,
+            driver_id INTEGER,
+            seats INTEGER,
+            status TEXT DEFAULT 'pending_driver',
+            driver_latitude REAL,
+            driver_longitude REAL,
+            created_at TEXT
+        )
+        """)
+
+        await db.execute("""
+        CREATE TABLE IF NOT EXISTS ratings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            booking_id INTEGER UNIQUE,
+            passenger_id INTEGER,
+            driver_id INTEGER,
+            rating INTEGER,
+            comment TEXT,
+            created_at TEXT
+        )
+        """)
+
+        await db.execute("""
+        CREATE TABLE IF NOT EXISTS group_messages (
+            chat_id INTEGER,
+            message_id INTEGER,
+            processed_at TEXT,
+            PRIMARY KEY(chat_id, message_id)
+        )
         """)
 
         await db.commit()
 
+    # ========================================================
+    # ESKI DATABASE UCHUN MIGRATION
+    # ========================================================
 
-# =========================================================
+    await add_column_if_missing(
+        "rides",
+        "source_chat_id",
+        "INTEGER",
+    )
+
+    await add_column_if_missing(
+        "rides",
+        "source_message_id",
+        "INTEGER",
+    )
+
+    await add_column_if_missing(
+        "rides",
+        "source_text",
+        "TEXT",
+    )
+
+    await add_column_if_missing(
+        "passenger_requests",
+        "source_chat_id",
+        "INTEGER",
+    )
+
+    await add_column_if_missing(
+        "passenger_requests",
+        "source_message_id",
+        "INTEGER",
+    )
+
+    await add_column_if_missing(
+        "passenger_requests",
+        "source_text",
+        "TEXT",
+    )
+
+
+# ============================================================
 # HELPERS
-# =========================================================
+# ============================================================
 
-async def ensure_user(message: Message):
-    name = message.from_user.full_name or ""
+async def save_user(message: Message):
 
-    await db_execute("""
-        INSERT INTO users (telegram_id, name)
-        VALUES (?, ?)
-        ON CONFLICT(telegram_id)
-        DO UPDATE SET name=excluded.name
-    """, (
-        message.from_user.id,
-        name,
-    ))
+    user = message.from_user
 
-
-async def update_user_location(user_id, latitude, longitude):
-    await db_execute("""
-        INSERT INTO users (
-            telegram_id,
-            latitude,
-            longitude,
-            location_updated
+    await db_execute(
+        """
+        INSERT INTO users
+        (
+            user_id,
+            full_name,
+            username,
+            created_at
         )
         VALUES (?, ?, ?, ?)
 
-        ON CONFLICT(telegram_id)
+        ON CONFLICT(user_id)
         DO UPDATE SET
-            latitude=excluded.latitude,
-            longitude=excluded.longitude,
-            location_updated=excluded.location_updated
-    """, (
-        user_id,
-        latitude,
-        longitude,
-        datetime.now().isoformat(),
-    ))
+            full_name=excluded.full_name,
+            username=excluded.username
+        """,
+        (
+            user.id,
+            user.full_name,
+            user.username,
+            datetime.now().isoformat(),
+        ),
+    )
 
 
-async def get_user_location(user_id):
-    row = await db_execute("""
-        SELECT latitude, longitude
+async def save_user_phone(
+    user_id,
+    phone,
+):
+
+    await db_execute(
+        """
+        UPDATE users
+        SET phone=?
+        WHERE user_id=?
+        """,
+        (
+            phone,
+            user_id,
+        ),
+    )
+
+
+async def get_user(user_id):
+
+    return await db_execute(
+        """
+        SELECT *
         FROM users
-        WHERE telegram_id=?
-    """, (user_id,), fetchone=True)
-
-    if not row:
-        return None
-
-    if row["latitude"] is None or row["longitude"] is None:
-        return None
-
-    return row["latitude"], row["longitude"]
-
-
-def calculate_distance(lat1, lon1, lat2, lon2):
-    R = 6371
-
-    dlat = radians(lat2 - lat1)
-    dlon = radians(lon2 - lon1)
-
-    a = (
-        sin(dlat / 2) ** 2
-        + cos(radians(lat1))
-        * cos(radians(lat2))
-        * sin(dlon / 2) ** 2
+        WHERE user_id=?
+        """,
+        (user_id,),
+        fetchone=True,
     )
 
-    c = 2 * atan2(sqrt(a), sqrt(1 - a))
 
-    return R * c
+async def get_driver(driver_id):
 
-
-async def get_route_info(lat1, lon1, lat2, lon2):
-    distance = calculate_distance(lat1, lon1, lat2, lon2)
-
-    fallback_minutes = max(1, round((distance / 35) * 60))
-
-    url = (
-        f"https://router.project-osrm.org/route/v1/driving/"
-        f"{lon1},{lat1};{lon2},{lat2}"
-        f"?overview=false"
-    )
-
-    try:
-        timeout = aiohttp.ClientTimeout(total=8)
-
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.get(url) as response:
-
-                if response.status != 200:
-                    return distance, fallback_minutes
-
-                data = await response.json()
-
-                routes = data.get("routes", [])
-
-                if not routes:
-                    return distance, fallback_minutes
-
-                route = routes[0]
-
-                km = route["distance"] / 1000
-                minutes = max(1, round(route["duration"] / 60))
-
-                return km, minutes
-
-    except Exception:
-        return distance, fallback_minutes
-
-
-def clean_city(text):
-    if not text:
-        return None
-
-    for city in CITIES:
-        if text == city or text.endswith(city):
-            return city
-
-    return text
-
-
-def parse_date(text):
-    today = datetime.now().date()
-
-    if text.startswith("Bugun"):
-        return today.strftime("%d.%m.%Y")
-
-    if text.startswith("Ertaga"):
-        return (today + timedelta(days=1)).strftime("%d.%m.%Y")
-
-    try:
-        return datetime.strptime(text, "%d.%m.%Y").strftime("%d.%m.%Y")
-    except Exception:
-        return None
-
-
-def is_admin(user_id):
-    return user_id in ADMIN_IDS
-
-
-async def get_driver_profile(user_id):
-    return await db_execute("""
+    return await db_execute(
+        """
         SELECT *
         FROM driver_profiles
-        WHERE telegram_id=?
-    """, (user_id,), fetchone=True)
+        WHERE user_id=?
+        """,
+        (driver_id,),
+        fetchone=True,
+    )
 
 
-async def driver_status(user_id):
-    row = await get_driver_profile(user_id)
+async def get_request(request_id):
 
-    if not row:
-        return None
+    return await db_execute(
+        """
+        SELECT *
+        FROM passenger_requests
+        WHERE id=?
+        """,
+        (request_id,),
+        fetchone=True,
+    )
 
-    return row["status"]
+
+async def get_booking(booking_id):
+
+    return await db_execute(
+        """
+        SELECT *
+        FROM bookings
+        WHERE id=?
+        """,
+        (booking_id,),
+        fetchone=True,
+    )
 
 
-async def send_location_to_user(user_id, lat, lon):
+async def safe_send(
+    user_id,
+    text,
+    **kwargs,
+):
+
     try:
-        await bot.send_location(
-            chat_id=user_id,
-            latitude=lat,
-            longitude=lon,
+
+        await bot.send_message(
+            user_id,
+            text,
+            **kwargs,
         )
+
         return True
-    except Exception:
+
+    except Exception as e:
+
+        print(
+            f"SEND ERROR {user_id}: {e}"
+        )
+
         return False
 
 
-# =========================================================
-# START
-# =========================================================
+async def notify_admins(
+    text,
+    **kwargs,
+):
 
-@dp.message(CommandStart())
-async def start(message: Message, state: FSMContext):
-    await state.clear()
-    await ensure_user(message)
+    for admin_id in ADMIN_IDS:
 
-    await message.answer(
-        "🚕 <b>OPPER TAXI</b>\n\n"
-        "Farg‘ona vodiysi ↔ Toshkent yo‘nalishlarida "
-        "haydovchi va yo‘lovchilarni bog‘lovchi xizmat.\n\n"
-        "Kerakli bo‘limni tanlang:",
-        parse_mode="HTML",
-        reply_markup=main_menu(),
+        await safe_send(
+            admin_id,
+            text,
+            **kwargs,
+        )
+
+
+# ============================================================
+# TEXT NORMALIZATION
+# ============================================================
+
+def normalize_text(text):
+
+    if not text:
+        return ""
+
+    text = text.replace(
+        "’",
+        "'",
+    )
+
+    text = text.replace(
+        "‘",
+        "'",
+    )
+
+    text = text.replace(
+        "ʻ",
+        "'",
+    )
+
+    text = text.replace(
+        "ʼ",
+        "'",
+    )
+
+    text = text.replace(
+        "–",
+        "-",
+    )
+
+    text = text.replace(
+        "—",
+        "-",
+    )
+
+    return " ".join(
+        text.lower().split()
     )
 
 
-# =========================================================
-# CANCEL FSM
-# =========================================================
+CITY_ALIASES = {
+    "toshkent": "Toshkent",
+    "tashkent": "Toshkent",
 
-@dp.message(F.text == "⬅️ Bekor qilish")
-async def cancel_all(message: Message, state: FSMContext):
+    "namangan": "Namangan",
+
+    "andijon": "Andijon",
+    "andijan": "Andijon",
+
+    "fargona": "Farg‘ona",
+    "fergana": "Farg‘ona",
+    "ferghana": "Farg‘ona",
+
+    "qoqon": "Qo‘qon",
+    "kokand": "Qo‘qon",
+    "qoqand": "Qo‘qon",
+
+    "margilon": "Marg‘ilon",
+    "margilan": "Marg‘ilon",
+}
+
+
+def extract_cities(text):
+
+    normalized = normalize_text(text)
+
+    found = []
+
+    for alias, city in CITY_ALIASES.items():
+
+        pattern = rf"\b{re.escape(alias)}\b"
+
+        match = re.search(
+            pattern,
+            normalized,
+        )
+
+        if match:
+
+            found.append(
+                (
+                    match.start(),
+                    city,
+                )
+            )
+
+    found.sort(
+        key=lambda x: x[0]
+    )
+
+    result = []
+
+    for _, city in found:
+
+        if city not in result:
+
+            result.append(city)
+
+    return result[:2]
+
+
+def extract_time(text):
+
+    normalized = normalize_text(text)
+
+    patterns = [
+        r"\b([01]?\d|2[0-3])[:.]([0-5]\d)\b",
+        r"\b([01]?\d|2[0-3])\s+([0-5]\d)\b",
+    ]
+
+    for pattern in patterns:
+
+        match = re.search(
+            pattern,
+            normalized,
+        )
+
+        if match:
+
+            hour = int(match.group(1))
+            minute = int(match.group(2))
+
+            return f"{hour:02d}:{minute:02d}"
+
+    return None
+
+
+def extract_seats(text):
+
+    normalized = normalize_text(text)
+
+    patterns = [
+        r"\b(\d+)\s*(?:kishi|kishiга|kishiга|odam|yo['']lovchi)\b",
+        r"\b(\d+)\s*(?:ta\s*)?(?:joy|mashina|o'rin|orin)\b",
+        r"\b(\d+)\s*(?:ta)?\s*(?:yo['']lovchi)\b",
+    ]
+
+    for pattern in patterns:
+
+        match = re.search(
+            pattern,
+            normalized,
+        )
+
+        if match:
+
+            value = int(
+                match.group(1)
+            )
+
+            if 1 <= value <= 8:
+                return value
+
+    # "2 kishi" uchun oddiy fallback
+    match = re.search(
+        r"\b(\d+)\s*kishi\b",
+        normalized,
+    )
+
+    if match:
+
+        value = int(
+            match.group(1)
+        )
+
+        if 1 <= value <= 8:
+            return value
+
+    return None
+
+
+def normalize_phone(raw):
+
+    if not raw:
+        return None
+
+    digits = re.sub(
+        r"\D",
+        "",
+        raw,
+    )
+
+    if digits.startswith("998"):
+        return "+" + digits
+
+    if digits.startswith("8") and len(digits) == 11:
+        return "+998" + digits[1:]
+
+    if len(digits) == 9:
+        return "+998" + digits
+
+    return None
+
+
+def extract_phone(text):
+
+    patterns = [
+        r"\+?998[\s\-()]?\d[\d\s\-()]{7,12}",
+        r"\b\d{9}\b",
+    ]
+
+    for pattern in patterns:
+
+        match = re.search(
+            pattern,
+            text,
+        )
+
+        if match:
+
+            phone = normalize_phone(
+                match.group(0)
+            )
+
+            if phone:
+                return phone
+
+    return None
+
+
+def is_passenger_message(text):
+
+    normalized = normalize_text(text)
+
+    keywords = [
+        "taksi kerak",
+        "taksi kerek",
+        "mashina kerak",
+        "mashina kerek",
+        "joy kerak",
+        "joy kerek",
+        "olib keting",
+        "olib ketish",
+        "yo'lovchi",
+        "yo'lovchiga",
+        "chiqaman",
+        "ketaman",
+        "kerak",
+        "kerek",
+        "izlayapman",
+        "izlayman",
+        "olib borish",
+    ]
+
+    return any(
+        word in normalized
+        for word in keywords
+    )
+
+
+def is_driver_message(text):
+
+    normalized = normalize_text(text)
+
+    keywords = [
+        "joy bor",
+        "bo'sh joy",
+        "bosh joy",
+        "bo'sh",
+        "olaman",
+        "taksi bor",
+        "mashina bor",
+        "mashina chiqadi",
+        "taksi chiqadi",
+        "ketaman",
+        "yo'lga chiqaman",
+        "joy mavjud",
+    ]
+
+    return any(
+        word in normalized
+        for word in keywords
+    )
+
+
+def clean_person_name(name):
+
+    if not name:
+        return "Guruh yo‘lovchisi"
+
+    name = name.strip()
+
+    if len(name) > 80:
+        name = name[:80]
+
+    return name
+
+
+def extract_name_from_message(message: Message):
+
+    if message.from_user:
+
+        if message.from_user.full_name:
+            return clean_person_name(
+                message.from_user.full_name
+            )
+
+    return "Guruh yo‘lovchisi"
+
+
+# ============================================================
+# GROUP MESSAGE DUPLICATE CHECK
+# ============================================================
+
+async def group_message_already_processed(
+    chat_id,
+    message_id,
+):
+
+    row = await db_execute(
+        """
+        SELECT 1
+        FROM group_messages
+        WHERE chat_id=?
+          AND message_id=?
+        """,
+        (
+            chat_id,
+            message_id,
+        ),
+        fetchone=True,
+    )
+
+    return row is not None
+
+
+async def mark_group_message_processed(
+    chat_id,
+    message_id,
+):
+
+    await db_execute(
+        """
+        INSERT OR IGNORE INTO group_messages
+        (
+            chat_id,
+            message_id,
+            processed_at
+        )
+        VALUES (?, ?, ?)
+        """,
+        (
+            chat_id,
+            message_id,
+            datetime.now().isoformat(),
+        ),
+    )
+
+
+# ============================================================
+# SEND REQUEST TO DRIVERS
+# ============================================================
+
+async def send_request_to_matching_drivers(
+    request_id,
+):
+
+    request = await get_request(
+        request_id
+    )
+
+    if not request:
+        return 0
+
+    drivers = await db_execute(
+        """
+        SELECT
+            d.*,
+            r.id AS ride_id,
+            r.available_seats
+        FROM driver_profiles d
+        JOIN rides r
+            ON r.driver_id=d.user_id
+        WHERE d.status='approved'
+          AND r.status='active'
+          AND r.from_city=?
+          AND r.to_city=?
+          AND r.ride_time=?
+          AND r.available_seats >= ?
+        ORDER BY r.id DESC
+        """,
+        (
+            request["from_city"],
+            request["to_city"],
+            request["ride_time"],
+            request["seats"],
+        ),
+        fetch=True,
+    )
+
+    sent_count = 0
+
+    already_sent = set()
+
+    for driver in drivers:
+
+        if driver["user_id"] in already_sent:
+            continue
+
+        already_sent.add(
+            driver["user_id"]
+        )
+
+        text = (
+            "🚕 <b>YANGI YO‘LOVCHI BUYURTMASI!</b>\n\n"
+            f"📍 <b>{request['from_city']} → "
+            f"{request['to_city']}</b>\n"
+            f"🕐 Vaqt: <b>{request['ride_time']}</b>\n"
+            f"👥 Yo‘lovchi: <b>{request['seats']} kishi</b>\n\n"
+            "Buyurtmani qabul qilasizmi?"
+        )
+
+        ok = await safe_send(
+            driver["user_id"],
+            text,
+            reply_markup=driver_request_keyboard(
+                request_id
+            ),
+            parse_mode="HTML",
+        )
+
+        if ok:
+            sent_count += 1
+
+    return sent_count
+
+
+# ============================================================
+# START
+# ============================================================
+
+@dp.message(CommandStart())
+async def start_handler(
+    message: Message,
+    state: FSMContext,
+):
+
+    await state.clear()
+
+    await save_user(message)
+
+    await message.answer(
+        "🚕 <b>OPPER TAXI</b>\n\n"
+        "Assalomu alaykum!\n"
+        "Taksi xizmatidan foydalanish uchun "
+        "menyudan kerakli bo‘limni tanlang.",
+        reply_markup=main_menu(),
+        parse_mode="HTML",
+    )
+
+
+# ============================================================
+# CANCEL
+# ============================================================
+
+@dp.message(Command("cancel"))
+@dp.message(F.text == "❌ Bekor qilish")
+async def cancel_handler(
+    message: Message,
+    state: FSMContext,
+):
+
     await state.clear()
 
     await message.answer(
@@ -831,582 +1132,23 @@ async def cancel_all(message: Message, state: FSMContext):
     )
 
 
-# =========================================================
-# DRIVER REGISTRATION
-# =========================================================
+# ============================================================
+# PASSENGER START
+# ============================================================
 
-@dp.message(F.text == "🚕 Haydovchi bo‘lish")
-async def driver_start(message: Message, state: FSMContext):
-    await ensure_user(message)
-
-    profile = await get_driver_profile(message.from_user.id)
-
-    if profile:
-
-        if profile["status"] == DRIVER_VERIFIED:
-            await start_driver_ride(message, state)
-            return
-
-        if profile["status"] == DRIVER_PENDING:
-            await message.answer(
-                "⏳ Sizning haydovchilik arizangiz hali admin tomonidan "
-                "tasdiqlanmagan."
-            )
-            return
-
-        if profile["status"] == DRIVER_BLOCKED:
-            await message.answer(
-                "🚫 Sizning haydovchilik profilingiz bloklangan."
-            )
-            return
-
-    await state.set_state(DriverState.name)
-
-    await message.answer(
-        "👤 Ism-familiyangizni kiriting:"
-    )
-
-
-@dp.message(DriverState.name)
-async def driver_name(message: Message, state: FSMContext):
-    await state.update_data(name=message.text.strip())
-    await state.set_state(DriverState.phone)
-
-    await message.answer(
-        "📱 Telefon raqamingizni yuboring:",
-        reply_markup=phone_keyboard(),
-    )
-
-
-@dp.message(DriverState.phone, F.contact)
-async def driver_phone_contact(message: Message, state: FSMContext):
-    phone = message.contact.phone_number
-
-    await state.update_data(phone=phone)
-    await state.set_state(DriverState.car)
-
-    await message.answer(
-        "🚗 Mashina markasi va modelini yozing:",
-        reply_markup=ReplyKeyboardRemove(),
-    )
-
-
-@dp.message(DriverState.phone)
-async def driver_phone_text(message: Message, state: FSMContext):
-    phone = message.text.strip()
-
-    await state.update_data(phone=phone)
-    await state.set_state(DriverState.car)
-
-    await message.answer(
-        "🚗 Mashina markasi va modelini yozing:"
-    )
-
-
-@dp.message(DriverState.car)
-async def driver_car(message: Message, state: FSMContext):
-    await state.update_data(car=message.text.strip())
-    await state.set_state(DriverState.car_number)
-
-    await message.answer(
-        "🔢 Avtomobil davlat raqamini yozing:"
-    )
-
-
-@dp.message(DriverState.car_number)
-async def driver_car_number(message: Message, state: FSMContext):
-    await state.update_data(car_number=message.text.strip())
-    await state.set_state(DriverState.license)
-
-    await message.answer(
-        "🪪 Haydovchilik guvohnomangiz rasmini yuboring:"
-    )
-
-
-@dp.message(DriverState.license, F.photo)
-async def driver_license(message: Message, state: FSMContext):
-    file_id = message.photo[-1].file_id
-
-    await state.update_data(license_file_id=file_id)
-    await state.set_state(DriverState.vehicle_doc)
-
-    await message.answer(
-        "📄 Texpasport yoki avtomobil hujjatini yuboring:"
-    )
-
-
-@dp.message(DriverState.vehicle_doc, F.photo)
-async def driver_vehicle_doc(message: Message, state: FSMContext):
-    file_id = message.photo[-1].file_id
-
-    await state.update_data(vehicle_doc_file_id=file_id)
-    await state.set_state(DriverState.vehicle_photo)
-
-    await message.answer(
-        "🚗 Avtomobilingizning tashqi ko‘rinishdagi rasmini yuboring:"
-    )
-
-
-@dp.message(DriverState.vehicle_photo, F.photo)
-async def driver_vehicle_photo(message: Message, state: FSMContext):
-    file_id = message.photo[-1].file_id
-
-    data = await state.get_data()
-
-    await db_execute("""
-        INSERT INTO driver_profiles (
-            telegram_id,
-            car,
-            car_number,
-            license_file_id,
-            vehicle_doc_file_id,
-            vehicle_photo_file_id,
-            status,
-            created_at
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-
-        ON CONFLICT(telegram_id)
-        DO UPDATE SET
-            car=excluded.car,
-            car_number=excluded.car_number,
-            license_file_id=excluded.license_file_id,
-            vehicle_doc_file_id=excluded.vehicle_doc_file_id,
-            vehicle_photo_file_id=excluded.vehicle_photo_file_id,
-            status=excluded.status,
-            created_at=excluded.created_at
-    """, (
-        message.from_user.id,
-        data["car"],
-        data["car_number"],
-        data["license_file_id"],
-        data["vehicle_doc_file_id"],
-        file_id,
-        DRIVER_PENDING,
-        datetime.now().isoformat(),
-    ))
+@dp.message(F.text == "🚕 Taksi chaqirish")
+async def passenger_start(
+    message: Message,
+    state: FSMContext,
+):
 
     await state.clear()
 
-    await message.answer(
-        "✅ Hujjatlaringiz qabul qilindi.\n\n"
-        "⏳ Admin tekshiruvdan o‘tkazadi.\n"
-        "Tasdiqlangandan keyin siz safar joylashingiz mumkin.",
-        reply_markup=main_menu(),
+    await save_user(message)
+
+    await state.set_state(
+        PassengerState.from_city
     )
-
-    for admin_id in ADMIN_IDS:
-        try:
-            await bot.send_message(
-                admin_id,
-                "🚕 <b>Yangi haydovchi arizasi</b>\n\n"
-                f"👤 {html.escape(data['name'])}\n"
-                f"📱 {html.escape(data['phone'])}\n"
-                f"🚗 {html.escape(data['car'])}\n"
-                f"🔢 {html.escape(data['car_number'])}\n"
-                f"🆔 Telegram ID: <code>{message.from_user.id}</code>",
-                parse_mode="HTML",
-                reply_markup=admin_driver_keyboard(message.from_user.id),
-            )
-
-            await bot.send_photo(
-                admin_id,
-                data["license_file_id"],
-                caption="🪪 Haydovchilik guvohnomasi",
-            )
-
-            await bot.send_photo(
-                admin_id,
-                data["vehicle_doc_file_id"],
-                caption="📄 Avtomobil hujjati",
-            )
-
-            await bot.send_photo(
-                admin_id,
-                file_id,
-                caption="🚗 Avtomobil rasmi",
-            )
-
-        except Exception:
-            pass
-
-
-# =========================================================
-# ADMIN DRIVER CALLBACKS
-# =========================================================
-
-@dp.callback_query(F.data.startswith("admin_verify:"))
-async def admin_verify(callback: CallbackQuery):
-    if not is_admin(callback.from_user.id):
-        await callback.answer("Ruxsat yo‘q.", show_alert=True)
-        return
-
-    driver_id = int(callback.data.split(":")[1])
-
-    await db_execute("""
-        UPDATE driver_profiles
-        SET status=?
-        WHERE telegram_id=?
-    """, (DRIVER_VERIFIED, driver_id))
-
-    try:
-        await bot.send_message(
-            driver_id,
-            "🎉 <b>Tabriklaymiz!</b>\n\n"
-            "Sizning haydovchilik profilingiz tasdiqlandi.\n"
-            "Endi safar joylashingiz mumkin.",
-            parse_mode="HTML",
-            reply_markup=main_menu(),
-        )
-    except Exception:
-        pass
-
-    await callback.message.edit_reply_markup(reply_markup=None)
-
-    await callback.answer("Haydovchi tasdiqlandi.")
-
-
-@dp.callback_query(F.data.startswith("admin_reject:"))
-async def admin_reject(callback: CallbackQuery):
-    if not is_admin(callback.from_user.id):
-        await callback.answer("Ruxsat yo‘q.", show_alert=True)
-        return
-
-    driver_id = int(callback.data.split(":")[1])
-
-    await db_execute("""
-        UPDATE driver_profiles
-        SET status=?
-        WHERE telegram_id=?
-    """, (DRIVER_REJECTED, driver_id))
-
-    try:
-        await bot.send_message(
-            driver_id,
-            "❌ Haydovchilik arizangiz rad etildi."
-        )
-    except Exception:
-        pass
-
-    await callback.message.edit_reply_markup(reply_markup=None)
-    await callback.answer("Ariza rad etildi.")
-
-
-@dp.callback_query(F.data.startswith("admin_block:"))
-async def admin_block(callback: CallbackQuery):
-    if not is_admin(callback.from_user.id):
-        await callback.answer("Ruxsat yo‘q.", show_alert=True)
-        return
-
-    driver_id = int(callback.data.split(":")[1])
-
-    await db_execute("""
-        UPDATE driver_profiles
-        SET status=?
-        WHERE telegram_id=?
-    """, (DRIVER_BLOCKED, driver_id))
-
-    await db_execute("""
-        UPDATE rides
-        SET status=?
-        WHERE telegram_id=? AND status=?
-    """, (RIDE_CANCELLED, driver_id, RIDE_ACTIVE))
-
-    try:
-        await bot.send_message(
-            driver_id,
-            "🚫 Sizning haydovchilik profilingiz bloklandi."
-        )
-    except Exception:
-        pass
-
-    await callback.message.edit_reply_markup(reply_markup=None)
-    await callback.answer("Haydovchi bloklandi.")
-
-
-# =========================================================
-# DRIVER RIDE CREATION
-# =========================================================
-
-async def start_driver_ride(message: Message, state: FSMContext):
-    profile = await get_driver_profile(message.from_user.id)
-
-    if not profile or profile["status"] != DRIVER_VERIFIED:
-        await message.answer(
-            "❌ Avval haydovchilik profilingiz tasdiqlanishi kerak."
-        )
-        return
-
-    await state.set_state(DriverRideState.from_city)
-
-    await message.answer(
-        "🚕 Yangi safar joylash\n\n"
-        "Qayerdan chiqasiz?",
-        reply_markup=city_keyboard(),
-    )
-
-
-@dp.message(DriverRideState.from_city)
-async def ride_from_city(message: Message, state: FSMContext):
-    city = clean_city(message.text)
-
-    if city not in CITIES:
-        await message.answer("Shaharni tugmalardan tanlang.")
-        return
-
-    await state.update_data(from_city=city)
-    await state.set_state(DriverRideState.to_city)
-
-    await message.answer(
-        "📍 Qayerga borasiz?",
-        reply_markup=city_keyboard(),
-    )
-
-
-@dp.message(DriverRideState.to_city)
-async def ride_to_city(message: Message, state: FSMContext):
-    city = clean_city(message.text)
-
-    if city not in CITIES:
-        await message.answer("Shaharni tugmalardan tanlang.")
-        return
-
-    data = await state.get_data()
-
-    if city == data["from_city"]:
-        await message.answer(
-            "❌ Ketish va borish shahri bir xil bo‘lishi mumkin emas."
-        )
-        return
-
-    await state.update_data(to_city=city)
-    await state.set_state(DriverRideState.date)
-
-    await message.answer(
-        "📅 Safar sanasini tanlang:",
-        reply_markup=date_keyboard(),
-    )
-
-
-@dp.message(DriverRideState.date)
-async def ride_date(message: Message, state: FSMContext):
-    date = parse_date(message.text)
-
-    if not date:
-        await message.answer("Sanani tugmalardan tanlang.")
-        return
-
-    await state.update_data(date=date)
-    await state.set_state(DriverRideState.time)
-
-    await message.answer(
-        "⏰ Safar vaqtini tanlang:",
-        reply_markup=time_keyboard(),
-    )
-
-
-@dp.message(DriverRideState.time)
-async def ride_time(message: Message, state: FSMContext):
-    if message.text not in {
-        "06:00", "07:00", "08:00", "09:00",
-        "10:00", "11:00", "12:00", "13:00",
-        "14:00", "15:00", "16:00", "17:00",
-        "18:00", "19:00", "20:00", "21:00",
-        "22:00",
-    }:
-        await message.answer("Vaqtni tugmalardan tanlang.")
-        return
-
-    await state.update_data(time=message.text)
-    await state.set_state(DriverRideState.seats)
-
-    await message.answer(
-        "💺 Nechta bo‘sh joy bor?",
-        reply_markup=seats_keyboard(),
-    )
-
-
-@dp.message(DriverRideState.seats)
-async def ride_seats(message: Message, state: FSMContext):
-    if message.text not in {"1", "2", "3", "4"}:
-        await message.answer("1 dan 4 gacha tanlang.")
-        return
-
-    await state.update_data(seats=int(message.text))
-    await state.set_state(DriverRideState.price)
-
-    await message.answer(
-        "💰 Bir yo‘lovchi uchun narxni so‘mda kiriting:",
-        reply_markup=ReplyKeyboardRemove(),
-    )
-
-
-@dp.message(DriverRideState.price)
-async def ride_price(message: Message, state: FSMContext):
-    try:
-        price = int(
-            message.text
-            .replace(" ", "")
-            .replace(",", "")
-            .replace(".", "")
-        )
-    except Exception:
-        await message.answer("Narxni faqat raqamda kiriting. Masalan: 150000")
-        return
-
-    if price <= 0:
-        await message.answer("Narx 0 dan katta bo‘lishi kerak.")
-        return
-
-    data = await state.get_data()
-
-    profile = await get_driver_profile(message.from_user.id)
-
-    if not profile or profile["status"] != DRIVER_VERIFIED:
-        await state.clear()
-        await message.answer(
-            "❌ Haydovchi profilingiz tasdiqlanmagan.",
-            reply_markup=main_menu(),
-        )
-        return
-
-    user = await db_execute("""
-        SELECT name, phone
-        FROM users
-        WHERE telegram_id=?
-    """, (message.from_user.id,), fetchone=True)
-
-    name = user["name"] if user else message.from_user.full_name
-    phone = user["phone"] if user else None
-
-    seats = data["seats"]
-
-    await db_execute("""
-        INSERT INTO rides (
-            telegram_id,
-            name,
-            phone,
-            role,
-            from_city,
-            to_city,
-            date,
-            time,
-            car,
-            car_number,
-            seats,
-            price,
-            original_seats,
-            available_seats,
-            reserved_seats,
-            status,
-            created_at
-        )
-        VALUES (?, ?, ?, 'driver', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
-    """, (
-        message.from_user.id,
-        name,
-        phone,
-        data["from_city"],
-        data["to_city"],
-        data["date"],
-        data["time"],
-        profile["car"],
-        profile["car_number"],
-        seats,
-        price,
-        seats,
-        seats,
-        RIDE_ACTIVE,
-        datetime.now().isoformat(),
-    ))
-
-    await state.clear()
-
-    await message.answer(
-        "🎉 <b>Safar muvaffaqiyatli joylandi!</b>\n\n"
-        f"🚕 {data['from_city']} → {data['to_city']}\n"
-        f"📅 {data['date']}\n"
-        f"⏰ {data['time']}\n"
-        f"💺 Bo‘sh joy: {seats}\n"
-        f"💰 Narx: {price:,} so‘m\n"
-        f"🚗 {html.escape(profile['car'])}\n"
-        f"🔢 {html.escape(profile['car_number'])}",
-        parse_mode="HTML",
-        reply_markup=main_menu(),
-    )
-
-
-# =========================================================
-# PASSENGER FLOW
-# =========================================================
-
-@dp.message(F.text == "👤 Yo‘lovchi bo‘lish")
-async def passenger_start(message: Message, state: FSMContext):
-    await ensure_user(message)
-
-    await state.set_state(PassengerState.name)
-
-    await message.answer(
-        "👤 Ism-familiyangizni kiriting:"
-    )
-
-
-@dp.message(PassengerState.name)
-async def passenger_name(message: Message, state: FSMContext):
-    await state.update_data(name=message.text.strip())
-    await state.set_state(PassengerState.phone)
-
-    await message.answer(
-        "📱 Telefon raqamingizni yuboring:",
-        reply_markup=phone_keyboard(),
-    )
-
-
-@dp.message(PassengerState.phone, F.contact)
-async def passenger_phone_contact(message: Message, state: FSMContext):
-    await state.update_data(phone=message.contact.phone_number)
-    await state.set_state(PassengerState.gender)
-
-    await message.answer(
-        "👤 Jinsingizni tanlang:",
-        reply_markup=gender_keyboard(),
-    )
-
-
-@dp.message(PassengerState.phone)
-async def passenger_phone_text(message: Message, state: FSMContext):
-    await state.update_data(phone=message.text.strip())
-    await state.set_state(PassengerState.gender)
-
-    await message.answer(
-        "👤 Jinsingizni tanlang:",
-        reply_markup=gender_keyboard(),
-    )
-
-
-@dp.message(PassengerState.gender)
-async def passenger_gender(message: Message, state: FSMContext):
-    if message.text not in {"👨 Erkak", "👩 Ayol"}:
-        await message.answer("Jinsingizni tugmadan tanlang.")
-        return
-
-    await state.update_data(gender=message.text)
-    await state.set_state(PassengerState.age_category)
-
-    await message.answer(
-        "🎂 Yosh toifangizni tanlang:",
-        reply_markup=age_keyboard(),
-    )
-
-
-@dp.message(PassengerState.age_category)
-async def passenger_age(message: Message, state: FSMContext):
-    if message.text not in {"18-25", "26-35", "36-50", "51+"}:
-        await message.answer("Yosh toifasini tanlang.")
-        return
-
-    await state.update_data(age_category=message.text)
-    await state.set_state(PassengerState.from_city)
 
     await message.answer(
         "📍 Qayerdan ketasiz?",
@@ -1415,15 +1157,27 @@ async def passenger_age(message: Message, state: FSMContext):
 
 
 @dp.message(PassengerState.from_city)
-async def passenger_from(message: Message, state: FSMContext):
-    city = clean_city(message.text)
+async def passenger_from_city(
+    message: Message,
+    state: FSMContext,
+):
 
-    if city not in CITIES:
-        await message.answer("Shaharni tugmadan tanlang.")
+    if message.text not in CITIES:
+
+        await message.answer(
+            "Iltimos, ro‘yxatdan shaharni tanlang.",
+            reply_markup=city_keyboard(),
+        )
+
         return
 
-    await state.update_data(from_city=city)
-    await state.set_state(PassengerState.to_city)
+    await state.update_data(
+        from_city=message.text
+    )
+
+    await state.set_state(
+        PassengerState.to_city
+    )
 
     await message.answer(
         "📍 Qayerga borasiz?",
@@ -1432,2124 +1186,2764 @@ async def passenger_from(message: Message, state: FSMContext):
 
 
 @dp.message(PassengerState.to_city)
-async def passenger_to(message: Message, state: FSMContext):
-    city = clean_city(message.text)
+async def passenger_to_city(
+    message: Message,
+    state: FSMContext,
+):
 
-    if city not in CITIES:
-        await message.answer("Shaharni tugmadan tanlang.")
+    if message.text not in CITIES:
+
+        await message.answer(
+            "Iltimos, ro‘yxatdan shaharni tanlang.",
+            reply_markup=city_keyboard(),
+        )
+
         return
 
     data = await state.get_data()
 
-    if city == data["from_city"]:
+    if message.text == data["from_city"]:
+
         await message.answer(
-            "❌ Ketish va borish shahri bir xil bo‘lishi mumkin emas."
+            "❗ Qayerdan va qayerga shaharlar "
+            "bir xil bo‘lishi mumkin emas.",
+            reply_markup=city_keyboard(),
         )
+
         return
 
-    await state.update_data(to_city=city)
-    await state.set_state(PassengerState.date)
-
-    await message.answer(
-        "📅 Safar sanasi:",
-        reply_markup=date_keyboard(),
+    await state.update_data(
+        to_city=message.text
     )
 
-
-@dp.message(PassengerState.date)
-async def passenger_date(message: Message, state: FSMContext):
-    date = parse_date(message.text)
-
-    if not date:
-        await message.answer("Sanani tugmadan tanlang.")
-        return
-
-    await state.update_data(date=date)
-    await state.set_state(PassengerState.time)
+    await state.set_state(
+        PassengerState.time
+    )
 
     await message.answer(
-        "⏰ Safar vaqti:",
+        "🕐 Qaysi vaqtda ketasiz?",
         reply_markup=time_keyboard(),
     )
 
 
 @dp.message(PassengerState.time)
-async def passenger_time(message: Message, state: FSMContext):
-    if ":" not in message.text:
-        await message.answer("Vaqtni tugmadan tanlang.")
-        return
-
-    await state.update_data(time=message.text)
-    await state.set_state(PassengerState.passengers)
-
-    await message.answer(
-        "👥 Nechta yo‘lovchi bo‘lasiz?",
-        reply_markup=passenger_count_keyboard(),
-    )
-
-
-@dp.message(PassengerState.passengers)
-async def passenger_count(message: Message, state: FSMContext):
-    if message.text not in {"1", "2", "3", "4"}:
-        await message.answer("1 dan 4 gacha tanlang.")
-        return
-
-    await state.update_data(passengers=int(message.text))
-    await state.set_state(PassengerState.location)
-
-    await message.answer(
-        "📍 <b>Eng muhim qadam</b>\n\n"
-        "Haydovchi sizni aniqroq topishi uchun "
-        "lokatsiyangizni yuboring.\n\n"
-        "Pastdagi <b>📍 Lokatsiyani yuborish</b> tugmasini bosing.",
-        parse_mode="HTML",
-        reply_markup=location_keyboard(),
-    )
-
-
-# =========================================================
-# PASSENGER LOCATION
-# =========================================================
-
-@dp.message(PassengerState.location, F.location)
-async def passenger_location_received(
+async def passenger_time(
     message: Message,
-    state: FSMContext
+    state: FSMContext,
 ):
-    lat = message.location.latitude
-    lon = message.location.longitude
 
-    await update_user_location(
-        message.from_user.id,
-        lat,
-        lon,
-    )
+    if message.text not in TIMES:
+
+        await message.answer(
+            "Iltimos, vaqtni tugmalardan tanlang.",
+            reply_markup=time_keyboard(),
+        )
+
+        return
 
     await state.update_data(
-        pickup_latitude=lat,
-        pickup_longitude=lon,
+        ride_time=message.text
     )
 
-    await passenger_finish(message, state)
+    await state.set_state(
+        PassengerState.seats
+    )
+
+    await message.answer(
+        "👥 Nechta yo‘lovchi bo‘ladi?\n\n"
+        "1 dan 4 gacha son kiriting.",
+        reply_markup=cancel_keyboard(),
+    )
 
 
-@dp.message(PassengerState.location, F.text == "⏭ Lokatsiyasiz davom etish")
+@dp.message(PassengerState.seats)
+async def passenger_seats(
+    message: Message,
+    state: FSMContext,
+):
+
+    try:
+        seats = int(
+            message.text
+        )
+
+    except Exception:
+
+        await message.answer(
+            "❗ Faqat son kiriting. Masalan: 2"
+        )
+
+        return
+
+    if seats < 1 or seats > PASSENGER_LIMIT:
+
+        await message.answer(
+            "❗ Yo‘lovchilar soni 1–4 oralig‘ida."
+        )
+
+        return
+
+    await state.update_data(
+        seats=seats
+    )
+
+    await state.set_state(
+        PassengerState.name
+    )
+
+    await message.answer(
+        "👤 Ismingizni kiriting:",
+        reply_markup=cancel_keyboard(),
+    )
+
+
+@dp.message(PassengerState.name)
+async def passenger_name(
+    message: Message,
+    state: FSMContext,
+):
+
+    await state.update_data(
+        name=message.text.strip()
+    )
+
+    await state.set_state(
+        PassengerState.phone
+    )
+
+    await message.answer(
+        "📞 Telefon raqamingizni kiriting:\n\n"
+        "Masalan: +998901234567",
+        reply_markup=cancel_keyboard(),
+    )
+
+
+@dp.message(PassengerState.phone)
+async def passenger_phone(
+    message: Message,
+    state: FSMContext,
+):
+
+    phone = normalize_phone(
+        message.text
+    )
+
+    if not phone:
+
+        await message.answer(
+            "❗ Telefon raqam noto‘g‘ri.\n"
+            "Masalan: +998901234567"
+        )
+
+        return
+
+    await state.update_data(
+        phone=phone
+    )
+
+    await save_user_phone(
+        message.from_user.id,
+        phone,
+    )
+
+    await state.set_state(
+        PassengerState.location
+    )
+
+    await message.answer(
+        "📍 Olish joyingiz lokatsiyasini yuboring.",
+        reply_markup=location_keyboard(),
+    )
+
+
+# ============================================================
+# PASSENGER LOCATION
+# ============================================================
+
+@dp.message(
+    PassengerState.location,
+    F.location
+)
+async def passenger_location(
+    message: Message,
+    state: FSMContext,
+):
+
+    location = message.location
+
+    await finish_passenger_request(
+        message,
+        state,
+        location.latitude,
+        location.longitude,
+    )
+
+
+@dp.message(
+    PassengerState.location,
+    F.text == "⏭ Lokatsiyasiz davom etish"
+)
 async def passenger_without_location(
     message: Message,
-    state: FSMContext
+    state: FSMContext,
 ):
-    await passenger_finish(message, state)
 
-
-@dp.message(PassengerState.location, F.text == "📍 Lokatsiyani yuborish")
-async def passenger_location_button(
-    message: Message,
-    state: FSMContext
-):
-    await message.answer(
-        "📍 Iltimos, Telegram chiqargan <b>Lokatsiyani yuborish</b> tugmasini bosing.",
-        parse_mode="HTML",
-        reply_markup=location_keyboard(),
+    await finish_passenger_request(
+        message,
+        state,
+        None,
+        None,
     )
 
 
-@dp.message(PassengerState.location)
-async def passenger_location_invalid(
+async def finish_passenger_request(
     message: Message,
-    state: FSMContext
+    state: FSMContext,
+    latitude,
+    longitude,
+    source_chat_id=None,
+    source_message_id=None,
+    source_text=None,
 ):
-    await message.answer(
-        "📍 Lokatsiyani yuboring yoki "
-        "⏭ Lokatsiyasiz davom etish tugmasini bosing.",
-        reply_markup=location_keyboard(),
-    )
 
-
-async def passenger_finish(message: Message, state: FSMContext):
     data = await state.get_data()
 
-    await db_execute("""
-        INSERT INTO passenger_requests (
-            telegram_id,
-            name,
-            phone,
-            gender,
-            age_category,
+    request_id = await db_execute(
+        """
+        INSERT INTO passenger_requests
+        (
+            passenger_id,
             from_city,
             to_city,
-            date,
-            time,
-            passengers,
-            pickup_latitude,
-            pickup_longitude,
+            ride_time,
+            seats,
+            name,
+            phone,
+            latitude,
+            longitude,
             status,
-            created_at
+            created_at,
+            source_chat_id,
+            source_message_id,
+            source_text
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        message.from_user.id,
-        data["name"],
-        data["phone"],
-        data["gender"],
-        data["age_category"],
-        data["from_city"],
-        data["to_city"],
-        data["date"],
-        data["time"],
-        data["passengers"],
-        data.get("pickup_latitude"),
-        data.get("pickup_longitude"),
-        "active",
-        datetime.now().isoformat(),
-    ))
-
-    request_id = (
-        await db_execute(
-            "SELECT last_insert_rowid() AS id",
-            fetchone=True,
+        VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, 'searching', ?,
+            ?, ?, ?
         )
-    )["id"]
+        """,
+        (
+            message.from_user.id,
+            data["from_city"],
+            data["to_city"],
+            data["ride_time"],
+            data["seats"],
+            data["name"],
+            data["phone"],
+            latitude,
+            longitude,
+            datetime.now().isoformat(),
+            source_chat_id,
+            source_message_id,
+            source_text,
+        ),
+    )
 
     await state.clear()
 
     await message.answer(
-        "🔎 <b>Safarlar qidirilmoqda...</b>",
-        parse_mode="HTML",
-        reply_markup=ReplyKeyboardRemove(),
-    )
-
-    rides = await db_execute("""
-        SELECT
-            r.*,
-            d.rating,
-            d.rating_count
-        FROM rides r
-        LEFT JOIN driver_profiles d
-            ON d.telegram_id = r.telegram_id
-        WHERE r.role='driver'
-          AND r.status=?
-          AND r.from_city=?
-          AND r.to_city=?
-          AND r.date=?
-          AND r.available_seats >= ?
-          AND r.telegram_id != ?
-        ORDER BY r.time ASC
-        LIMIT 20
-    """, (
-        RIDE_ACTIVE,
-        data["from_city"],
-        data["to_city"],
-        data["date"],
-        data["passengers"],
-        message.from_user.id,
-    ), fetchall=True)
-
-    if not rides:
-        await message.answer(
-            "😔 Hozircha mos taksi topilmadi.\n\n"
-            "Keyinroq yana qidirib ko‘ring.",
-            reply_markup=main_menu(),
-        )
-        return
-
-    await message.answer(
-        f"🚕 <b>{len(rides)} ta mos taksi topildi.</b>\n\n"
-        "Kerakli taksini tanlang:",
-        parse_mode="HTML",
+        "🔎 <b>Buyurtmangiz yaratildi!</b>\n\n"
+        f"📍 {data['from_city']} → {data['to_city']}\n"
+        f"🕐 {data['ride_time']}\n"
+        f"👥 {data['seats']} kishi\n\n"
+        "🚕 Mos taksichilar qidirilmoqda...",
         reply_markup=main_menu(),
+        parse_mode="HTML",
     )
 
-    for ride in rides:
-        rating = ride["rating"] or 0
-        rating_count = ride["rating_count"] or 0
+    sent_count = await send_request_to_matching_drivers(
+        request_id
+    )
 
-        text = (
-            f"🚕 <b>{html.escape(ride['car'])}</b>\n"
-            f"🔢 {html.escape(ride['car_number'])}\n"
-            f"🛣 {ride['from_city']} → {ride['to_city']}\n"
-            f"📅 {ride['date']}\n"
-            f"⏰ {ride['time']}\n"
-            f"💺 Bo‘sh joy: {ride['available_seats']}\n"
-            f"💰 {ride['price']:,} so‘m\n"
-            f"⭐ {rating:.1f} ({rating_count} ta baho)\n"
-        )
-
-        keyboard = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text="🚕 Shu taksini tanlash",
-                        callback_data=(
-                            f"select_taxi:{request_id}:"
-                            f"{ride['id']}"
-                        ),
-                    )
-                ]
-            ]
-        )
+    if sent_count:
 
         await message.answer(
-            text,
+            f"🚕 <b>{sent_count} ta taksichiga</b> "
+            "buyurtma yuborildi.\n\n"
+            "Taksichi qabul qilishi bilan "
+            "sizga avtomatik xabar keladi.",
             parse_mode="HTML",
-            reply_markup=keyboard,
-        )
-
-
-# =========================================================
-# SELECT TAXI
-# =========================================================
-
-@dp.callback_query(F.data.startswith("select_taxi:"))
-async def select_taxi(callback: CallbackQuery):
-    _, request_id, ride_id = callback.data.split(":")
-
-    request_id = int(request_id)
-    ride_id = int(ride_id)
-
-    request = await db_execute("""
-        SELECT *
-        FROM passenger_requests
-        WHERE id=?
-          AND telegram_id=?
-          AND status='active'
-    """, (
-        request_id,
-        callback.from_user.id,
-    ), fetchone=True)
-
-    if not request:
-        await callback.answer(
-            "Buyurtma topilmadi yoki yopilgan.",
-            show_alert=True,
-        )
-        return
-
-    # Transaction bilan joyni rezerv qilamiz
-    async with aiosqlite.connect(DB) as db:
-
-        try:
-            await db.execute("BEGIN IMMEDIATE")
-
-            ride = await db.execute_fetchone("""
-                SELECT *
-                FROM rides
-                WHERE id=?
-                  AND status=?
-            """, (
-                ride_id,
-                RIDE_ACTIVE,
-            ))
-
-            if not ride:
-                await db.rollback()
-                await callback.answer(
-                    "Bu safar endi mavjud emas.",
-                    show_alert=True,
-                )
-                return
-
-            available = ride[14]
-            reserved = ride[15]
-
-            # rides column indexes:
-            # 0 id
-            # 1 telegram_id
-            # ...
-            # available_seats = 14
-            # reserved_seats = 15
-
-            passengers = request["passengers"]
-
-            if available - reserved < passengers:
-                await db.rollback()
-                await callback.answer(
-                    "Bu taksida yetarli joy qolmagan.",
-                    show_alert=True,
-                )
-                return
-
-            duplicate = await db.execute_fetchone("""
-                SELECT id
-                FROM bookings
-                WHERE ride_id=?
-                  AND passenger_id=?
-                  AND status NOT IN (
-                      'rejected',
-                      'cancelled',
-                      'completed'
-                  )
-            """, (
-                ride_id,
-                callback.from_user.id,
-            ))
-
-            if duplicate:
-                await db.rollback()
-                await callback.answer(
-                    "Siz bu taksiga allaqachon buyurtma yuborgansiz.",
-                    show_alert=True,
-                )
-                return
-
-            now = datetime.now().isoformat()
-
-            await db.execute("""
-                UPDATE rides
-                SET reserved_seats=reserved_seats+?
-                WHERE id=?
-            """, (
-                passengers,
-                ride_id,
-            ))
-
-            await db.execute("""
-                INSERT INTO bookings (
-                    request_id,
-                    ride_id,
-                    passenger_id,
-                    passenger_count,
-                    pickup_latitude,
-                    pickup_longitude,
-                    status,
-                    created_at
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                request_id,
-                ride_id,
-                callback.from_user.id,
-                passengers,
-                request["pickup_latitude"],
-                request["pickup_longitude"],
-                BOOKING_PENDING,
-                now,
-            ))
-
-            booking_id = (
-                await db.execute_fetchone(
-                    "SELECT last_insert_rowid()"
-                )
-            )[0]
-
-            await db.commit()
-
-        except Exception:
-            await db.rollback()
-            raise
-
-    # Yo‘lovchi request holati
-    await db_execute("""
-        UPDATE passenger_requests
-        SET status='waiting'
-        WHERE id=?
-    """, (request_id,))
-
-    await callback.message.edit_reply_markup(reply_markup=None)
-
-    await callback.message.answer(
-        "📨 <b>Buyurtma haydovchiga yuborildi.</b>\n\n"
-        "⏳ Haydovchi tasdiqlashini kuting.",
-        parse_mode="HTML",
-        reply_markup=passenger_taxi_keyboard(booking_id),
-    )
-
-    ride = await db_execute("""
-        SELECT *
-        FROM rides
-        WHERE id=?
-    """, (ride_id,), fetchone=True)
-
-    if ride:
-        passenger_name = html.escape(request["name"])
-        passenger_phone = html.escape(request["phone"])
-
-        driver_text = (
-            "🚕 <b>YANGI YO‘LOVCHI BUYURTMASI</b>\n\n"
-            f"👤 Ism: {passenger_name}\n"
-            f"📱 Telefon: {passenger_phone}\n"
-            f"👥 Yo‘lovchilar: {request['passengers']} ta\n"
-            f"👫 Jins: {html.escape(request['gender'])}\n"
-            f"🎂 Yosh: {html.escape(request['age_category'])}\n\n"
-            f"🛣 {request['from_city']} → {request['to_city']}\n"
-            f"📅 {request['date']}\n"
-            f"⏰ {request['time']}\n\n"
-            "⚠️ Buyurtmani qabul qilsangiz, joy avtomatik band qilinadi."
-        )
-
-        try:
-            await bot.send_message(
-                ride["telegram_id"],
-                driver_text,
-                parse_mode="HTML",
-                reply_markup=driver_booking_keyboard(booking_id),
-            )
-
-            if (
-                request["pickup_latitude"] is not None
-                and request["pickup_longitude"] is not None
-            ):
-                await bot.send_location(
-                    ride["telegram_id"],
-                    request["pickup_latitude"],
-                    request["pickup_longitude"],
-                )
-
-        except Exception:
-            pass
-
-    await callback.answer("Buyurtma haydovchiga yuborildi.")
-
-
-# =========================================================
-# DRIVER ACCEPT
-# =========================================================
-
-@dp.callback_query(F.data.startswith("accept_booking:"))
-async def accept_booking(callback: CallbackQuery):
-    booking_id = int(callback.data.split(":")[1])
-
-    async with aiosqlite.connect(DB) as db:
-        try:
-            await db.execute("BEGIN IMMEDIATE")
-
-            booking = await db.execute_fetchone("""
-                SELECT
-                    b.*,
-                    r.telegram_id AS driver_id,
-                    r.available_seats,
-                    r.reserved_seats,
-                    r.car,
-                    r.car_number,
-                    r.price,
-                    pr.name AS passenger_name,
-                    pr.phone AS passenger_phone,
-                    pr.from_city,
-                    pr.to_city,
-                    pr.date,
-                    pr.time
-                FROM bookings b
-                JOIN rides r ON r.id=b.ride_id
-                JOIN passenger_requests pr
-                    ON pr.id=b.request_id
-                WHERE b.id=?
-            """, (booking_id,))
-
-            if not booking:
-                await db.rollback()
-                await callback.answer(
-                    "Buyurtma topilmadi.",
-                    show_alert=True,
-                )
-                return
-
-            if booking["driver_id"] != callback.from_user.id:
-                await db.rollback()
-                await callback.answer(
-                    "Bu buyurtma sizga tegishli emas.",
-                    show_alert=True,
-                )
-                return
-
-            if booking["status"] != BOOKING_PENDING:
-                await db.rollback()
-                await callback.answer(
-                    "Bu buyurtma allaqachon ko‘rib chiqilgan.",
-                    show_alert=True,
-                )
-                return
-
-            if booking["available_seats"] < booking["passenger_count"]:
-                await db.rollback()
-                await callback.answer(
-                    "Bo‘sh joy yetarli emas.",
-                    show_alert=True,
-                )
-                return
-
-            now = datetime.now().isoformat()
-
-            await db.execute("""
-                UPDATE rides
-                SET
-                    available_seats=available_seats-?,
-                    reserved_seats=reserved_seats-?
-                WHERE id=?
-            """, (
-                booking["passenger_count"],
-                booking["passenger_count"],
-                booking["ride_id"],
-            ))
-
-            await db.execute("""
-                UPDATE bookings
-                SET
-                    status=?,
-                    accepted_at=?
-                WHERE id=?
-            """, (
-                BOOKING_ACCEPTED,
-                now,
-                booking_id,
-            ))
-
-            await db.execute("""
-                UPDATE passenger_requests
-                SET status='accepted'
-                WHERE id=?
-            """, (
-                booking["request_id"],
-            ))
-
-            await db.commit()
-
-        except Exception:
-            await db.rollback()
-            raise
-
-    await callback.message.edit_reply_markup(reply_markup=None)
-
-    await callback.message.answer(
-        "✅ Buyurtma qabul qilindi.\n\n"
-        f"👤 {html.escape(booking['passenger_name'])}\n"
-        f"📱 {html.escape(booking['passenger_phone'])}\n"
-        f"🛣 {booking['from_city']} → {booking['to_city']}\n\n"
-        "📍 Yo‘lovchi lokatsiyasi buyurtma bilan birga yuborilgan.",
-        parse_mode="HTML",
-        reply_markup=driver_active_keyboard(booking_id),
-    )
-
-    try:
-        await bot.send_message(
-            booking["passenger_id"],
-            "🎉 <b>Haydovchi buyurtmangizni qabul qildi!</b>\n\n"
-            f"🚕 {html.escape(booking['car'])}\n"
-            f"🔢 {html.escape(booking['car_number'])}\n"
-            f"💰 {booking['price']:,} so‘m\n\n"
-            "🚕 Haydovchi siz tomon yo‘l olmoqda.",
-            parse_mode="HTML",
-            reply_markup=passenger_active_keyboard(booking_id),
-        )
-    except Exception:
-        pass
-
-    await callback.answer("Buyurtma qabul qilindi.")
-
-
-# =========================================================
-# DRIVER REJECT
-# =========================================================
-
-@dp.callback_query(F.data.startswith("reject_booking:"))
-async def reject_booking(callback: CallbackQuery):
-    booking_id = int(callback.data.split(":")[1])
-
-    async with aiosqlite.connect(DB) as db:
-        try:
-            await db.execute("BEGIN IMMEDIATE")
-
-            booking = await db.execute_fetchone("""
-                SELECT *
-                FROM bookings
-                WHERE id=?
-            """, (booking_id,))
-
-            if not booking:
-                await db.rollback()
-                await callback.answer(
-                    "Buyurtma topilmadi.",
-                    show_alert=True,
-                )
-                return
-
-            ride = await db.execute_fetchone("""
-                SELECT telegram_id
-                FROM rides
-                WHERE id=?
-            """, (booking["ride_id"],))
-
-            if not ride or ride["telegram_id"] != callback.from_user.id:
-                await db.rollback()
-                await callback.answer(
-                    "Ruxsat yo‘q.",
-                    show_alert=True,
-                )
-                return
-
-            if booking["status"] != BOOKING_PENDING:
-                await db.rollback()
-                await callback.answer(
-                    "Buyurtma allaqachon ko‘rib chiqilgan.",
-                    show_alert=True,
-                )
-                return
-
-            await db.execute("""
-                UPDATE bookings
-                SET status=?
-                WHERE id=?
-            """, (
-                BOOKING_REJECTED,
-                booking_id,
-            ))
-
-            await db.execute("""
-                UPDATE rides
-                SET reserved_seats=MAX(
-                    0,
-                    reserved_seats-?
-                )
-                WHERE id=?
-            """, (
-                booking["passenger_count"],
-                booking["ride_id"],
-            ))
-
-            await db.execute("""
-                UPDATE passenger_requests
-                SET status='rejected'
-                WHERE id=?
-            """, (
-                booking["request_id"],
-            ))
-
-            await db.commit()
-
-        except Exception:
-            await db.rollback()
-            raise
-
-    await callback.message.edit_reply_markup(reply_markup=None)
-
-    try:
-        await bot.send_message(
-            booking["passenger_id"],
-            "❌ Afsuski, haydovchi buyurtmangizni rad etdi.\n\n"
-            "🔎 Boshqa taksini qidirishingiz mumkin.",
-            reply_markup=main_menu(),
-        )
-    except Exception:
-        pass
-
-    await callback.answer("Buyurtma rad etildi.")
-
-
-# =========================================================
-# DRIVER LOCATION
-# =========================================================
-
-@dp.message(F.location)
-async def universal_location(message: Message, state: FSMContext):
-    """
-    Agar PassengerState.location bo‘lsa yuqoridagi handler ishlaydi.
-    Bu handler oddiy menyudagi Lokatsiyam yoki faol haydovchi uchun ishlaydi.
-    """
-
-    current_state = await state.get_state()
-
-    if current_state == PassengerState.location.state:
-        return
-
-    lat = message.location.latitude
-    lon = message.location.longitude
-
-    await update_user_location(
-        message.from_user.id,
-        lat,
-        lon,
-    )
-
-    active_booking = await db_execute("""
-        SELECT
-            b.*,
-            r.telegram_id AS driver_id
-        FROM bookings b
-        JOIN rides r ON r.id=b.ride_id
-        WHERE r.telegram_id=?
-          AND b.status IN (
-              'accepted',
-              'arriving',
-              'arrived',
-              'onboard',
-              'in_progress'
-          )
-        ORDER BY b.id DESC
-        LIMIT 1
-    """, (
-        message.from_user.id,
-    ), fetchone=True)
-
-    if active_booking:
-        await db_execute("""
-            UPDATE bookings
-            SET
-                driver_latitude=?,
-                driver_longitude=?
-            WHERE id=?
-        """, (
-            lat,
-            lon,
-            active_booking["id"],
-        ))
-
-        passenger = await db_execute("""
-            SELECT *
-            FROM bookings
-            WHERE id=?
-        """, (
-            active_booking["id"],
-        ), fetchone=True)
-
-        pickup_lat = active_booking["pickup_latitude"]
-        pickup_lon = active_booking["pickup_longitude"]
-
-        if pickup_lat is not None and pickup_lon is not None:
-            km, minutes = await get_route_info(
-                lat,
-                lon,
-                pickup_lat,
-                pickup_lon,
-            )
-
-            text = (
-                "📍 <b>Haydovchi lokatsiyasi yangilandi</b>\n\n"
-                f"📏 Masofa: <b>{km:.1f} km</b>\n"
-                f"⏱ Taxminiy yetib kelish: <b>{minutes} daqiqa</b>"
-            )
-        else:
-            text = (
-                "📍 <b>Haydovchi lokatsiyasi yangilandi.</b>\n"
-                "Xaritadagi lokatsiyani tekshiring."
-            )
-
-        try:
-            await bot.send_message(
-                active_booking["passenger_id"],
-                text,
-                parse_mode="HTML",
-                reply_markup=passenger_active_keyboard(
-                    active_booking["id"]
-                ),
-            )
-
-            await bot.send_location(
-                active_booking["passenger_id"],
-                latitude=lat,
-                longitude=lon,
-            )
-
-        except Exception:
-            pass
-
-        await message.answer(
-            "✅ Lokatsiyangiz yangilandi.\n"
-            "Yo‘lovchiga yuborildi.",
-            reply_markup=main_menu(),
         )
 
     else:
+
         await message.answer(
-            "✅ Lokatsiyangiz saqlandi.",
-            reply_markup=main_menu(),
+            "😔 Hozircha bu yo‘nalish va vaqt bo‘yicha "
+            "bo‘sh taksi topilmadi.\n\n"
+            "Buyurtmangiz qidiruvda qoladi."
         )
 
 
-# =========================================================
-# LOCATION MENU
-# =========================================================
+# ============================================================
+# DRIVER REGISTRATION
+# ============================================================
 
-@dp.message(F.text == "📍 Lokatsiyam")
-async def location_menu(message: Message):
-    await message.answer(
-        "📍 Lokatsiyangizni yuborish uchun pastdagi tugmani bosing:",
-        reply_markup=location_keyboard(),
+@dp.message(F.text == "🚗 Haydovchi bo‘lish")
+async def driver_start(
+    message: Message,
+    state: FSMContext,
+):
+
+    await state.clear()
+
+    await save_user(message)
+
+    driver = await get_driver(
+        message.from_user.id
     )
 
+    if driver:
 
-@dp.message(F.text == "📍 Lokatsiyani yuborish")
-async def location_manual_text(message: Message):
-    await message.answer(
-        "📍 Telegram'dagi <b>Lokatsiyani yuborish</b> tugmasini bosing.",
-        parse_mode="HTML",
-        reply_markup=location_keyboard(),
-    )
+        if driver["status"] == "approved":
 
-
-# =========================================================
-# DRIVER LOCATION CALLBACK
-# =========================================================
-
-@dp.callback_query(F.data.startswith("driver_location:"))
-async def driver_location_request(callback: CallbackQuery):
-    booking_id = int(callback.data.split(":")[1])
-
-    booking = await db_execute("""
-        SELECT
-            b.*,
-            r.telegram_id AS driver_id
-        FROM bookings b
-        JOIN rides r ON r.id=b.ride_id
-        WHERE b.id=?
-    """, (
-        booking_id,
-    ), fetchone=True)
-
-    if not booking:
-        await callback.answer("Buyurtma topilmadi.", show_alert=True)
-        return
-
-    if booking["driver_id"] != callback.from_user.id:
-        await callback.answer("Ruxsat yo‘q.", show_alert=True)
-        return
-
-    await callback.message.answer(
-        "📍 Lokatsiyangizni yuboring:",
-        reply_markup=location_keyboard(),
-    )
-
-    await callback.answer()
-
-
-# =========================================================
-# TRACK DRIVER
-# =========================================================
-
-@dp.callback_query(F.data.startswith("track:"))
-async def track_driver(callback: CallbackQuery):
-    booking_id = int(callback.data.split(":")[1])
-
-    booking = await db_execute("""
-        SELECT *
-        FROM bookings
-        WHERE id=?
-    """, (
-        booking_id,
-    ), fetchone=True)
-
-    if not booking:
-        await callback.answer("Buyurtma topilmadi.", show_alert=True)
-        return
-
-    if booking["passenger_id"] != callback.from_user.id:
-        await callback.answer("Ruxsat yo‘q.", show_alert=True)
-        return
-
-    if (
-        booking["driver_latitude"] is None
-        or booking["driver_longitude"] is None
-    ):
-        await callback.answer(
-            "Haydovchi hali lokatsiyasini yubormagan.",
-            show_alert=True,
-        )
-        return
-
-    lat = booking["driver_latitude"]
-    lon = booking["driver_longitude"]
-
-    if (
-        booking["pickup_latitude"] is not None
-        and booking["pickup_longitude"] is not None
-    ):
-        km, minutes = await get_route_info(
-            lat,
-            lon,
-            booking["pickup_latitude"],
-            booking["pickup_longitude"],
-        )
-
-        await callback.message.answer(
-            "🚕 <b>Haydovchi lokatsiyasi</b>\n\n"
-            f"📏 Masofa: <b>{km:.1f} km</b>\n"
-            f"⏱ Yetib kelish: <b>{minutes} daqiqa</b>",
-            parse_mode="HTML",
-        )
-
-    await bot.send_location(
-        callback.from_user.id,
-        latitude=lat,
-        longitude=lon,
-    )
-
-    await callback.answer()
-
-
-# =========================================================
-# ARRIVED
-# =========================================================
-
-@dp.callback_query(F.data.startswith("arrived:"))
-async def driver_arrived(callback: CallbackQuery):
-    booking_id = int(callback.data.split(":")[1])
-
-    booking = await db_execute("""
-        SELECT
-            b.*,
-            r.telegram_id AS driver_id
-        FROM bookings b
-        JOIN rides r ON r.id=b.ride_id
-        WHERE b.id=?
-    """, (
-        booking_id,
-    ), fetchone=True)
-
-    if not booking or booking["driver_id"] != callback.from_user.id:
-        await callback.answer("Ruxsat yo‘q.", show_alert=True)
-        return
-
-    await db_execute("""
-        UPDATE bookings
-        SET
-            status=?,
-            arrived_at=?
-        WHERE id=?
-    """, (
-        BOOKING_ARRIVED,
-        datetime.now().isoformat(),
-        booking_id,
-    ))
-
-    try:
-        await bot.send_message(
-            booking["passenger_id"],
-            "📍 <b>Haydovchi manzilga yetib keldi.</b>\n\n"
-            "Iltimos, mashinani toping.",
-            parse_mode="HTML",
-        )
-    except Exception:
-        pass
-
-    await callback.message.answer(
-        "📍 Yo‘lovchiga haydovchi kelgani bildirildi.",
-        reply_markup=driver_active_keyboard(booking_id),
-    )
-
-    await callback.answer("Yo‘lovchiga xabar yuborildi.")
-
-
-# =========================================================
-# ONBOARD
-# =========================================================
-
-@dp.callback_query(F.data.startswith("onboard:"))
-async def driver_onboard(callback: CallbackQuery):
-    booking_id = int(callback.data.split(":")[1])
-
-    booking = await db_execute("""
-        SELECT
-            b.*,
-            r.telegram_id AS driver_id
-        FROM bookings b
-        JOIN rides r ON r.id=b.ride_id
-        WHERE b.id=?
-    """, (
-        booking_id,
-    ), fetchone=True)
-
-    if not booking or booking["driver_id"] != callback.from_user.id:
-        await callback.answer("Ruxsat yo‘q.", show_alert=True)
-        return
-
-    await db_execute("""
-        UPDATE bookings
-        SET
-            status=?,
-            started_at=?
-        WHERE id=?
-    """, (
-        BOOKING_ONBOARD,
-        datetime.now().isoformat(),
-        booking_id,
-    ))
-
-    try:
-        await bot.send_message(
-            booking["passenger_id"],
-            "🚕 <b>Sizni haydovchi oldi.</b>\n\n"
-            "Safaringiz boshlandi.",
-            parse_mode="HTML",
-        )
-    except Exception:
-        pass
-
-    await callback.answer("Safar boshlandi.")
-
-
-# =========================================================
-# COMPLETE
-# =========================================================
-
-@dp.callback_query(F.data.startswith("complete:"))
-async def complete_booking(callback: CallbackQuery):
-    booking_id = int(callback.data.split(":")[1])
-
-    booking = await db_execute("""
-        SELECT
-            b.*,
-            r.telegram_id AS driver_id,
-            r.id AS ride_id
-        FROM bookings b
-        JOIN rides r ON r.id=b.ride_id
-        WHERE b.id=?
-    """, (
-        booking_id,
-    ), fetchone=True)
-
-    if not booking:
-        await callback.answer("Buyurtma topilmadi.", show_alert=True)
-        return
-
-    if booking["driver_id"] != callback.from_user.id:
-        await callback.answer("Ruxsat yo‘q.", show_alert=True)
-        return
-
-    if booking["status"] not in {
-        BOOKING_ONBOARD,
-        BOOKING_IN_PROGRESS,
-        BOOKING_ARRIVED,
-    }:
-        await callback.answer(
-            "Bu buyurtmani hozir yakunlab bo‘lmaydi.",
-            show_alert=True,
-        )
-        return
-
-    await db_execute("""
-        UPDATE bookings
-        SET
-            status=?,
-            completed_at=?
-        WHERE id=?
-    """, (
-        BOOKING_COMPLETED,
-        datetime.now().isoformat(),
-        booking_id,
-    ))
-
-    try:
-        await bot.send_message(
-            booking["passenger_id"],
-            "🏁 <b>Sizning safaringiz yakunlandi.</b>\n\n"
-            "Haydovchini baholashingiz mumkin:",
-            parse_mode="HTML",
-            reply_markup=rating_keyboard(booking_id),
-        )
-    except Exception:
-        pass
-
-    await callback.message.answer(
-        "🏁 Safar yakunlandi.",
-        reply_markup=main_menu(),
-    )
-
-    await callback.answer("Safar yakunlandi.")
-
-
-# =========================================================
-# CANCEL BOOKING BY PASSENGER
-# =========================================================
-
-@dp.callback_query(F.data.startswith("cancel_booking:"))
-async def cancel_booking(callback: CallbackQuery):
-    booking_id = int(callback.data.split(":")[1])
-
-    async with aiosqlite.connect(DB) as db:
-        try:
-            await db.execute("BEGIN IMMEDIATE")
-
-            booking = await db.execute_fetchone("""
-                SELECT *
-                FROM bookings
-                WHERE id=?
-            """, (
-                booking_id,
-            ))
-
-            if not booking:
-                await db.rollback()
-                await callback.answer(
-                    "Buyurtma topilmadi.",
-                    show_alert=True,
-                )
-                return
-
-            if booking["passenger_id"] != callback.from_user.id:
-                await db.rollback()
-                await callback.answer(
-                    "Ruxsat yo‘q.",
-                    show_alert=True,
-                )
-                return
-
-            if booking["status"] in {
-                BOOKING_CANCELLED,
-                BOOKING_REJECTED,
-                BOOKING_COMPLETED,
-            }:
-                await db.rollback()
-                await callback.answer(
-                    "Buyurtma allaqachon yopilgan.",
-                    show_alert=True,
-                )
-                return
-
-            if booking["status"] == BOOKING_PENDING:
-                await db.execute("""
-                    UPDATE rides
-                    SET reserved_seats=MAX(
-                        0,
-                        reserved_seats-?
-                    )
-                    WHERE id=?
-                """, (
-                    booking["passenger_count"],
-                    booking["ride_id"],
-                ))
-
-            elif booking["status"] in {
-                BOOKING_ACCEPTED,
-                BOOKING_ARRIVING,
-                BOOKING_ARRIVED,
-            }:
-                await db.execute("""
-                    UPDATE rides
-                    SET available_seats=available_seats+?
-                    WHERE id=?
-                """, (
-                    booking["passenger_count"],
-                    booking["ride_id"],
-                ))
-
-            await db.execute("""
-                UPDATE bookings
-                SET status=?
-                WHERE id=?
-            """, (
-                BOOKING_CANCELLED,
-                booking_id,
-            ))
-
-            await db.execute("""
-                UPDATE passenger_requests
-                SET status='cancelled'
-                WHERE id=?
-            """, (
-                booking["request_id"],
-            ))
-
-            await db.commit()
-
-        except Exception:
-            await db.rollback()
-            raise
-
-    ride = await db_execute("""
-        SELECT telegram_id
-        FROM rides
-        WHERE id=?
-    """, (
-        booking["ride_id"],
-    ), fetchone=True)
-
-    if ride:
-        try:
-            await bot.send_message(
-                ride["telegram_id"],
-                "❌ Yo‘lovchi buyurtmani bekor qildi."
+            await state.set_state(
+                DriverRideState.from_city
             )
-        except Exception:
-            pass
 
-    await callback.message.answer(
-        "❌ Buyurtma bekor qilindi.",
-        reply_markup=main_menu(),
+            await message.answer(
+                "🚗 <b>Yangi safar e’lon qilish</b>\n\n"
+                "Qaysi shahardan yo‘lovchi olasiz?",
+                reply_markup=city_keyboard(),
+                parse_mode="HTML",
+            )
+
+            return
+
+        if driver["status"] == "pending":
+
+            await message.answer(
+                "⏳ Sizning haydovchilik profilingiz "
+                "admin tasdig‘ini kutmoqda.",
+                reply_markup=main_menu(),
+            )
+
+            return
+
+        if driver["status"] == "rejected":
+
+            await message.answer(
+                "❌ Haydovchilik profilingiz rad etilgan.\n\n"
+                "Administrator bilan bog‘laning.",
+                reply_markup=main_menu(),
+            )
+
+            return
+
+    await state.set_state(
+        DriverRegisterState.name
     )
-
-    await callback.answer("Buyurtma bekor qilindi.")
-
-
-# =========================================================
-# DRIVER CANCEL
-# =========================================================
-
-@dp.callback_query(F.data.startswith("driver_cancel:"))
-async def driver_cancel(callback: CallbackQuery):
-    booking_id = int(callback.data.split(":")[1])
-
-    async with aiosqlite.connect(DB) as db:
-        try:
-            await db.execute("BEGIN IMMEDIATE")
-
-            booking = await db.execute_fetchone("""
-                SELECT
-                    b.*,
-                    r.telegram_id AS driver_id
-                FROM bookings b
-                JOIN rides r ON r.id=b.ride_id
-                WHERE b.id=?
-            """, (
-                booking_id,
-            ))
-
-            if not booking:
-                await db.rollback()
-                await callback.answer(
-                    "Buyurtma topilmadi.",
-                    show_alert=True,
-                )
-                return
-
-            if booking["driver_id"] != callback.from_user.id:
-                await db.rollback()
-                await callback.answer(
-                    "Ruxsat yo‘q.",
-                    show_alert=True,
-                )
-                return
-
-            if booking["status"] == BOOKING_PENDING:
-
-                await db.execute("""
-                    UPDATE rides
-                    SET reserved_seats=MAX(
-                        0,
-                        reserved_seats-?
-                    )
-                    WHERE id=?
-                """, (
-                    booking["passenger_count"],
-                    booking["ride_id"],
-                ))
-
-            elif booking["status"] in {
-                BOOKING_ACCEPTED,
-                BOOKING_ARRIVING,
-                BOOKING_ARRIVED,
-            }:
-
-                await db.execute("""
-                    UPDATE rides
-                    SET available_seats=available_seats+?
-                    WHERE id=?
-                """, (
-                    booking["passenger_count"],
-                    booking["ride_id"],
-                ))
-
-            await db.execute("""
-                UPDATE bookings
-                SET status=?
-                WHERE id=?
-            """, (
-                BOOKING_CANCELLED,
-                booking_id,
-            ))
-
-            await db.execute("""
-                UPDATE passenger_requests
-                SET status='cancelled'
-                WHERE id=?
-            """, (
-                booking["request_id"],
-            ))
-
-            await db.commit()
-
-        except Exception:
-            await db.rollback()
-            raise
-
-    try:
-        await bot.send_message(
-            booking["passenger_id"],
-            "❌ Haydovchi buyurtmani bekor qildi.\n\n"
-            "Boshqa taksini qidirishingiz mumkin.",
-            reply_markup=main_menu(),
-        )
-    except Exception:
-        pass
-
-    await callback.message.answer(
-        "❌ Buyurtma bekor qilindi.",
-        reply_markup=main_menu(),
-    )
-
-    await callback.answer("Buyurtma bekor qilindi.")
-
-
-# =========================================================
-# SEARCH TAXI
-# =========================================================
-
-@dp.message(F.text == "🔎 Safar qidirish")
-async def search_start(message: Message, state: FSMContext):
-    await state.set_state(SearchState.from_city)
 
     await message.answer(
-        "🔎 Qayerdan?",
-        reply_markup=city_keyboard(),
+        "🚗 <b>Haydovchi ro‘yxatdan o‘tishi</b>\n\n"
+        "Ism-familiyangizni kiriting:",
+        reply_markup=cancel_keyboard(),
+        parse_mode="HTML",
     )
 
 
-@dp.message(SearchState.from_city)
-async def search_from(message: Message, state: FSMContext):
-    city = clean_city(message.text)
+@dp.message(DriverRegisterState.name)
+async def driver_register_name(
+    message: Message,
+    state: FSMContext,
+):
 
-    if city not in CITIES:
-        await message.answer("Shaharni tugmadan tanlang.")
+    name = message.text.strip()
+
+    if len(name) < 2:
+
+        await message.answer(
+            "❗ Ismni to‘liqroq kiriting."
+        )
+
         return
 
-    await state.update_data(from_city=city)
-    await state.set_state(SearchState.to_city)
+    await state.update_data(
+        name=name
+    )
+
+    await state.set_state(
+        DriverRegisterState.phone
+    )
 
     await message.answer(
-        "📍 Qayerga?",
+        "📞 Telefon raqamingizni kiriting:",
+        reply_markup=cancel_keyboard(),
+    )
+
+
+@dp.message(DriverRegisterState.phone)
+async def driver_register_phone(
+    message: Message,
+    state: FSMContext,
+):
+
+    phone = normalize_phone(
+        message.text
+    )
+
+    if not phone:
+
+        await message.answer(
+            "❗ Telefon raqam noto‘g‘ri.\n"
+            "Masalan: +998901234567"
+        )
+
+        return
+
+    await state.update_data(
+        phone=phone
+    )
+
+    await save_user_phone(
+        message.from_user.id,
+        phone,
+    )
+
+    await state.set_state(
+        DriverRegisterState.car_model
+    )
+
+    await message.answer(
+        "🚗 Mashina markasi/modelini kiriting:\n\n"
+        "Masalan: Chevrolet Cobalt",
+        reply_markup=cancel_keyboard(),
+    )
+
+
+@dp.message(DriverRegisterState.car_model)
+async def driver_register_car_model(
+    message: Message,
+    state: FSMContext,
+):
+
+    car_model = message.text.strip()
+
+    await state.update_data(
+        car_model=car_model
+    )
+
+    await state.set_state(
+        DriverRegisterState.car_number
+    )
+
+    await message.answer(
+        "🔢 Mashina davlat raqamini kiriting:\n\n"
+        "Masalan: 01 A 123 BC",
+        reply_markup=cancel_keyboard(),
+    )
+
+
+@dp.message(DriverRegisterState.car_number)
+async def driver_register_car_number(
+    message: Message,
+    state: FSMContext,
+):
+
+    car_number = message.text.strip()
+
+    data = await state.get_data()
+
+    await db_execute(
+        """
+        INSERT INTO driver_profiles
+        (
+            user_id,
+            full_name,
+            phone,
+            car_model,
+            car_number,
+            seats,
+            status,
+            created_at
+        )
+        VALUES (?, ?, ?, ?, ?, 4, 'pending', ?)
+
+        ON CONFLICT(user_id)
+        DO UPDATE SET
+            full_name=excluded.full_name,
+            phone=excluded.phone,
+            car_model=excluded.car_model,
+            car_number=excluded.car_number,
+            status='pending'
+        """,
+        (
+            message.from_user.id,
+            data["name"],
+            data["phone"],
+            data["car_model"],
+            car_number,
+            datetime.now().isoformat(),
+        ),
+    )
+
+    await state.clear()
+
+    await message.answer(
+        "✅ <b>Haydovchilik arizangiz yuborildi!</b>\n\n"
+        f"👤 {data['name']}\n"
+        f"📞 {data['phone']}\n"
+        f"🚗 {data['car_model']}\n"
+        f"🔢 {car_number}\n\n"
+        "⏳ Administrator tasdiqlashini kuting.",
+        reply_markup=main_menu(),
+        parse_mode="HTML",
+    )
+
+    # ADMINLARGA AVTOMATIK XABAR
+
+    admin_text = (
+        "🚗 <b>YANGI HAYDOVCHI ARIZASI!</b>\n\n"
+        f"👤 {data['name']}\n"
+        f"📞 {data['phone']}\n"
+        f"🚗 {data['car_model']}\n"
+        f"🔢 {car_number}\n"
+        f"🆔 Telegram ID: <code>{message.from_user.id}</code>"
+    )
+
+    await notify_admins(
+        admin_text,
+        reply_markup=admin_driver_keyboard(
+            message.from_user.id
+        ),
+        parse_mode="HTML",
+    )
+
+
+# ============================================================
+# DRIVER RIDE
+# ============================================================
+
+@dp.message(DriverRideState.from_city)
+async def driver_from_city(
+    message: Message,
+    state: FSMContext,
+):
+
+    if message.text not in CITIES:
+
+        await message.answer(
+            "Shaharni tugmalardan tanlang.",
+            reply_markup=city_keyboard(),
+        )
+
+        return
+
+    await state.update_data(
+        from_city=message.text
+    )
+
+    await state.set_state(
+        DriverRideState.to_city
+    )
+
+    await message.answer(
+        "📍 Qaysi shaharga borasiz?",
         reply_markup=city_keyboard(),
     )
 
 
-@dp.message(SearchState.to_city)
-async def search_to(message: Message, state: FSMContext):
-    city = clean_city(message.text)
+@dp.message(DriverRideState.to_city)
+async def driver_to_city(
+    message: Message,
+    state: FSMContext,
+):
 
-    if city not in CITIES:
-        await message.answer("Shaharni tugmadan tanlang.")
+    if message.text not in CITIES:
+
+        await message.answer(
+            "Shaharni tugmalardan tanlang.",
+            reply_markup=city_keyboard(),
+        )
+
         return
 
     data = await state.get_data()
 
-    if city == data["from_city"]:
-        await message.answer("❌ Shaharlar bir xil bo‘lmasin.")
+    if message.text == data["from_city"]:
+
+        await message.answer(
+            "❗ Yo‘nalish shaharlari bir xil bo‘lishi mumkin emas."
+        )
+
         return
 
-    await state.update_data(to_city=city)
-    await state.set_state(SearchState.date)
-
-    await message.answer(
-        "📅 Sana:",
-        reply_markup=date_keyboard(),
+    await state.update_data(
+        to_city=message.text
     )
 
-
-@dp.message(SearchState.date)
-async def search_date(message: Message, state: FSMContext):
-    date = parse_date(message.text)
-
-    if not date:
-        await message.answer("Sanani tugmadan tanlang.")
-        return
-
-    await state.update_data(date=date)
-    await state.set_state(SearchState.time)
+    await state.set_state(
+        DriverRideState.time
+    )
 
     await message.answer(
-        "⏰ Vaqt:",
+        "🕐 Qaysi vaqtda yo‘lga chiqasiz?",
         reply_markup=time_keyboard(),
     )
 
 
-@dp.message(SearchState.time)
-async def search_time(message: Message, state: FSMContext):
-    await state.update_data(time=message.text)
-    await state.set_state(SearchState.passengers)
+@dp.message(DriverRideState.time)
+async def driver_time(
+    message: Message,
+    state: FSMContext,
+):
+
+    if message.text not in TIMES:
+
+        await message.answer(
+            "Vaqtni tugmalardan tanlang.",
+            reply_markup=time_keyboard(),
+        )
+
+        return
+
+    await state.update_data(
+        ride_time=message.text
+    )
+
+    await state.set_state(
+        DriverRideState.seats
+    )
 
     await message.answer(
-        "👥 Nechta yo‘lovchi?",
-        reply_markup=passenger_count_keyboard(),
+        "💺 Nechta bo‘sh joy bor?\n\n"
+        "1–4 oralig‘ida son kiriting.",
+        reply_markup=cancel_keyboard(),
     )
 
 
-@dp.message(SearchState.passengers)
-async def search_passengers(message: Message, state: FSMContext):
-    if message.text not in {"1", "2", "3", "4"}:
-        await message.answer("1 dan 4 gacha tanlang.")
+@dp.message(DriverRideState.seats)
+async def driver_seats(
+    message: Message,
+    state: FSMContext,
+):
+
+    try:
+
+        seats = int(
+            message.text
+        )
+
+    except Exception:
+
+        await message.answer(
+            "Faqat son kiriting."
+        )
+
+        return
+
+    if seats < 1 or seats > 4:
+
+        await message.answer(
+            "Bo‘sh joylar 1–4 oralig‘ida bo‘lishi kerak."
+        )
+
+        return
+
+    driver = await get_driver(
+        message.from_user.id
+    )
+
+    if not driver or driver["status"] != "approved":
+
+        await state.clear()
+
+        await message.answer(
+            "❗ Siz hali tasdiqlangan haydovchi emassiz.",
+            reply_markup=main_menu(),
+        )
+
         return
 
     data = await state.get_data()
 
-    passengers = int(message.text)
-
-    rides = await db_execute("""
-        SELECT
-            r.*,
-            d.rating,
-            d.rating_count
-        FROM rides r
-        LEFT JOIN driver_profiles d
-            ON d.telegram_id=r.telegram_id
-        WHERE r.role='driver'
-          AND r.status=?
-          AND r.from_city=?
-          AND r.to_city=?
-          AND r.date=?
-          AND r.available_seats>=?
-        ORDER BY r.time ASC
-        LIMIT 20
-    """, (
-        RIDE_ACTIVE,
-        data["from_city"],
-        data["to_city"],
-        data["date"],
-        passengers,
-    ), fetchall=True)
-
-    await state.clear()
-
-    if not rides:
-        await message.answer(
-            "😔 Mos safar topilmadi.",
-            reply_markup=main_menu(),
-        )
-        return
-
-    await message.answer(
-        f"🚕 {len(rides)} ta safar topildi:",
-        reply_markup=main_menu(),
-    )
-
-    for ride in rides:
-        rating = ride["rating"] or 0
-        count = ride["rating_count"] or 0
-
-        await message.answer(
-            f"🚕 <b>{html.escape(ride['car'])}</b>\n"
-            f"🔢 {html.escape(ride['car_number'])}\n"
-            f"🛣 {ride['from_city']} → {ride['to_city']}\n"
-            f"📅 {ride['date']}\n"
-            f"⏰ {ride['time']}\n"
-            f"💺 {ride['available_seats']} ta joy\n"
-            f"💰 {ride['price']:,} so‘m\n"
-            f"⭐ {rating:.1f} ({count})",
-            parse_mode="HTML",
-        )
-
-
-# =========================================================
-# MY RIDES
-# =========================================================
-
-@dp.message(F.text == "📋 Mening safarlarim")
-async def my_rides(message: Message):
-    driver_rides = await db_execute("""
-        SELECT *
-        FROM rides
-        WHERE telegram_id=?
-        ORDER BY id DESC
-        LIMIT 20
-    """, (
-        message.from_user.id,
-    ), fetchall=True)
-
-    bookings = await db_execute("""
-        SELECT
-            b.*,
-            r.from_city,
-            r.to_city,
-            r.date,
-            r.time,
-            r.car,
-            r.car_number,
-            r.price
-        FROM bookings b
-        JOIN rides r ON r.id=b.ride_id
-        WHERE b.passenger_id=?
-        ORDER BY b.id DESC
-        LIMIT 20
-    """, (
-        message.from_user.id,
-    ), fetchall=True)
-
-    text = "📋 <b>Mening safarlarim</b>\n\n"
-
-    if driver_rides:
-        text += "<b>🚕 Haydovchi safarlarim:</b>\n"
-
-        for ride in driver_rides:
-            text += (
-                f"#{ride['id']} "
-                f"{ride['from_city']} → {ride['to_city']} | "
-                f"{ride['date']} {ride['time']} | "
-                f"💺 {ride['available_seats']}/{ride['original_seats']} | "
-                f"{ride['status']}\n"
-            )
-
-        text += "\n"
-
-    if bookings:
-        text += "<b>👤 Yo‘lovchi buyurtmalarim:</b>\n"
-
-        for b in bookings:
-            text += (
-                f"#{b['id']} "
-                f"{b['from_city']} → {b['to_city']} | "
-                f"{b['date']} {b['time']} | "
-                f"🚕 {html.escape(b['car'])} | "
-                f"{b['status']}\n"
-            )
-
-    if not driver_rides and not bookings:
-        text += "Hozircha safarlar yo‘q."
-
-    await message.answer(
-        text,
-        parse_mode="HTML",
-        reply_markup=main_menu(),
-    )
-
-
-# =========================================================
-# PROFILE
-# =========================================================
-
-@dp.message(F.text == "👤 Profilim")
-async def profile(message: Message):
-    user = await db_execute("""
-        SELECT *
-        FROM users
-        WHERE telegram_id=?
-    """, (
-        message.from_user.id,
-    ), fetchone=True)
-
-    driver = await get_driver_profile(message.from_user.id)
-
-    text = "👤 <b>Profilim</b>\n\n"
-
-    if user:
-        text += f"👤 Ism: {html.escape(user['name'] or '-')}\n"
-        text += f"📱 Telefon: {html.escape(user['phone'] or '-')}\n"
-
-    if driver:
-        text += "\n<b>🚕 Haydovchi profili:</b>\n"
-        text += f"🚗 {html.escape(driver['car'] or '-')}\n"
-        text += f"🔢 {html.escape(driver['car_number'] or '-')}\n"
-        text += f"📌 Holat: {driver['status']}\n"
-        text += f"⭐ Reyting: {driver['rating']:.1f}\n"
-
-    await message.answer(
-        text,
-        parse_mode="HTML",
-        reply_markup=main_menu(),
-    )
-
-
-# =========================================================
-# RATING
-# =========================================================
-
-@dp.message(F.text == "⭐ Haydovchini baholash")
-async def rating_start(message: Message):
-    booking = await db_execute("""
-        SELECT *
-        FROM bookings
-        WHERE passenger_id=?
-          AND status='completed'
-        ORDER BY completed_at DESC
-        LIMIT 1
-    """, (
-        message.from_user.id,
-    ), fetchone=True)
-
-    if not booking:
-        await message.answer(
-            "⭐ Baholash uchun yakunlangan safar topilmadi."
-        )
-        return
-
-    existing = await db_execute("""
-        SELECT id
-        FROM ratings
-        WHERE booking_id=?
-    """, (
-        booking["id"],
-    ), fetchone=True)
-
-    if existing:
-        await message.answer(
-            "Siz bu safarni allaqachon baholagansiz."
-        )
-        return
-
-    await message.answer(
-        "⭐ Haydovchini baholang:",
-        reply_markup=rating_keyboard(booking["id"]),
-    )
-
-
-@dp.callback_query(F.data.startswith("rating:"))
-async def rating_select(callback: CallbackQuery, state: FSMContext):
-    _, booking_id, rating = callback.data.split(":")
-
-    booking_id = int(booking_id)
-    rating = int(rating)
-
-    booking = await db_execute("""
-        SELECT *
-        FROM bookings
-        WHERE id=?
-          AND passenger_id=?
-          AND status='completed'
-    """, (
-        booking_id,
-        callback.from_user.id,
-    ), fetchone=True)
-
-    if not booking:
-        await callback.answer(
-            "Baholash mumkin emas.",
-            show_alert=True,
-        )
-        return
-
-    existing = await db_execute("""
-        SELECT id
-        FROM ratings
-        WHERE booking_id=?
-    """, (
-        booking_id,
-    ), fetchone=True)
-
-    if existing:
-        await callback.answer(
-            "Allaqachon baholangan.",
-            show_alert=True,
-        )
-        return
-
-    await db_execute("""
-        INSERT INTO ratings (
-            booking_id,
-            ride_id,
+    ride_id = await db_execute(
+        """
+        INSERT INTO rides
+        (
             driver_id,
-            passenger_id,
-            rating,
+            from_city,
+            to_city,
+            ride_time,
+            seats,
+            available_seats,
+            reserved_seats,
+            status,
             created_at
         )
-        SELECT
-            ?,
-            b.ride_id,
-            r.telegram_id,
-            ?,
-            ?,
-            ?
-        FROM bookings b
-        JOIN rides r ON r.id=b.ride_id
-        WHERE b.id=?
-    """, (
-        booking_id,
-        callback.from_user.id,
-        rating,
-        datetime.now().isoformat(),
-        booking_id,
-    ))
-
-    await db_execute("""
-        UPDATE driver_profiles
-        SET
-            rating=(
-                SELECT AVG(rating)
-                FROM ratings
-                WHERE driver_id=?
-            ),
-            rating_count=(
-                SELECT COUNT(*)
-                FROM ratings
-                WHERE driver_id=?
-            )
-        WHERE telegram_id=(
-            SELECT telegram_id
-            FROM rides
-            WHERE id=?
-        )
-    """, (
-        booking["driver_id"] if "driver_id" in booking.keys() else 0,
-        booking["driver_id"] if "driver_id" in booking.keys() else 0,
-        booking["ride_id"],
-    ))
-
-    await callback.message.answer(
-        f"⭐ Rahmat! Siz {rating}/5 baho berdingiz.",
-        reply_markup=main_menu(),
-    )
-
-    await callback.answer("Baholandi.")
-
-
-# =========================================================
-# CANCEL RIDE
-# =========================================================
-
-@dp.message(F.text == "❌ Safarni bekor qilish")
-async def cancel_ride_start(message: Message):
-    rides = await db_execute("""
-        SELECT *
-        FROM rides
-        WHERE telegram_id=?
-          AND status=?
-        ORDER BY id DESC
-    """, (
-        message.from_user.id,
-        RIDE_ACTIVE,
-    ), fetchall=True)
-
-    if not rides:
-        await message.answer(
-            "Faol safaringiz yo‘q."
-        )
-        return
-
-    rows = []
-
-    for ride in rides:
-        rows.append([
-            InlineKeyboardButton(
-                text=(
-                    f"#{ride['id']} "
-                    f"{ride['from_city']} → {ride['to_city']}"
-                ),
-                callback_data=f"cancel_ride:{ride['id']}",
-            )
-        ])
-
-    await message.answer(
-        "❌ Qaysi safarni bekor qilasiz?",
-        reply_markup=InlineKeyboardMarkup(
-            inline_keyboard=rows
+        VALUES (?, ?, ?, ?, ?, ?, 0, 'active', ?)
+        """,
+        (
+            message.from_user.id,
+            data["from_city"],
+            data["to_city"],
+            data["ride_time"],
+            seats,
+            seats,
+            datetime.now().isoformat(),
         ),
     )
 
+    await state.clear()
 
-@dp.callback_query(F.data.startswith("cancel_ride:"))
-async def cancel_ride(callback: CallbackQuery):
-    ride_id = int(callback.data.split(":")[1])
+    await message.answer(
+        "✅ <b>Safaringiz e’lon qilindi!</b>\n\n"
+        f"📍 {data['from_city']} → {data['to_city']}\n"
+        f"🕐 {data['ride_time']}\n"
+        f"💺 Bo‘sh joy: {seats} ta\n\n"
+        "Yo‘lovchi buyurtmasi kelganda "
+        "sizga avtomatik xabar keladi.",
+        reply_markup=main_menu(),
+        parse_mode="HTML",
+    )
 
-    ride = await db_execute("""
-        SELECT *
-        FROM rides
-        WHERE id=?
-          AND telegram_id=?
-          AND status=?
-    """, (
-        ride_id,
-        callback.from_user.id,
-        RIDE_ACTIVE,
-    ), fetchone=True)
 
-    if not ride:
+# ============================================================
+# DRIVER ACCEPT
+# ============================================================
+
+@dp.callback_query(
+    F.data.startswith("accept_request:")
+)
+async def accept_request(
+    callback: CallbackQuery,
+):
+
+    request_id = int(
+        callback.data.split(":")[1]
+    )
+
+    driver_id = callback.from_user.id
+
+    request = await get_request(
+        request_id
+    )
+
+    if not request:
+
         await callback.answer(
-            "Safar topilmadi.",
+            "Buyurtma topilmadi.",
             show_alert=True,
         )
+
         return
 
-    await db_execute("""
-        UPDATE rides
-        SET status=?
-        WHERE id=?
-    """, (
-        RIDE_CANCELLED,
-        ride_id,
-    ))
+    if request["status"] != "searching":
 
-    bookings = await db_execute("""
-        SELECT *
-        FROM bookings
-        WHERE ride_id=?
-          AND status NOT IN (
-              'cancelled',
-              'rejected',
-              'completed'
-          )
-    """, (
-        ride_id,
-    ), fetchall=True)
-
-    for booking in bookings:
-
-        await db_execute("""
-            UPDATE bookings
-            SET status=?
-            WHERE id=?
-        """, (
-            BOOKING_CANCELLED,
-            booking["id"],
-        ))
-
-        await db_execute("""
-            UPDATE passenger_requests
-            SET status='cancelled'
-            WHERE id=?
-        """, (
-            booking["request_id"],
-        ))
+        await callback.answer(
+            "Bu buyurtma allaqachon yopilgan.",
+            show_alert=True,
+        )
 
         try:
-            await bot.send_message(
-                booking["passenger_id"],
-                "❌ Haydovchi safarni bekor qildi.\n\n"
-                "Boshqa taksini qidirishingiz mumkin.",
-                reply_markup=main_menu(),
+            await callback.message.edit_reply_markup(
+                reply_markup=None
             )
         except Exception:
             pass
 
-    await callback.message.answer(
-        "✅ Safar bekor qilindi.",
-        reply_markup=main_menu(),
-    )
-
-    await callback.answer("Safar bekor qilindi.")
-
-
-# =========================================================
-# HELP
-# =========================================================
-
-@dp.message(F.text == "📞 Yordam")
-async def help_command(message: Message):
-    await message.answer(
-        "📞 <b>OPPER TAXI yordam</b>\n\n"
-        "🚕 Haydovchi bo‘lish — hujjat topshirish va safar joylash.\n"
-        "👤 Yo‘lovchi bo‘lish — taksi buyurtma qilish.\n"
-        "🔎 Safar qidirish — mavjud taksilarni ko‘rish.\n"
-        "📍 Lokatsiyam — lokatsiyani yuborish.\n"
-        "📋 Mening safarlarim — buyurtmalarni ko‘rish.\n\n"
-        "Muammo bo‘lsa administratorga murojaat qiling.",
-        parse_mode="HTML",
-        reply_markup=main_menu(),
-    )
-
-
-# =========================================================
-# ADMIN COMMAND
-# =========================================================
-
-@dp.message(Command("admin"))
-async def admin_panel(message: Message):
-    if not is_admin(message.from_user.id):
-        await message.answer("🚫 Ruxsat yo‘q.")
         return
 
-    pending = await db_execute("""
-        SELECT *
-        FROM driver_profiles
-        WHERE status=?
-        ORDER BY created_at DESC
-    """, (
-        DRIVER_PENDING,
-    ), fetchall=True)
-
-    active_rides = await db_execute("""
-        SELECT COUNT(*) AS count
-        FROM rides
-        WHERE status=?
-    """, (
-        RIDE_ACTIVE,
-    ), fetchone=True)
-
-    bookings = await db_execute("""
-        SELECT COUNT(*) AS count
-        FROM bookings
-        WHERE status IN (
-            'pending_driver',
-            'accepted',
-            'arriving',
-            'arrived',
-            'onboard',
-            'in_progress'
-        )
-    """, fetchone=True)
-
-    text = (
-        "👨‍💼 <b>ADMIN PANEL</b>\n\n"
-        f"🚕 Faol safarlar: {active_rides['count']}\n"
-        f"📦 Faol buyurtmalar: {bookings['count']}\n"
-        f"⏳ Kutilayotgan haydovchilar: {len(pending)}\n"
+    driver = await get_driver(
+        driver_id
     )
+
+    if not driver or driver["status"] != "approved":
+
+        await callback.answer(
+            "Siz tasdiqlangan haydovchi emassiz.",
+            show_alert=True,
+        )
+
+        return
+
+    ride = await db_execute(
+        """
+        SELECT *
+        FROM rides
+        WHERE driver_id=?
+          AND from_city=?
+          AND to_city=?
+          AND ride_time=?
+          AND status='active'
+          AND available_seats >= ?
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (
+            driver_id,
+            request["from_city"],
+            request["to_city"],
+            request["ride_time"],
+            request["seats"],
+        ),
+        fetchone=True,
+    )
+
+    if not ride:
+
+        await callback.answer(
+            "❌ Sizda yetarli bo‘sh joyli safar topilmadi.",
+            show_alert=True,
+        )
+
+        return
+
+    booking_id = None
+
+    async with aiosqlite.connect(DB_PATH) as db:
+
+        db.row_factory = aiosqlite.Row
+
+        try:
+
+            await db.execute(
+                "BEGIN IMMEDIATE"
+            )
+
+            cur = await db.execute(
+                """
+                SELECT *
+                FROM passenger_requests
+                WHERE id=?
+                """,
+                (request_id,),
+            )
+
+            req = await cur.fetchone()
+
+            if not req:
+
+                await db.rollback()
+
+                await callback.answer(
+                    "Buyurtma topilmadi.",
+                    show_alert=True,
+                )
+
+                return
+
+            if req["status"] != "searching":
+
+                await db.rollback()
+
+                await callback.answer(
+                    "Bu buyurtma boshqa taksichi tomonidan qabul qilingan.",
+                    show_alert=True,
+                )
+
+                return
+
+            cur = await db.execute(
+                """
+                SELECT *
+                FROM rides
+                WHERE id=?
+                """,
+                (ride["id"],),
+            )
+
+            ride_now = await cur.fetchone()
+
+            if not ride_now:
+
+                await db.rollback()
+
+                await callback.answer(
+                    "Safar topilmadi.",
+                    show_alert=True,
+                )
+
+                return
+
+            available = ride_now["available_seats"]
+
+            if available < req["seats"]:
+
+                await db.rollback()
+
+                await callback.answer(
+                    "❌ Bo‘sh joy yetarli emas.",
+                    show_alert=True,
+                )
+
+                return
+
+            await db.execute(
+                """
+                UPDATE passenger_requests
+                SET status='accepted'
+                WHERE id=?
+                """,
+                (request_id,),
+            )
+
+            await db.execute(
+                """
+                UPDATE rides
+                SET available_seats =
+                    available_seats - ?
+                WHERE id=?
+                """,
+                (
+                    req["seats"],
+                    ride["id"],
+                ),
+            )
+
+            cur = await db.execute(
+                """
+                INSERT INTO bookings
+                (
+                    request_id,
+                    ride_id,
+                    passenger_id,
+                    driver_id,
+                    seats,
+                    status,
+                    created_at
+                )
+                VALUES (?, ?, ?, ?, ?, 'accepted', ?)
+                """,
+                (
+                    request_id,
+                    ride["id"],
+                    req["passenger_id"],
+                    driver_id,
+                    req["seats"],
+                    datetime.now().isoformat(),
+                ),
+            )
+
+            booking_id = cur.lastrowid
+
+            await db.commit()
+
+        except Exception as e:
+
+            await db.rollback()
+
+            print(
+                "ACCEPT ERROR:",
+                e,
+            )
+
+            await callback.answer(
+                "❌ Xatolik yuz berdi.",
+                show_alert=True,
+            )
+
+            return
+
+    await callback.answer(
+        "✅ Buyurtma qabul qilindi!",
+        show_alert=True,
+    )
+
+    try:
+
+        await callback.message.edit_text(
+            "✅ <b>BUYURTMA QABUL QILINDI</b>\n\n"
+            f"📍 {request['from_city']} → {request['to_city']}\n"
+            f"🕐 {request['ride_time']}\n"
+            f"👥 {request['seats']} kishi\n\n"
+            "Yo‘lovchiga avtomatik xabar yuborildi.",
+            parse_mode="HTML",
+        )
+
+    except Exception:
+        pass
+
+    passenger_text = (
+        "✅ <b>TAKSICHINGIZ BUYURTMANI QABUL QILDI!</b>\n\n"
+        f"🚕 Haydovchi: <b>{driver['full_name']}</b>\n"
+        f"📞 Telefon: <b>{driver['phone'] or 'mavjud emas'}</b>\n"
+        f"🚗 Mashina: <b>{driver['car_model'] or 'mavjud emas'}</b>\n"
+        f"🔢 Raqam: <b>{driver['car_number'] or 'mavjud emas'}</b>\n\n"
+        f"📍 {request['from_city']} → {request['to_city']}\n"
+        f"🕐 {request['ride_time']}\n\n"
+        "Haydovchi siz bilan bog‘lanadi."
+    )
+
+    await safe_send(
+        request["passenger_id"],
+        passenger_text,
+        reply_markup=passenger_booking_keyboard(
+            booking_id
+        ),
+        parse_mode="HTML",
+    )
+
+    # QOLGAN HAYDOVCHILARGA YOPILDI
+
+    other_drivers = await db_execute(
+        """
+        SELECT DISTINCT d.user_id
+        FROM driver_profiles d
+        JOIN rides r
+            ON r.driver_id=d.user_id
+        WHERE d.status='approved'
+          AND r.from_city=?
+          AND r.to_city=?
+          AND r.ride_time=?
+          AND d.user_id != ?
+        """,
+        (
+            request["from_city"],
+            request["to_city"],
+            request["ride_time"],
+            driver_id,
+        ),
+        fetch=True,
+    )
+
+    for other in other_drivers:
+
+        await safe_send(
+            other["user_id"],
+            "ℹ️ <b>Buyurtma yopildi.</b>\n\n"
+            "Ushbu yo‘lovchi boshqa taksichi "
+            "tomonidan qabul qilindi.",
+            parse_mode="HTML",
+        )
+
+
+# ============================================================
+# DRIVER REJECT
+# ============================================================
+
+@dp.callback_query(
+    F.data.startswith("reject_request:")
+)
+async def reject_request(
+    callback: CallbackQuery,
+):
+
+    request_id = int(
+        callback.data.split(":")[1]
+    )
+
+    request = await get_request(
+        request_id
+    )
+
+    if not request:
+
+        await callback.answer(
+            "Buyurtma topilmadi.",
+            show_alert=True,
+        )
+
+        return
+
+    await callback.answer(
+        "❌ Buyurtma rad etildi."
+    )
+
+    try:
+
+        await callback.message.edit_text(
+            "❌ <b>BUYURTMA RAD ETILDI</b>\n\n"
+            "Siz ushbu buyurtmani rad etdingiz.",
+            parse_mode="HTML",
+        )
+
+    except Exception:
+        pass
+
+
+# ============================================================
+# PASSENGER CANCEL REQUEST
+# ============================================================
+
+@dp.callback_query(
+    F.data.startswith("cancel_request:")
+)
+async def cancel_request(
+    callback: CallbackQuery,
+):
+
+    request_id = int(
+        callback.data.split(":")[1]
+    )
+
+    request = await get_request(
+        request_id
+    )
+
+    if not request:
+
+        await callback.answer(
+            "Buyurtma topilmadi.",
+            show_alert=True,
+        )
+
+        return
+
+    if request["passenger_id"] != callback.from_user.id:
+
+        await callback.answer(
+            "Bu buyurtma sizniki emas.",
+            show_alert=True,
+        )
+
+        return
+
+    if request["status"] not in (
+        "searching",
+        "accepted",
+    ):
+
+        await callback.answer(
+            "Buyurtmani bekor qilib bo‘lmaydi.",
+            show_alert=True,
+        )
+
+        return
+
+    await db_execute(
+        """
+        UPDATE passenger_requests
+        SET status='cancelled'
+        WHERE id=?
+        """,
+        (request_id,),
+    )
+
+    booking = await db_execute(
+        """
+        SELECT *
+        FROM bookings
+        WHERE request_id=?
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (request_id,),
+        fetchone=True,
+    )
+
+    if booking:
+
+        await db_execute(
+            """
+            UPDATE bookings
+            SET status='cancelled'
+            WHERE id=?
+            """,
+            (booking["id"],),
+        )
+
+        await db_execute(
+            """
+            UPDATE rides
+            SET available_seats =
+                available_seats + ?
+            WHERE id=?
+            """,
+            (
+                booking["seats"],
+                booking["ride_id"],
+            ),
+        )
+
+        await safe_send(
+            booking["driver_id"],
+            "❌ <b>Yo‘lovchi buyurtmani bekor qildi.</b>\n\n"
+            "Ushbu buyurtma endi faol emas.",
+            parse_mode="HTML",
+        )
+
+    await callback.answer(
+        "Buyurtma bekor qilindi."
+    )
+
+    try:
+
+        await callback.message.edit_reply_markup(
+            reply_markup=None
+        )
+
+    except Exception:
+        pass
+
+
+# ============================================================
+# DRIVER LOCATION BUTTON
+# ============================================================
+
+@dp.callback_query(
+    F.data.startswith("driver_location:")
+)
+async def driver_location(
+    callback: CallbackQuery,
+):
+
+    booking_id = int(
+        callback.data.split(":")[1]
+    )
+
+    booking = await get_booking(
+        booking_id
+    )
+
+    if not booking:
+
+        await callback.answer(
+            "Safar topilmadi.",
+            show_alert=True,
+        )
+
+        return
+
+    if booking["driver_id"] != callback.from_user.id:
+
+        await callback.answer(
+            "Bu safar sizniki emas.",
+            show_alert=True,
+        )
+
+        return
+
+    kb = ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                KeyboardButton(
+                    text="📍 Hozirgi lokatsiyamni yuborish",
+                    request_location=True,
+                )
+            ],
+            [
+                KeyboardButton(
+                    text="❌ Bekor qilish"
+                )
+            ],
+        ],
+        resize_keyboard=True,
+    )
+
+    await callback.message.answer(
+        "📍 Hozirgi lokatsiyangizni yuboring:",
+        reply_markup=kb,
+    )
+
+    await callback.answer()
+
+
+# ============================================================
+# UNIVERSAL LOCATION
+# ============================================================
+
+@dp.message(F.location)
+async def universal_location(
+    message: Message,
+):
+
+    driver_id = message.from_user.id
+
+    location = message.location
+
+    # FSM passenger bo'lsa, passenger handler ishlaydi.
+    current_booking = await db_execute(
+        """
+        SELECT *
+        FROM bookings
+        WHERE driver_id=?
+          AND status IN (
+              'accepted',
+              'arriving',
+              'arrived',
+              'onboard'
+          )
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (driver_id,),
+        fetchone=True,
+    )
+
+    if not current_booking:
+
+        await message.answer(
+            "📍 Lokatsiyangiz qabul qilindi."
+        )
+
+        return
+
+    await db_execute(
+        """
+        UPDATE bookings
+        SET driver_latitude=?,
+            driver_longitude=?
+        WHERE id=?
+        """,
+        (
+            location.latitude,
+            location.longitude,
+            current_booking["id"],
+        ),
+    )
+
+    await message.answer(
+        "✅ Lokatsiyangiz yo‘lovchiga yuborildi.",
+        reply_markup=main_menu(),
+    )
+
+    await safe_send(
+        current_booking["passenger_id"],
+        "📍 <b>Haydovchi lokatsiyasini yubordi.</b>",
+        parse_mode="HTML",
+    )
+
+    try:
+
+        await bot.send_location(
+            current_booking["passenger_id"],
+            latitude=location.latitude,
+            longitude=location.longitude,
+        )
+
+    except Exception as e:
+
+        print(
+            "SEND LOCATION ERROR:",
+            e,
+        )
+
+
+# ============================================================
+# DRIVER ARRIVED
+# ============================================================
+
+@dp.callback_query(
+    F.data.startswith("driver_arrived:")
+)
+async def driver_arrived(
+    callback: CallbackQuery,
+):
+
+    booking_id = int(
+        callback.data.split(":")[1]
+    )
+
+    booking = await get_booking(
+        booking_id
+    )
+
+    if not booking:
+
+        await callback.answer(
+            "Safar topilmadi.",
+            show_alert=True,
+        )
+
+        return
+
+    if booking["driver_id"] != callback.from_user.id:
+
+        await callback.answer(
+            "Bu safar sizniki emas.",
+            show_alert=True,
+        )
+
+        return
+
+    await db_execute(
+        """
+        UPDATE bookings
+        SET status='arrived'
+        WHERE id=?
+        """,
+        (booking_id,),
+    )
+
+    await callback.answer(
+        "Yo‘lovchiga xabar yuborildi."
+    )
+
+    await safe_send(
+        booking["passenger_id"],
+        "🚕 <b>Haydovchi yetib keldi!</b>\n\n"
+        "Taksini kutib oling.",
+        parse_mode="HTML",
+    )
+
+
+# ============================================================
+# DRIVER ONBOARD
+# ============================================================
+
+@dp.callback_query(
+    F.data.startswith("driver_onboard:")
+)
+async def driver_onboard(
+    callback: CallbackQuery,
+):
+
+    booking_id = int(
+        callback.data.split(":")[1]
+    )
+
+    booking = await get_booking(
+        booking_id
+    )
+
+    if not booking:
+
+        await callback.answer(
+            "Safar topilmadi.",
+            show_alert=True,
+        )
+
+        return
+
+    if booking["driver_id"] != callback.from_user.id:
+
+        await callback.answer(
+            "Bu safar sizniki emas.",
+            show_alert=True,
+        )
+
+        return
+
+    await db_execute(
+        """
+        UPDATE bookings
+        SET status='onboard'
+        WHERE id=?
+        """,
+        (booking_id,),
+    )
+
+    await callback.answer(
+        "Safar boshlandi."
+    )
+
+    await safe_send(
+        booking["passenger_id"],
+        "🚕 <b>Sizni haydovchi olib ketdi.</b>\n\n"
+        "Xavfsiz safar tilaymiz!",
+        parse_mode="HTML",
+    )
+
+
+# ============================================================
+# DRIVER COMPLETE
+# ============================================================
+
+@dp.callback_query(
+    F.data.startswith("driver_complete:")
+)
+async def driver_complete(
+    callback: CallbackQuery,
+):
+
+    booking_id = int(
+        callback.data.split(":")[1]
+    )
+
+    booking = await get_booking(
+        booking_id
+    )
+
+    if not booking:
+
+        await callback.answer(
+            "Safar topilmadi.",
+            show_alert=True,
+        )
+
+        return
+
+    if booking["driver_id"] != callback.from_user.id:
+
+        await callback.answer(
+            "Bu safar sizniki emas.",
+            show_alert=True,
+        )
+
+        return
+
+    await db_execute(
+        """
+        UPDATE bookings
+        SET status='completed'
+        WHERE id=?
+        """,
+        (booking_id,),
+    )
+
+    await db_execute(
+        """
+        UPDATE driver_profiles
+        SET trips=trips+1
+        WHERE user_id=?
+        """,
+        (callback.from_user.id,),
+    )
+
+    await callback.answer(
+        "Safar tugadi."
+    )
+
+    await safe_send(
+        booking["passenger_id"],
+        "🏁 <b>Safar tugadi.</b>\n\n"
+        "Rahmat! Xavfsiz yetib boring.",
+        parse_mode="HTML",
+    )
+
+
+# ============================================================
+# DRIVER CANCEL
+# ============================================================
+
+@dp.callback_query(
+    F.data.startswith("driver_cancel:")
+)
+async def driver_cancel(
+    callback: CallbackQuery,
+):
+
+    booking_id = int(
+        callback.data.split(":")[1]
+    )
+
+    booking = await get_booking(
+        booking_id
+    )
+
+    if not booking:
+
+        await callback.answer(
+            "Safar topilmadi.",
+            show_alert=True,
+        )
+
+        return
+
+    if booking["driver_id"] != callback.from_user.id:
+
+        await callback.answer(
+            "Bu safar sizniki emas.",
+            show_alert=True,
+        )
+
+        return
+
+    await db_execute(
+        """
+        UPDATE bookings
+        SET status='cancelled'
+        WHERE id=?
+        """,
+        (booking_id,),
+    )
+
+    await db_execute(
+        """
+        UPDATE passenger_requests
+        SET status='searching'
+        WHERE id=?
+        """,
+        (booking["request_id"],),
+    )
+
+    await db_execute(
+        """
+        UPDATE rides
+        SET available_seats =
+            available_seats + ?
+        WHERE id=?
+        """,
+        (
+            booking["seats"],
+            booking["ride_id"],
+        ),
+    )
+
+    await callback.answer(
+        "Safar bekor qilindi."
+    )
+
+    await safe_send(
+        booking["passenger_id"],
+        "❌ <b>Haydovchi safarni bekor qildi.</b>\n\n"
+        "Yangi taksi qidirilmoqda.",
+        parse_mode="HTML",
+    )
+
+    # QAYTA MOS TAKSILARGA YUBORISH
+
+    await send_request_to_matching_drivers(
+        booking["request_id"]
+    )
+
+
+# ============================================================
+# TRACK DRIVER
+# ============================================================
+
+@dp.callback_query(
+    F.data.startswith("track_driver:")
+)
+async def track_driver(
+    callback: CallbackQuery,
+):
+
+    booking_id = int(
+        callback.data.split(":")[1]
+    )
+
+    booking = await get_booking(
+        booking_id
+    )
+
+    if not booking:
+
+        await callback.answer(
+            "Safar topilmadi.",
+            show_alert=True,
+        )
+
+        return
+
+    if booking["passenger_id"] != callback.from_user.id:
+
+        await callback.answer(
+            "Bu safar sizniki emas.",
+            show_alert=True,
+        )
+
+        return
+
+    if booking["driver_latitude"] is None:
+
+        await callback.answer(
+            "Haydovchi hali lokatsiyasini yubormagan.",
+            show_alert=True,
+        )
+
+        return
+
+    await callback.message.answer(
+        "📍 <b>Haydovchi lokatsiyasi:</b>",
+        parse_mode="HTML",
+    )
+
+    await bot.send_location(
+        callback.from_user.id,
+        latitude=booking["driver_latitude"],
+        longitude=booking["driver_longitude"],
+    )
+
+    await callback.answer()
+
+
+# ============================================================
+# PASSENGER CANCEL BOOKING
+# ============================================================
+
+@dp.callback_query(
+    F.data.startswith("passenger_cancel:")
+)
+async def passenger_cancel_booking(
+    callback: CallbackQuery,
+):
+
+    booking_id = int(
+        callback.data.split(":")[1]
+    )
+
+    booking = await get_booking(
+        booking_id
+    )
+
+    if not booking:
+
+        await callback.answer(
+            "Safar topilmadi.",
+            show_alert=True,
+        )
+
+        return
+
+    if booking["passenger_id"] != callback.from_user.id:
+
+        await callback.answer(
+            "Bu safar sizniki emas.",
+            show_alert=True,
+        )
+
+        return
+
+    if booking["status"] in (
+        "completed",
+        "cancelled",
+    ):
+
+        await callback.answer(
+            "Safar allaqachon yopilgan.",
+            show_alert=True,
+        )
+
+        return
+
+    await db_execute(
+        """
+        UPDATE bookings
+        SET status='cancelled'
+        WHERE id=?
+        """,
+        (booking_id,),
+    )
+
+    await db_execute(
+        """
+        UPDATE passenger_requests
+        SET status='cancelled'
+        WHERE id=?
+        """,
+        (booking["request_id"],),
+    )
+
+    await db_execute(
+        """
+        UPDATE rides
+        SET available_seats =
+            available_seats + ?
+        WHERE id=?
+        """,
+        (
+            booking["seats"],
+            booking["ride_id"],
+        ),
+    )
+
+    await safe_send(
+        booking["driver_id"],
+        "❌ <b>Yo‘lovchi safarni bekor qildi.</b>",
+        parse_mode="HTML",
+    )
+
+    await callback.answer(
+        "Safar bekor qilindi."
+    )
+
+
+# ============================================================
+# MY BOOKINGS
+# ============================================================
+
+@dp.message(F.text == "📋 Buyurtmalarim")
+async def my_bookings(
+    message: Message,
+):
+
+    rows = await db_execute(
+        """
+        SELECT
+            b.*,
+            r.from_city,
+            r.to_city,
+            r.ride_time
+        FROM bookings b
+        JOIN rides r
+            ON r.id=b.ride_id
+        WHERE b.passenger_id=?
+        ORDER BY b.id DESC
+        LIMIT 10
+        """,
+        (message.from_user.id,),
+        fetch=True,
+    )
+
+    if not rows:
+
+        await message.answer(
+            "📋 Hozircha buyurtmalaringiz yo‘q."
+        )
+
+        return
+
+    text = "📋 <b>Buyurtmalarim</b>\n\n"
+
+    for row in rows:
+
+        text += (
+            f"#{row['id']} "
+            f"{row['from_city']} → {row['to_city']}\n"
+            f"🕐 {row['ride_time']}\n"
+            f"📌 {row['status']}\n\n"
+        )
 
     await message.answer(
         text,
         parse_mode="HTML",
     )
 
-    for driver in pending:
+
+# ============================================================
+# SEARCH
+# ============================================================
+
+@dp.message(F.text == "🔎 Taksilarni qidirish")
+async def search_taxis(
+    message: Message,
+):
+
+    rows = await db_execute(
+        """
+        SELECT
+            r.*,
+            d.full_name,
+            d.phone,
+            d.car_model,
+            d.car_number,
+            d.rating
+        FROM rides r
+        JOIN driver_profiles d
+            ON d.user_id=r.driver_id
+        WHERE r.status='active'
+          AND d.status='approved'
+          AND r.available_seats>0
+        ORDER BY r.id DESC
+        LIMIT 20
+        """,
+        fetch=True,
+    )
+
+    if not rows:
+
         await message.answer(
-            "⏳ <b>Kutilayotgan haydovchi</b>\n\n"
-            f"🆔 <code>{driver['telegram_id']}</code>\n"
-            f"🚗 {html.escape(driver['car'])}\n"
-            f"🔢 {html.escape(driver['car_number'])}",
-            parse_mode="HTML",
-            reply_markup=admin_driver_keyboard(
-                driver["telegram_id"]
-            ),
+            "🚕 Hozircha faol taksilar topilmadi."
         )
 
-
-# =========================================================
-# ADMIN VERIFY COMMANDS
-# =========================================================
-
-@dp.message(Command("verify"))
-async def verify_command(message: Message):
-    if not is_admin(message.from_user.id):
         return
 
-    parts = message.text.split()
+    text = "🚕 <b>Faol taksilar:</b>\n\n"
 
-    if len(parts) != 2:
-        await message.answer(
-            "Format: /verify TELEGRAM_ID"
+    for row in rows:
+
+        text += (
+            f"🚗 <b>{row['car_model'] or 'Mashina'}</b>\n"
+            f"🔢 {row['car_number'] or '-'}\n"
+            f"👤 {row['full_name']}\n"
+            f"📍 {row['from_city']} → {row['to_city']}\n"
+            f"🕐 {row['ride_time']}\n"
+            f"💺 Bo‘sh joy: {row['available_seats']}\n"
+            f"⭐ {float(row['rating'] or 5):.1f}\n\n"
         )
+
+    await message.answer(
+        text,
+        parse_mode="HTML",
+    )
+
+
+# ============================================================
+# PROFILE
+# ============================================================
+
+@dp.message(F.text == "👤 Profil")
+async def profile(
+    message: Message,
+):
+
+    user = await get_user(
+        message.from_user.id
+    )
+
+    driver = await get_driver(
+        message.from_user.id
+    )
+
+    text = (
+        "👤 <b>Profil</b>\n\n"
+        f"Ism: "
+        f"{user['full_name'] if user else '-'}\n"
+        f"Username: "
+        f"@{user['username'] if user and user['username'] else '-'}\n"
+        f"Telefon: "
+        f"{user['phone'] if user and user['phone'] else '-'}\n"
+    )
+
+    if driver:
+
+        text += (
+            "\n🚕 <b>Haydovchi profili</b>\n"
+            f"🚗 Mashina: "
+            f"{driver['car_model'] or '-'}\n"
+            f"🔢 Raqam: "
+            f"{driver['car_number'] or '-'}\n"
+            f"⭐ Reyting: "
+            f"{float(driver['rating'] or 5):.1f}\n"
+            f"🏁 Safarlar: "
+            f"{driver['trips']}\n"
+            f"📌 Holat: "
+            f"{driver['status']}\n"
+        )
+
+    await message.answer(
+        text,
+        parse_mode="HTML",
+    )
+
+
+# ============================================================
+# HELP
+# ============================================================
+
+@dp.message(F.text == "ℹ️ Yordam")
+async def help_handler(
+    message: Message,
+):
+
+    await message.answer(
+        "ℹ️ <b>OPPER TAXI</b>\n\n"
+        "🚕 Taksi chaqirish — yo‘lovchi buyurtmasi.\n\n"
+        "🚗 Haydovchi bo‘lish — haydovchi ro‘yxatdan o‘tishi "
+        "va safar e’lon qilishi.\n\n"
+        "🔎 Taksilarni qidirish — faol safarlarni ko‘rish.\n\n"
+        "📋 Buyurtmalarim — buyurtmalar holati.\n\n"
+        "📍 Haydovchi lokatsiyasi — yo‘lovchiga yuboriladi.\n\n"
+        "💬 Bot qo‘shilgan guruhlarda taxi buyurtmalarini "
+        "avtomatik aniqlash ham ishlaydi.",
+        parse_mode="HTML",
+    )
+
+
+# ============================================================
+# ADMIN APPROVE
+# ============================================================
+
+@dp.callback_query(
+    F.data.startswith("admin_approve:")
+)
+async def admin_approve(
+    callback: CallbackQuery,
+):
+
+    if callback.from_user.id not in ADMIN_IDS:
+
+        await callback.answer(
+            "Siz admin emassiz.",
+            show_alert=True,
+        )
+
         return
 
-    try:
-        driver_id = int(parts[1])
-    except Exception:
-        await message.answer("ID noto‘g‘ri.")
-        return
+    user_id = int(
+        callback.data.split(":")[1]
+    )
 
-    await db_execute("""
+    await db_execute(
+        """
         UPDATE driver_profiles
-        SET status=?
-        WHERE telegram_id=?
-    """, (
-        DRIVER_VERIFIED,
-        driver_id,
-    ))
+        SET status='approved'
+        WHERE user_id=?
+        """,
+        (user_id,),
+    )
 
-    await message.answer("✅ Tasdiqlandi.")
+    await callback.answer(
+        "Haydovchi tasdiqlandi."
+    )
+
+    await safe_send(
+        user_id,
+        "🎉 <b>Haydovchilik profilingiz tasdiqlandi!</b>\n\n"
+        "Endi «🚗 Haydovchi bo‘lish» orqali "
+        "safar e’lon qilishingiz mumkin.",
+        parse_mode="HTML",
+    )
 
     try:
-        await bot.send_message(
-            driver_id,
-            "🎉 Haydovchi profilingiz tasdiqlandi!\n"
-            "Endi safar joylashingiz mumkin.",
-            reply_markup=main_menu(),
+
+        await callback.message.edit_reply_markup(
+            reply_markup=None
         )
+
     except Exception:
         pass
 
 
-@dp.message(Command("reject"))
-async def reject_command(message: Message):
-    if not is_admin(message.from_user.id):
-        return
+# ============================================================
+# ADMIN REJECT
+# ============================================================
 
-    parts = message.text.split()
+@dp.callback_query(
+    F.data.startswith("admin_reject:")
+)
+async def admin_reject(
+    callback: CallbackQuery,
+):
 
-    if len(parts) != 2:
-        await message.answer(
-            "Format: /reject TELEGRAM_ID"
+    if callback.from_user.id not in ADMIN_IDS:
+
+        await callback.answer(
+            "Siz admin emassiz.",
+            show_alert=True,
         )
+
         return
 
-    driver_id = int(parts[1])
+    user_id = int(
+        callback.data.split(":")[1]
+    )
 
-    await db_execute("""
+    await db_execute(
+        """
         UPDATE driver_profiles
-        SET status=?
-        WHERE telegram_id=?
-    """, (
-        DRIVER_REJECTED,
-        driver_id,
-    ))
+        SET status='rejected'
+        WHERE user_id=?
+        """,
+        (user_id,),
+    )
 
-    await message.answer("❌ Rad etildi.")
+    await callback.answer(
+        "Haydovchi rad etildi."
+    )
 
+    await safe_send(
+        user_id,
+        "❌ Haydovchilik profilingiz tasdiqlanmadi.\n\n"
+        "Administrator bilan bog‘lanishingiz mumkin.",
+    )
 
-@dp.message(Command("block"))
-async def block_command(message: Message):
-    if not is_admin(message.from_user.id):
-        return
+    try:
 
-    parts = message.text.split()
-
-    if len(parts) != 2:
-        await message.answer(
-            "Format: /block TELEGRAM_ID"
+        await callback.message.edit_reply_markup(
+            reply_markup=None
         )
+
+    except Exception:
+        pass
+
+
+# ============================================================
+# ADMIN /DRIVERS
+# ============================================================
+
+@dp.message(Command("drivers"))
+async def admin_drivers(
+    message: Message,
+):
+
+    if message.from_user.id not in ADMIN_IDS:
         return
 
-    driver_id = int(parts[1])
+    rows = await db_execute(
+        """
+        SELECT *
+        FROM driver_profiles
+        WHERE status='pending'
+        ORDER BY created_at
+        """,
+        fetch=True,
+    )
 
-    await db_execute("""
-        UPDATE driver_profiles
-        SET status=?
-        WHERE telegram_id=?
-    """, (
-        DRIVER_BLOCKED,
-        driver_id,
-    ))
+    if not rows:
 
-    await db_execute("""
-        UPDATE rides
-        SET status=?
-        WHERE telegram_id=?
-          AND status=?
-    """, (
-        RIDE_CANCELLED,
-        driver_id,
-        RIDE_ACTIVE,
-    ))
-
-    await message.answer("🚫 Bloklandi.")
-
-
-@dp.message(Command("unblock"))
-async def unblock_command(message: Message):
-    if not is_admin(message.from_user.id):
-        return
-
-    parts = message.text.split()
-
-    if len(parts) != 2:
         await message.answer(
-            "Format: /unblock TELEGRAM_ID"
+            "⏳ Tasdiqlashni kutayotgan haydovchilar yo‘q."
         )
+
         return
 
-    driver_id = int(parts[1])
+    for driver in rows:
 
-    await db_execute("""
-        UPDATE driver_profiles
-        SET status=?
-        WHERE telegram_id=?
-    """, (
-        DRIVER_VERIFIED,
-        driver_id,
-    ))
+        text = (
+            "🚗 <b>YANGI HAYDOVCHI</b>\n\n"
+            f"👤 {driver['full_name']}\n"
+            f"📞 {driver['phone']}\n"
+            f"🚗 {driver['car_model']}\n"
+            f"🔢 {driver['car_number']}\n"
+            f"💺 {driver['seats']} joy\n"
+            f"🆔 <code>{driver['user_id']}</code>"
+        )
 
-    await message.answer("✅ Blokdan chiqarildi.")
+        await message.answer(
+            text,
+            reply_markup=admin_driver_keyboard(
+                driver["user_id"]
+            ),
+            parse_mode="HTML",
+        )
 
 
-# =========================================================
-# FALLBACK
-# =========================================================
+# ============================================================
+# ADMIN PANEL
+# ============================================================
 
-@dp.message()
-async def fallback(message: Message):
-    await ensure_user(message)
+@dp.message(Command("admin"))
+async def admin_panel(
+    message: Message,
+):
+
+    if message.from_user.id not in ADMIN_IDS:
+        return
+
+    users = await db_execute(
+        """
+        SELECT COUNT(*) AS c
+        FROM users
+        """,
+        fetchone=True,
+    )
+
+    drivers = await db_execute(
+        """
+        SELECT COUNT(*) AS c
+        FROM driver_profiles
+        WHERE status='approved'
+        """,
+        fetchone=True,
+    )
+
+    active_rides = await db_execute(
+        """
+        SELECT COUNT(*) AS c
+        FROM rides
+        WHERE status='active'
+        """,
+        fetchone=True,
+    )
+
+    requests = await db_execute(
+        """
+        SELECT COUNT(*) AS c
+        FROM passenger_requests
+        WHERE status='searching'
+        """,
+        fetchone=True,
+    )
+
+    groups = await db_execute(
+        """
+        SELECT COUNT(DISTINCT chat_id) AS c
+        FROM group_messages
+        """,
+        fetchone=True,
+    )
 
     await message.answer(
-        "Men bu buyruqni tushunmadim.\n\n"
+        "👑 <b>ADMIN PANEL</b>\n\n"
+        f"👥 Foydalanuvchilar: {users['c']}\n"
+        f"🚕 Tasdiqlangan haydovchilar: {drivers['c']}\n"
+        f"🚗 Faol safarlar: {active_rides['c']}\n"
+        f"🔎 Faol buyurtmalar: {requests['c']}\n"
+        f"💬 Guruhlar: {groups['c']}\n\n"
+        "/drivers — haydovchilarni tasdiqlash",
+        parse_mode="HTML",
+    )
+
+
+# ============================================================
+# GROUP TAXI PARSER
+# ============================================================
+
+async def create_group_passenger_request(
+    message: Message,
+    from_city,
+    to_city,
+    ride_time,
+    seats,
+    phone,
+):
+
+    user_id = message.from_user.id
+
+    name = extract_name_from_message(
+        message
+    )
+
+    # Telefon bo‘lsa user profiliga saqlaymiz
+
+    if phone:
+
+        await save_user_phone(
+            user_id,
+            phone,
+        )
+
+    request_id = await db_execute(
+        """
+        INSERT INTO passenger_requests
+        (
+            passenger_id,
+            from_city,
+            to_city,
+            ride_time,
+            seats,
+            name,
+            phone,
+            latitude,
+            longitude,
+            status,
+            created_at,
+            source_chat_id,
+            source_message_id,
+            source_text
+        )
+        VALUES (
+            ?, ?, ?, ?, ?, ?, ?, NULL, NULL,
+            'searching', ?, ?, ?, ?
+        )
+        """,
+        (
+            user_id,
+            from_city,
+            to_city,
+            ride_time,
+            seats,
+            name,
+            phone,
+            datetime.now().isoformat(),
+            message.chat.id,
+            message.message_id,
+            message.text,
+        ),
+    )
+
+    sent_count = await send_request_to_matching_drivers(
+        request_id
+    )
+
+    return request_id, sent_count
+
+
+async def create_group_driver_ride(
+    message: Message,
+    from_city,
+    to_city,
+    ride_time,
+    seats,
+):
+
+    driver = await get_driver(
+        message.from_user.id
+    )
+
+    if not driver:
+
+        return None, "not_registered"
+
+    if driver["status"] != "approved":
+
+        return None, "not_approved"
+
+    ride_id = await db_execute(
+        """
+        INSERT INTO rides
+        (
+            driver_id,
+            from_city,
+            to_city,
+            ride_time,
+            seats,
+            available_seats,
+            reserved_seats,
+            status,
+            created_at,
+            source_chat_id,
+            source_message_id,
+            source_text
+        )
+        VALUES (
+            ?, ?, ?, ?, ?, ?, 0, 'active', ?,
+            ?, ?, ?
+        )
+        """,
+        (
+            message.from_user.id,
+            from_city,
+            to_city,
+            ride_time,
+            seats,
+            seats,
+            datetime.now().isoformat(),
+            message.chat.id,
+            message.message_id,
+            message.text,
+        ),
+    )
+
+    return ride_id, "created"
+
+
+@dp.message(
+    F.chat.type.in_(
+        {"group", "supergroup"}
+    )
+)
+async def group_message_handler(
+    message: Message,
+):
+
+    # BOT XABARLARINI E'TIBORSIZ QOLDIRAMIZ
+
+    if message.from_user and message.from_user.is_bot:
+        return
+
+    if not message.text:
+        return
+
+    text = message.text.strip()
+
+    if not text:
+        return
+
+    # COMMANDLARNI PARSE QILMAYMIZ
+
+    if text.startswith("/"):
+        return
+
+    # DUPLICATE
+
+    if await group_message_already_processed(
+        message.chat.id,
+        message.message_id,
+    ):
+
+        return
+
+    await mark_group_message_processed(
+        message.chat.id,
+        message.message_id,
+    )
+
+    normalized = normalize_text(
+        text
+    )
+
+    # TAXI KALIT SO'ZLARINI TEKSHIRISH
+
+    taxi_words = [
+        "taksi",
+        "taxi",
+        "mashina",
+        "yo'lovchi",
+        "yo'lovchilar",
+        "joy",
+        "ketaman",
+        "kerak",
+        "kerek",
+        "olaman",
+        "olib keting",
+    ]
+
+    has_taxi_word = any(
+        word in normalized
+        for word in taxi_words
+    )
+
+    if not has_taxi_word:
+        return
+
+    cities = extract_cities(
+        text
+    )
+
+    if len(cities) < 2:
+        return
+
+    from_city = cities[0]
+    to_city = cities[1]
+
+    if from_city == to_city:
+        return
+
+    ride_time = extract_time(
+        text
+    )
+
+    seats = extract_seats(
+        text
+    )
+
+    phone = extract_phone(
+        text
+    )
+
+    # ========================================================
+    # VAQT YO‘Q BO‘LSA — GURUHDA ANIQLASHTIRISH
+    # ========================================================
+
+    if not ride_time:
+
+        await message.reply(
+            "🚕 Buyurtmani tushundim, lekin vaqt ko‘rsatilmagan.\n\n"
+            "Masalan:\n"
+            "<b>Toshkentdan Farg‘onaga 2 kishi, "
+            "18:00 ga taksi kerak.</b>",
+            parse_mode="HTML",
+        )
+
+        return
+
+    # ========================================================
+    # YO‘LOVCHI ANIQLASH
+    # ========================================================
+
+    passenger = is_passenger_message(
+        text
+    )
+
+    driver_message = is_driver_message(
+        text
+    )
+
+    # ========================================================
+    # AGAR IKKALASI HAM ANIQLANMASA
+    # ========================================================
+
+    if not passenger and not driver_message:
+
+        return
+
+    # ========================================================
+    # HAYDOVCHI XABARI
+    # ========================================================
+
+    if driver_message and not passenger:
+
+        # Guruhdan haydovchini faqat Telegram user ID
+        # orqali aniqlaymiz.
+
+        driver = await get_driver(
+            message.from_user.id
+        )
+
+        if not driver:
+
+            await message.reply(
+                "🚗 Safar e’lon qilish uchun avval "
+                "OPPER TAXI botida haydovchi sifatida "
+                "ro‘yxatdan o‘ting.",
+            )
+
+            return
+
+        if driver["status"] != "approved":
+
+            await message.reply(
+                "⏳ Sizning haydovchilik profilingiz "
+                "hali admin tomonidan tasdiqlanmagan."
+            )
+
+            return
+
+        if not seats:
+
+            seats = 1
+
+        if seats > 4:
+
+            seats = 4
+
+        ride_id, result = await create_group_driver_ride(
+            message,
+            from_city,
+            to_city,
+            ride_time,
+            seats,
+        )
+
+        if result != "created":
+            return
+
+        await message.reply(
+            "🚗 <b>Safar avtomatik ro‘yxatga olindi!</b>\n\n"
+            f"📍 {from_city} → {to_city}\n"
+            f"🕐 {ride_time}\n"
+            f"💺 Bo‘sh joy: {seats} ta\n\n"
+            "Yo‘lovchi buyurtmalari sizga "
+            "avtomatik yuboriladi.",
+            parse_mode="HTML",
+        )
+
+        return
+
+    # ========================================================
+    # YO‘LOVCHI XABARI
+    # ========================================================
+
+    if passenger:
+
+        if not seats:
+
+            await message.reply(
+                "👥 Nechta yo‘lovchi ekanini ham yozing.\n\n"
+                "Masalan: <b>2 kishi</b>",
+                parse_mode="HTML",
+            )
+
+            return
+
+        if seats > PASSENGER_LIMIT:
+
+            await message.reply(
+                f"❗ Hozircha bir buyurtmada "
+                f"1–{PASSENGER_LIMIT} kishi qabul qilinadi."
+            )
+
+            return
+
+        request_id, sent_count = await create_group_passenger_request(
+            message,
+            from_city,
+            to_city,
+            ride_time,
+            seats,
+            phone,
+        )
+
+        # ====================================================
+        # GURUHGA NORMALIZATSIYA QILINGAN XABAR
+        # ====================================================
+
+        if sent_count:
+
+            phone_text = (
+                "📞 Telefon raqami qabul qilindi."
+                if phone
+                else
+                "📞 Telefon raqami topilmadi."
+            )
+
+            await message.reply(
+                "🚕 <b>BUYURTMA QABUL QILINDI</b>\n\n"
+                f"📍 Yo‘nalish: "
+                f"<b>{from_city} → {to_city}</b>\n"
+                f"🕐 Vaqt: <b>{ride_time}</b>\n"
+                f"👥 Yo‘lovchi: <b>{seats} kishi</b>\n"
+                f"{phone_text}\n\n"
+                f"🚕 <b>{sent_count} ta taksichiga</b> "
+                "avtomatik yuborildi.\n\n"
+                "Taksichi buyurtmani qabul qilganda "
+                "yo‘lovchiga avtomatik xabar yuboriladi.",
+                parse_mode="HTML",
+            )
+
+        else:
+
+            await message.reply(
+                "🔎 <b>Buyurtma ro‘yxatga olindi.</b>\n\n"
+                f"📍 {from_city} → {to_city}\n"
+                f"🕐 {ride_time}\n"
+                f"👥 {seats} kishi\n\n"
+                "😔 Hozircha mos bo‘sh taksi topilmadi.\n"
+                "Buyurtma qidiruvda qoladi.",
+                parse_mode="HTML",
+            )
+
+
+# ============================================================
+# ADMIN GROUP INFO
+# ============================================================
+
+@dp.message(Command("groupid"))
+async def group_id(
+    message: Message,
+):
+
+    if message.from_user.id not in ADMIN_IDS:
+        return
+
+    await message.answer(
+        f"💬 <b>Chat ID:</b>\n"
+        f"<code>{message.chat.id}</code>",
+        parse_mode="HTML",
+    )
+
+
+# ============================================================
+# ADMIN BROADCAST
+# ============================================================
+
+@dp.message(Command("stats"))
+async def stats_command(
+    message: Message,
+):
+
+    if message.from_user.id not in ADMIN_IDS:
+        return
+
+    users = await db_execute(
+        """
+        SELECT COUNT(*) AS c
+        FROM users
+        """,
+        fetchone=True,
+    )
+
+    drivers = await db_execute(
+        """
+        SELECT COUNT(*) AS c
+        FROM driver_profiles
+        """,
+        fetchone=True,
+    )
+
+    requests = await db_execute(
+        """
+        SELECT COUNT(*) AS c
+        FROM passenger_requests
+        """,
+        fetchone=True,
+    )
+
+    rides = await db_execute(
+        """
+        SELECT COUNT(*) AS c
+        FROM rides
+        """,
+        fetchone=True,
+    )
+
+    groups = await db_execute(
+        """
+        SELECT COUNT(DISTINCT chat_id) AS c
+        FROM group_messages
+        """,
+        fetchone=True,
+    )
+
+    await message.answer(
+        "📊 <b>OPPER TAXI STATISTIKA</b>\n\n"
+        f"👥 Users: {users['c']}\n"
+        f"🚗 Drivers: {drivers['c']}\n"
+        f"🔎 Requests: {requests['c']}\n"
+        f"🚕 Rides: {rides['c']}\n"
+        f"💬 Groups: {groups['c']}",
+        parse_mode="HTML",
+    )
+
+
+# ============================================================
+# FALLBACK
+# ============================================================
+
+@dp.message()
+async def fallback(
+    message: Message,
+):
+
+    await message.answer(
+        "❓ Buyruqni tushunmadim.\n\n"
         "Iltimos, menyudagi tugmalardan foydalaning.",
         reply_markup=main_menu(),
     )
 
 
-# =========================================================
-# RUN
-# =========================================================
+# ============================================================
+# RAILWAY WEB SERVER
+# ============================================================
+
+async def health_handler(
+    request,
+):
+
+    return web.Response(
+        text="OPPER TAXI BOT OK"
+    )
+
+
+async def start_web_server():
+
+    app = web.Application()
+
+    app.router.add_get(
+        "/",
+        health_handler,
+    )
+
+    port = int(
+        os.getenv(
+            "PORT",
+            "8080",
+        )
+    )
+
+    runner = web.AppRunner(
+        app
+    )
+
+    await runner.setup()
+
+    site = web.TCPSite(
+        runner,
+        "0.0.0.0",
+        port,
+    )
+
+    await site.start()
+
+    print(
+        f"WEB SERVER RUNNING ON PORT {port}"
+    )
+
+
+# ============================================================
+# MAIN
+# ============================================================
 
 async def main():
+
+    print(
+        "======================================"
+    )
+
+    print(
+        "OPPER TAXI BOT STARTING..."
+    )
+
+    print(
+        "======================================"
+    )
+
     await init_db()
 
-    print("OPPER TAXI BOT IS RUNNING...")
+    print(
+        "DATABASE READY"
+    )
+
+    await start_web_server()
+
+    print(
+        "WEB SERVER READY"
+    )
+
+    print(
+        "BOT POLLING STARTED"
+    )
 
     await dp.start_polling(
         bot,
-        allowed_updates=dp.resolve_used_update_types(),
+        allowed_updates=
+        dp.resolve_used_update_types(),
     )
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+
+    try:
+
+        asyncio.run(
+            main()
+        )
+
+    except KeyboardInterrupt:
+
+        print(
+            "BOT STOPPED"
+        )
