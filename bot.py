@@ -52,14 +52,13 @@ INDEX_FILE = WEB_DIR / "index.html"
 
 PORT = int(os.getenv("PORT", "8080"))
 
-# Railway'da MINII_APP_URL berish mumkin:
-# https://your-app.up.railway.app
-#
-# Agar berilmasa RAILWAY_PUBLIC_DOMAIN'dan foydalanadi.
 MINI_APP_URL = os.getenv("MINI_APP_URL", "").strip()
 
 if not MINI_APP_URL:
-    railway_domain = os.getenv("RAILWAY_PUBLIC_DOMAIN", "").strip()
+    railway_domain = os.getenv(
+        "RAILWAY_PUBLIC_DOMAIN",
+        ""
+    ).strip()
 
     if railway_domain:
         MINI_APP_URL = (
@@ -121,7 +120,7 @@ PASSENGER_LIMIT = 4
 
 
 # =========================================================
-# FSM STATES
+# FSM
 # =========================================================
 
 class PassengerState(StatesGroup):
@@ -150,11 +149,13 @@ class DriverRideState(StatesGroup):
 
 
 # =========================================================
-# GENERAL HELPERS
+# HELPERS
 # =========================================================
 
 def now():
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return datetime.now().strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
 
 
 def esc(value):
@@ -163,17 +164,34 @@ def esc(value):
     return html.escape(str(value))
 
 
-async def safe_send(user_id, text, **kwargs):
+async def safe_send(
+    user_id,
+    text,
+    **kwargs
+):
     try:
-        return await bot.send_message(user_id, text, **kwargs)
+        return await bot.send_message(
+            user_id,
+            text,
+            **kwargs
+        )
     except Exception as e:
-        print(f"safe_send error {user_id}: {e}")
+        print(
+            f"safe_send error {user_id}: {e}"
+        )
         return None
 
 
-async def notify_admins(text, **kwargs):
+async def notify_admins(
+    text,
+    **kwargs
+):
     for admin_id in ADMIN_IDS:
-        await safe_send(admin_id, text, **kwargs)
+        await safe_send(
+            admin_id,
+            text,
+            **kwargs
+        )
 
 
 # =========================================================
@@ -186,10 +204,16 @@ async def db_execute(
     fetch=False,
     fetchone=False,
 ):
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(
+        DB_PATH
+    ) as db:
+
         db.row_factory = aiosqlite.Row
 
-        cursor = await db.execute(query, params)
+        cursor = await db.execute(
+            query,
+            params
+        )
 
         if fetchone:
             return await cursor.fetchone()
@@ -204,7 +228,9 @@ async def db_execute(
 
 async def init_db():
 
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(
+        DB_PATH
+    ) as db:
 
         await db.execute("""
         CREATE TABLE IF NOT EXISTS users (
@@ -296,10 +322,12 @@ async def init_db():
 
 
 # =========================================================
-# USER FUNCTIONS
+# USERS
 # =========================================================
 
-async def save_user_from_message(message: Message):
+async def save_user_from_message(
+    message: Message
+):
 
     user = message.from_user
 
@@ -307,7 +335,11 @@ async def save_user_from_message(message: Message):
         return
 
     existing = await db_execute(
-        "SELECT user_id FROM users WHERE user_id=?",
+        """
+        SELECT user_id
+        FROM users
+        WHERE user_id=?
+        """,
         (user.id,),
         fetchone=True,
     )
@@ -359,7 +391,11 @@ async def save_user(
 ):
 
     existing = await db_execute(
-        "SELECT user_id FROM users WHERE user_id=?",
+        """
+        SELECT user_id
+        FROM users
+        WHERE user_id=?
+        """,
         (user_id,),
         fetchone=True,
     )
@@ -369,9 +405,18 @@ async def save_user(
         await db_execute(
             """
             UPDATE users
-            SET full_name=COALESCE(NULLIF(?, ''), full_name),
-                username=COALESCE(NULLIF(?, ''), username),
-                phone=COALESCE(NULLIF(?, ''), phone)
+            SET full_name=COALESCE(
+                    NULLIF(?, ''),
+                    full_name
+                ),
+                username=COALESCE(
+                    NULLIF(?, ''),
+                    username
+                ),
+                phone=COALESCE(
+                    NULLIF(?, ''),
+                    phone
+                )
             WHERE user_id=?
             """,
             (
@@ -408,7 +453,11 @@ async def save_user(
 async def get_user(user_id):
 
     return await db_execute(
-        "SELECT * FROM users WHERE user_id=?",
+        """
+        SELECT *
+        FROM users
+        WHERE user_id=?
+        """,
         (user_id,),
         fetchone=True,
     )
@@ -417,7 +466,11 @@ async def get_user(user_id):
 async def get_driver(user_id):
 
     return await db_execute(
-        "SELECT * FROM driver_profiles WHERE user_id=?",
+        """
+        SELECT *
+        FROM driver_profiles
+        WHERE user_id=?
+        """,
         (user_id,),
         fetchone=True,
     )
@@ -426,7 +479,11 @@ async def get_driver(user_id):
 async def get_request(request_id):
 
     return await db_execute(
-        "SELECT * FROM passenger_requests WHERE id=?",
+        """
+        SELECT *
+        FROM passenger_requests
+        WHERE id=?
+        """,
         (request_id,),
         fetchone=True,
     )
@@ -435,7 +492,11 @@ async def get_request(request_id):
 async def get_booking(booking_id):
 
     return await db_execute(
-        "SELECT * FROM bookings WHERE id=?",
+        """
+        SELECT *
+        FROM bookings
+        WHERE id=?
+        """,
         (booking_id,),
         fetchone=True,
     )
@@ -454,22 +515,36 @@ def main_menu():
         rows.append([
             KeyboardButton(
                 text="🚕 OPPER TAXI",
-                web_app=WebAppInfo(url=MINI_APP_URL),
+                web_app=WebAppInfo(
+                    url=MINI_APP_URL
+                ),
             )
         ])
 
     rows.extend([
         [
-            KeyboardButton(text="🚕 Taksi chaqirish"),
-            KeyboardButton(text="🚗 Haydovchi bo‘lish"),
+            KeyboardButton(
+                text="🚕 Taksi chaqirish"
+            ),
+            KeyboardButton(
+                text="🚗 Haydovchi bo‘lish"
+            ),
         ],
         [
-            KeyboardButton(text="🔎 Taksilarni qidirish"),
-            KeyboardButton(text="📋 Buyurtmalarim"),
+            KeyboardButton(
+                text="🔎 Taksilarni qidirish"
+            ),
+            KeyboardButton(
+                text="📋 Buyurtmalarim"
+            ),
         ],
         [
-            KeyboardButton(text="👤 Profil"),
-            KeyboardButton(text="ℹ️ Yordam"),
+            KeyboardButton(
+                text="👤 Profil"
+            ),
+            KeyboardButton(
+                text="ℹ️ Yordam"
+            ),
         ],
     ])
 
@@ -484,7 +559,9 @@ def cancel_keyboard():
     return ReplyKeyboardMarkup(
         keyboard=[
             [
-                KeyboardButton(text="❌ Bekor qilish")
+                KeyboardButton(
+                    text="❌ Bekor qilish"
+                )
             ]
         ],
         resize_keyboard=True,
@@ -496,19 +573,33 @@ def city_keyboard():
     return ReplyKeyboardMarkup(
         keyboard=[
             [
-                KeyboardButton(text=CITIES[0]),
-                KeyboardButton(text=CITIES[1]),
+                KeyboardButton(
+                    text=CITIES[0]
+                ),
+                KeyboardButton(
+                    text=CITIES[1]
+                ),
             ],
             [
-                KeyboardButton(text=CITIES[2]),
-                KeyboardButton(text=CITIES[3]),
+                KeyboardButton(
+                    text=CITIES[2]
+                ),
+                KeyboardButton(
+                    text=CITIES[3]
+                ),
             ],
             [
-                KeyboardButton(text=CITIES[4]),
-                KeyboardButton(text=CITIES[5]),
+                KeyboardButton(
+                    text=CITIES[4]
+                ),
+                KeyboardButton(
+                    text=CITIES[5]
+                ),
             ],
             [
-                KeyboardButton(text="❌ Bekor qilish")
+                KeyboardButton(
+                    text="❌ Bekor qilish"
+                )
             ],
         ],
         resize_keyboard=True,
@@ -519,14 +610,21 @@ def time_keyboard():
 
     rows = []
 
-    for i in range(0, len(TIMES), 3):
+    for i in range(
+        0,
+        len(TIMES),
+        3
+    ):
+
         rows.append([
             KeyboardButton(text=x)
             for x in TIMES[i:i + 3]
         ])
 
     rows.append([
-        KeyboardButton(text="❌ Bekor qilish")
+        KeyboardButton(
+            text="❌ Bekor qilish"
+        )
     ])
 
     return ReplyKeyboardMarkup(
@@ -548,7 +646,9 @@ def seats_keyboard():
                 KeyboardButton(text="4"),
             ],
             [
-                KeyboardButton(text="❌ Bekor qilish")
+                KeyboardButton(
+                    text="❌ Bekor qilish"
+                )
             ],
         ],
         resize_keyboard=True,
@@ -566,118 +666,144 @@ def location_keyboard():
                 )
             ],
             [
-                KeyboardButton(text="⏭ O‘tkazib yuborish")
+                KeyboardButton(
+                    text="⏭ O‘tkazib yuborish"
+                )
             ],
             [
-                KeyboardButton(text="❌ Bekor qilish")
+                KeyboardButton(
+                    text="❌ Bekor qilish"
+                )
             ],
         ],
         resize_keyboard=True,
     )
 
 
-def passenger_cancel_keyboard(request_id):
+def passenger_cancel_keyboard(
+    request_id
+):
 
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
                     text="❌ Buyurtmani bekor qilish",
-                    callback_data=f"cancel_request:{request_id}",
+                    callback_data=
+                        f"cancel_request:{request_id}",
                 )
             ]
         ]
     )
 
 
-def driver_request_keyboard(request_id):
+def driver_request_keyboard(
+    request_id
+):
 
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
                     text="✅ Qabul qilish",
-                    callback_data=f"accept_request:{request_id}",
+                    callback_data=
+                        f"accept_request:{request_id}",
                 ),
                 InlineKeyboardButton(
                     text="❌ Rad etish",
-                    callback_data=f"reject_request:{request_id}",
+                    callback_data=
+                        f"reject_request:{request_id}",
                 ),
             ]
         ]
     )
 
 
-def booking_driver_keyboard(booking_id):
+def booking_driver_keyboard(
+    booking_id
+):
 
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
                     text="📍 Lokatsiyamni yuborish",
-                    callback_data=f"driver_location:{booking_id}",
+                    callback_data=
+                        f"driver_location:{booking_id}",
                 )
             ],
             [
                 InlineKeyboardButton(
                     text="🚕 Yetib bordim",
-                    callback_data=f"driver_arrived:{booking_id}",
+                    callback_data=
+                        f"driver_arrived:{booking_id}",
                 )
             ],
             [
                 InlineKeyboardButton(
                     text="👤 Yo‘lovchini oldim",
-                    callback_data=f"driver_onboard:{booking_id}",
+                    callback_data=
+                        f"driver_onboard:{booking_id}",
                 )
             ],
             [
                 InlineKeyboardButton(
                     text="🏁 Safarni tugatish",
-                    callback_data=f"driver_complete:{booking_id}",
+                    callback_data=
+                        f"driver_complete:{booking_id}",
                 )
             ],
             [
                 InlineKeyboardButton(
                     text="❌ Safarni bekor qilish",
-                    callback_data=f"driver_cancel:{booking_id}",
+                    callback_data=
+                        f"driver_cancel:{booking_id}",
                 )
             ],
         ]
     )
 
 
-def passenger_booking_keyboard(booking_id):
+def passenger_booking_keyboard(
+    booking_id
+):
 
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
                     text="📍 Haydovchini kuzatish",
-                    callback_data=f"track_driver:{booking_id}",
+                    callback_data=
+                        f"track_driver:{booking_id}",
                 )
             ],
             [
                 InlineKeyboardButton(
                     text="❌ Safarni bekor qilish",
-                    callback_data=f"passenger_cancel:{booking_id}",
+                    callback_data=
+                        f"passenger_cancel:{booking_id}",
                 )
             ],
         ]
     )
 
 
-def admin_driver_keyboard(user_id):
+def admin_driver_keyboard(
+    user_id
+):
 
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
                     text="✅ Tasdiqlash",
-                    callback_data=f"admin_approve:{user_id}",
+                    callback_data=
+                        f"admin_approve:{user_id}",
                 ),
                 InlineKeyboardButton(
                     text="❌ Rad etish",
-                    callback_data=f"admin_reject:{user_id}",
+                    callback_data=
+                        f"admin_reject:{user_id}",
                 ),
             ]
         ]
@@ -696,21 +822,18 @@ async def start_handler(
 
     await state.clear()
 
-    await save_user_from_message(message)
+    await save_user_from_message(
+        message
+    )
 
-    text = (
+    await message.answer(
         "🚕 <b>OPPER TAXI</b>\n\n"
         "Assalomu alaykum!\n"
         "OPPER TAXI xizmatiga xush kelibsiz.\n\n"
         "📍 Shaharlararo taksi\n"
         "🚗 Haydovchilar\n"
         "👤 Yo‘lovchilar\n"
-        "📍 Lokatsiya\n"
-        "📱 Mini App"
-    )
-
-    await message.answer(
-        text,
+        "📱 Mini App",
         reply_markup=main_menu(),
     )
 
@@ -719,7 +842,9 @@ async def start_handler(
 # CANCEL
 # =========================================================
 
-@dp.message(F.text == "❌ Bekor qilish")
+@dp.message(
+    F.text == "❌ Bekor qilish"
+)
 async def cancel_handler(
     message: Message,
     state: FSMContext,
@@ -734,10 +859,12 @@ async def cancel_handler(
 
 
 # =========================================================
-# PASSENGER - BOT
+# PASSENGER
 # =========================================================
 
-@dp.message(F.text == "🚕 Taksi chaqirish")
+@dp.message(
+    F.text == "🚕 Taksi chaqirish"
+)
 async def taxi_start(
     message: Message,
     state: FSMContext,
@@ -755,7 +882,9 @@ async def taxi_start(
     )
 
 
-@dp.message(PassengerState.from_city)
+@dp.message(
+    PassengerState.from_city
+)
 async def passenger_from(
     message: Message,
     state: FSMContext,
@@ -783,7 +912,9 @@ async def passenger_from(
     )
 
 
-@dp.message(PassengerState.to_city)
+@dp.message(
+    PassengerState.to_city
+)
 async def passenger_to(
     message: Message,
     state: FSMContext,
@@ -802,7 +933,8 @@ async def passenger_to(
     if message.text == data["from_city"]:
 
         await message.answer(
-            "❗ Qayerdan va qayerga shaharlari bir xil bo‘lishi mumkin emas.",
+            "❗ Qayerdan va qayerga "
+            "shaharlari bir xil bo‘lishi mumkin emas.",
             reply_markup=city_keyboard(),
         )
         return
@@ -821,7 +953,9 @@ async def passenger_to(
     )
 
 
-@dp.message(PassengerState.time)
+@dp.message(
+    PassengerState.time
+)
 async def passenger_time(
     message: Message,
     state: FSMContext,
@@ -849,13 +983,20 @@ async def passenger_time(
     )
 
 
-@dp.message(PassengerState.seats)
+@dp.message(
+    PassengerState.seats
+)
 async def passenger_seats(
     message: Message,
     state: FSMContext,
 ):
 
-    if message.text not in {"1", "2", "3", "4"}:
+    if message.text not in {
+        "1",
+        "2",
+        "3",
+        "4",
+    }:
 
         await message.answer(
             "1 dan 4 gacha tanlang.",
@@ -877,7 +1018,9 @@ async def passenger_seats(
     )
 
 
-@dp.message(PassengerState.name)
+@dp.message(
+    PassengerState.name
+)
 async def passenger_name(
     message: Message,
     state: FSMContext,
@@ -906,7 +1049,9 @@ async def passenger_name(
                     )
                 ],
                 [
-                    KeyboardButton(text="❌ Bekor qilish")
+                    KeyboardButton(
+                        text="❌ Bekor qilish"
+                    )
                 ],
             ],
             resize_keyboard=True,
@@ -914,19 +1059,22 @@ async def passenger_name(
     )
 
 
-@dp.message(PassengerState.phone)
+@dp.message(
+    PassengerState.phone
+)
 async def passenger_phone(
     message: Message,
     state: FSMContext,
 ):
-
-    phone = ""
 
     if message.contact:
         phone = message.contact.phone_number
 
     elif message.text:
         phone = message.text.strip()
+
+    else:
+        phone = ""
 
     if not phone:
 
@@ -995,16 +1143,20 @@ async def create_passenger_request(
 
     await save_user(
         user_id=user_id,
-        phone=phone,
         full_name=name,
+        phone=phone,
     )
 
     return request_id
 
 
-async def notify_matching_drivers(request_id):
+async def notify_matching_drivers(
+    request_id
+):
 
-    request = await get_request(request_id)
+    request = await get_request(
+        request_id
+    )
 
     if not request:
         return 0
@@ -1018,6 +1170,7 @@ async def notify_matching_drivers(request_id):
             d.car_model,
             d.car_number,
             d.seats,
+            d.rating,
             r.id AS ride_id,
             r.available_seats
         FROM driver_profiles d
@@ -1048,8 +1201,10 @@ async def notify_matching_drivers(request_id):
             "🚕 <b>YANGI BUYURTMA!</b>\n\n"
             f"📍 {esc(request['from_city'])} → "
             f"{esc(request['to_city'])}\n"
-            f"🕐 Vaqt: <b>{esc(request['ride_time'])}</b>\n"
-            f"👥 Yo‘lovchilar: <b>{request['seats']}</b>\n"
+            f"🕐 Vaqt: <b>"
+            f"{esc(request['ride_time'])}</b>\n"
+            f"👥 Yo‘lovchilar: "
+            f"<b>{request['seats']}</b>\n"
             f"👤 Ism: {esc(request['name'])}\n"
             f"📞 Telefon: {esc(request['phone'])}\n\n"
             "Buyurtmani qabul qilasizmi?"
@@ -1058,9 +1213,10 @@ async def notify_matching_drivers(request_id):
         result = await safe_send(
             driver["user_id"],
             text,
-            reply_markup=driver_request_keyboard(
-                request_id
-            ),
+            reply_markup=
+                driver_request_keyboard(
+                    request_id
+                ),
         )
 
         if result:
@@ -1104,8 +1260,7 @@ async def finish_passenger_request(
             f"{esc(data['to_city'])}\n"
             f"🕐 {esc(data['time'])}\n"
             f"👥 {data['seats']} kishi\n\n"
-            "🚗 Hozir haydovchilar qidirilmoqda.\n"
-            "Haydovchi buyurtmani qabul qilganda sizga xabar keladi.",
+            "🚗 Haydovchilarga buyurtma yuborildi.",
             reply_markup=main_menu(),
         )
 
@@ -1113,20 +1268,23 @@ async def finish_passenger_request(
 
         await message.answer(
             "🔎 <b>Hozircha mos haydovchi topilmadi.</b>\n\n"
-            "Buyurtmangiz qidiruvda qoladi. "
-            "Mos haydovchi paydo bo‘lsa, buyurtma yuboriladi.",
+            "Buyurtmangiz qidiruvda qoladi.",
             reply_markup=main_menu(),
         )
 
         await message.answer(
             "Buyurtmani bekor qilish:",
-            reply_markup=passenger_cancel_keyboard(
-                request_id
-            ),
+            reply_markup=
+                passenger_cancel_keyboard(
+                    request_id
+                ),
         )
 
 
-@dp.message(PassengerState.location, F.location)
+@dp.message(
+    PassengerState.location,
+    F.location
+)
 async def passenger_location(
     message: Message,
     state: FSMContext,
@@ -1135,12 +1293,16 @@ async def passenger_location(
     await finish_passenger_request(
         message,
         state,
-        latitude=message.location.latitude,
-        longitude=message.location.longitude,
+        latitude=
+            message.location.latitude,
+        longitude=
+            message.location.longitude,
     )
 
 
-@dp.message(PassengerState.location)
+@dp.message(
+    PassengerState.location
+)
 async def passenger_location_skip(
     message: Message,
     state: FSMContext,
@@ -1162,10 +1324,85 @@ async def passenger_location_skip(
 
 
 # =========================================================
-# DRIVER REGISTRATION
+# DRIVER PROFILE
 # =========================================================
 
-@dp.message(F.text == "🚗 Haydovchi bo‘lish")
+async def ensure_driver_profile(
+    user_id,
+    full_name,
+    phone,
+    car_model,
+    car_number,
+    seats,
+):
+
+    existing = await get_driver(
+        user_id
+    )
+
+    if existing:
+
+        await db_execute(
+            """
+            UPDATE driver_profiles
+            SET
+                full_name=?,
+                phone=?,
+                car_model=?,
+                car_number=?,
+                seats=?,
+                status='pending'
+            WHERE user_id=?
+            """,
+            (
+                full_name,
+                phone,
+                car_model,
+                car_number,
+                seats,
+                user_id,
+            ),
+        )
+
+    else:
+
+        await db_execute(
+            """
+            INSERT INTO driver_profiles(
+                user_id,
+                full_name,
+                phone,
+                car_model,
+                car_number,
+                seats,
+                status,
+                rating,
+                trips,
+                created_at
+            )
+            VALUES (
+                ?, ?, ?, ?, ?, ?,
+                'pending',
+                5.0,
+                0,
+                ?
+            )
+            """,
+            (
+                user_id,
+                full_name,
+                phone,
+                car_model,
+                car_number,
+                seats,
+                now(),
+            ),
+        )
+
+
+@dp.message(
+    F.text == "🚗 Haydovchi bo‘lish"
+)
 async def driver_start(
     message: Message,
     state: FSMContext,
@@ -1181,19 +1418,13 @@ async def driver_start(
 
         if driver["status"] == "approved":
 
-            await message.answer(
-                "✅ Siz allaqachon tasdiqlangan haydovchisiz.\n\n"
-                "Safar e’lon qilish uchun "
-                "🚗 Haydovchi bo‘lish tugmasidan foydalanishingiz mumkin.",
-                reply_markup=main_menu(),
-            )
-
             await state.set_state(
                 DriverRideState.from_city
             )
 
             await message.answer(
-                "📍 Qayerdan ketasiz?",
+                "✅ Siz tasdiqlangan haydovchisiz.\n\n"
+                "📍 Safar qayerdan?",
                 reply_markup=city_keyboard(),
             )
 
@@ -1202,17 +1433,11 @@ async def driver_start(
         if driver["status"] == "pending":
 
             await message.answer(
-                "⏳ Haydovchi arizangiz admin tomonidan ko‘rib chiqilmoqda.",
+                "⏳ Haydovchi arizangiz admin tomonidan "
+                "ko‘rib chiqilmoqda.",
                 reply_markup=main_menu(),
             )
             return
-
-        if driver["status"] == "rejected":
-
-            await message.answer(
-                "❌ Oldingi haydovchi arizangiz rad etilgan.\n"
-                "Qaytadan ro‘yxatdan o‘tishingiz mumkin."
-            )
 
     await state.set_state(
         DriverState.full_name
@@ -1225,7 +1450,9 @@ async def driver_start(
     )
 
 
-@dp.message(DriverState.full_name)
+@dp.message(
+    DriverState.full_name
+)
 async def driver_full_name(
     message: Message,
     state: FSMContext,
@@ -1260,21 +1487,25 @@ async def driver_full_name(
     )
 
 
-@dp.message(DriverState.phone)
+@dp.message(
+    DriverState.phone
+)
 async def driver_phone(
     message: Message,
     state: FSMContext,
 ):
 
-    phone = (
-        message.contact.phone_number
-        if message.contact
-        else message.text.strip()
-        if message.text
-        else ""
-    )
+    if message.contact:
+        phone = message.contact.phone_number
+
+    elif message.text:
+        phone = message.text.strip()
+
+    else:
+        phone = ""
 
     if not phone:
+
         await message.answer(
             "Telefon raqamingizni yuboring."
         )
@@ -1294,7 +1525,9 @@ async def driver_phone(
     )
 
 
-@dp.message(DriverState.car_model)
+@dp.message(
+    DriverState.car_model
+)
 async def driver_car_model(
     message: Message,
     state: FSMContext,
@@ -1314,7 +1547,9 @@ async def driver_car_model(
     )
 
 
-@dp.message(DriverState.car_number)
+@dp.message(
+    DriverState.car_number
+)
 async def driver_car_number(
     message: Message,
     state: FSMContext,
@@ -1345,7 +1580,9 @@ async def driver_car_number(
                     KeyboardButton(text="8"),
                 ],
                 [
-                    KeyboardButton(text="❌ Bekor qilish")
+                    KeyboardButton(
+                        text="❌ Bekor qilish"
+                    )
                 ],
             ],
             resize_keyboard=True,
@@ -1353,71 +1590,9 @@ async def driver_car_number(
     )
 
 
-async def ensure_driver_profile(
-    user_id,
-    full_name,
-    phone,
-    car_model,
-    car_number,
-    seats,
-):
-
-    existing = await get_driver(user_id)
-
-    if existing:
-
-        await db_execute(
-            """
-            UPDATE driver_profiles
-            SET full_name=?,
-                phone=?,
-                car_model=?,
-                car_number=?,
-                seats=?,
-                status='pending'
-            WHERE user_id=?
-            """,
-            (
-                full_name,
-                phone,
-                car_model,
-                car_number,
-                seats,
-                user_id,
-            ),
-        )
-
-    else:
-
-        await db_execute(
-            """
-            INSERT INTO driver_profiles(
-                user_id,
-                full_name,
-                phone,
-                car_model,
-                car_number,
-                seats,
-                status,
-                rating,
-                trips,
-                created_at
-            )
-            VALUES (?, ?, ?, ?, ?, ?, 'pending', 5.0, 0, ?)
-            """,
-            (
-                user_id,
-                full_name,
-                phone,
-                car_model,
-                car_number,
-                seats,
-                now(),
-            ),
-        )
-
-
-@dp.message(DriverState.seats)
+@dp.message(
+    DriverState.seats
+)
 async def driver_seats(
     message: Message,
     state: FSMContext,
@@ -1450,26 +1625,23 @@ async def driver_seats(
 
     await message.answer(
         "✅ <b>Haydovchi arizangiz yuborildi.</b>\n\n"
-        "Admin tekshiruvdan o‘tkazadi.\n"
+        "Admin tekshiradi.\n"
         "Tasdiqlangandan keyin safar e’lon qilishingiz mumkin.",
         reply_markup=main_menu(),
     )
 
-    text = (
+    await notify_admins(
         "🚗 <b>YANGI HAYDOVCHI ARIZASI</b>\n\n"
         f"👤 {esc(data['full_name'])}\n"
         f"📞 {esc(data['phone'])}\n"
         f"🚘 {esc(data['car_model'])}\n"
         f"🔢 {esc(data['car_number'])}\n"
         f"👥 O‘rinlar: {seats}\n"
-        f"🆔 Telegram ID: <code>{message.from_user.id}</code>"
-    )
-
-    await notify_admins(
-        text,
-        reply_markup=admin_driver_keyboard(
-            message.from_user.id
-        ),
+        f"🆔 <code>{message.from_user.id}</code>",
+        reply_markup=
+            admin_driver_keyboard(
+                message.from_user.id
+            ),
     )
 
 
@@ -1477,7 +1649,9 @@ async def driver_seats(
 # DRIVER RIDE
 # =========================================================
 
-@dp.message(F.text == "🚗 Safar e’lon qilish")
+@dp.message(
+    F.text == "🚗 Safar e’lon qilish"
+)
 async def driver_ride_start(
     message: Message,
     state: FSMContext,
@@ -1490,7 +1664,8 @@ async def driver_ride_start(
     if not driver or driver["status"] != "approved":
 
         await message.answer(
-            "❗ Avval haydovchi sifatida admin tomonidan tasdiqlanishingiz kerak."
+            "❗ Avval haydovchi sifatida "
+            "admin tomonidan tasdiqlanishingiz kerak."
         )
         return
 
@@ -1504,13 +1679,16 @@ async def driver_ride_start(
     )
 
 
-@dp.message(DriverRideState.from_city)
+@dp.message(
+    DriverRideState.from_city
+)
 async def ride_from(
     message: Message,
     state: FSMContext,
 ):
 
     if message.text not in CITIES:
+
         await message.answer(
             "Shaharni tanlang.",
             reply_markup=city_keyboard(),
@@ -1531,13 +1709,16 @@ async def ride_from(
     )
 
 
-@dp.message(DriverRideState.to_city)
+@dp.message(
+    DriverRideState.to_city
+)
 async def ride_to(
     message: Message,
     state: FSMContext,
 ):
 
     if message.text not in CITIES:
+
         await message.answer(
             "Shaharni tanlang.",
             reply_markup=city_keyboard(),
@@ -1549,7 +1730,8 @@ async def ride_to(
     if message.text == data["from_city"]:
 
         await message.answer(
-            "Qayerdan va qayerga bir xil bo‘lishi mumkin emas."
+            "Qayerdan va qayerga "
+            "bir xil bo‘lishi mumkin emas."
         )
         return
 
@@ -1567,7 +1749,9 @@ async def ride_to(
     )
 
 
-@dp.message(DriverRideState.time)
+@dp.message(
+    DriverRideState.time
+)
 async def ride_time(
     message: Message,
     state: FSMContext,
@@ -1595,13 +1779,20 @@ async def ride_time(
     )
 
 
-@dp.message(DriverRideState.seats)
+@dp.message(
+    DriverRideState.seats
+)
 async def ride_seats(
     message: Message,
     state: FSMContext,
 ):
 
-    if message.text not in {"1", "2", "3", "4"}:
+    if message.text not in {
+        "1",
+        "2",
+        "3",
+        "4",
+    }:
 
         await message.answer(
             "1 dan 4 gacha tanlang.",
@@ -1616,7 +1807,9 @@ async def ride_seats(
     )
 
     if not driver:
+
         await state.clear()
+
         await message.answer(
             "Haydovchi profili topilmadi."
         )
@@ -1677,7 +1870,10 @@ async def create_driver_ride(
             status,
             created_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, 0, 'active', ?)
+        VALUES (
+            ?, ?, ?, ?, ?,
+            ?, 0, 'active', ?
+        )
         """,
         (
             driver_id,
@@ -1696,7 +1892,11 @@ async def notify_searching_passengers_for_ride(
 ):
 
     ride = await db_execute(
-        "SELECT * FROM rides WHERE id=?",
+        """
+        SELECT *
+        FROM rides
+        WHERE id=?
+        """,
         (ride_id,),
         fetchone=True,
     )
@@ -1732,7 +1932,7 @@ async def notify_searching_passengers_for_ride(
             f"📍 {esc(ride['from_city'])} → "
             f"{esc(ride['to_city'])}\n"
             f"🕐 {esc(ride['ride_time'])}\n\n"
-            "Haydovchi buyurtmangizni qabul qilishi kutilmoqda.",
+            "Mos haydovchi safar e’lon qildi.",
         )
 
 
@@ -1741,7 +1941,9 @@ async def notify_searching_passengers_for_ride(
 # =========================================================
 
 @dp.callback_query(
-    F.data.startswith("accept_request:")
+    F.data.startswith(
+        "accept_request:"
+    )
 )
 async def accept_request(
     callback: CallbackQuery
@@ -1753,7 +1955,9 @@ async def accept_request(
 
     driver_id = callback.from_user.id
 
-    driver = await get_driver(driver_id)
+    driver = await get_driver(
+        driver_id
+    )
 
     if not driver or driver["status"] != "approved":
 
@@ -1763,18 +1967,26 @@ async def accept_request(
         )
         return
 
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(
+        DB_PATH
+    ) as db:
 
         db.row_factory = aiosqlite.Row
 
-        await db.execute("BEGIN IMMEDIATE")
+        await db.execute(
+            "BEGIN IMMEDIATE"
+        )
 
-        request = await db.execute(
-            "SELECT * FROM passenger_requests WHERE id=?",
+        cursor = await db.execute(
+            """
+            SELECT *
+            FROM passenger_requests
+            WHERE id=?
+            """,
             (request_id,),
         )
 
-        request = await request.fetchone()
+        request = await cursor.fetchone()
 
         if not request:
 
@@ -1796,7 +2008,7 @@ async def accept_request(
             )
             return
 
-        ride_cursor = await db.execute(
+        cursor = await db.execute(
             """
             SELECT *
             FROM rides
@@ -1818,7 +2030,7 @@ async def accept_request(
             ),
         )
 
-        ride = await ride_cursor.fetchone()
+        ride = await cursor.fetchone()
 
         if not ride:
 
@@ -1843,8 +2055,10 @@ async def accept_request(
             """
             UPDATE rides
             SET
-                available_seats=available_seats-?,
-                reserved_seats=reserved_seats+?
+                available_seats=
+                    available_seats-?,
+                reserved_seats=
+                    reserved_seats+?
             WHERE id=?
             """,
             (
@@ -1854,7 +2068,7 @@ async def accept_request(
             ),
         )
 
-        booking_id = await db.execute(
+        cursor = await db.execute(
             """
             INSERT INTO bookings(
                 request_id,
@@ -1865,7 +2079,11 @@ async def accept_request(
                 status,
                 created_at
             )
-            VALUES (?, ?, ?, ?, ?, 'accepted', ?)
+            VALUES (
+                ?, ?, ?, ?, ?,
+                'accepted',
+                ?
+            )
             """,
             (
                 request_id,
@@ -1876,6 +2094,8 @@ async def accept_request(
                 now(),
             ),
         )
+
+        booking_id = cursor.lastrowid
 
         await db.commit()
 
@@ -1891,9 +2111,10 @@ async def accept_request(
         f"{esc(request['to_city'])}\n"
         f"🕐 {esc(request['ride_time'])}\n\n"
         "Yo‘lovchi bilan bog‘laning.",
-        reply_markup=booking_driver_keyboard(
-            booking_id
-        ),
+        reply_markup=
+            booking_driver_keyboard(
+                booking_id
+            ),
     )
 
     await safe_send(
@@ -1905,9 +2126,10 @@ async def accept_request(
         f"📞 {esc(driver['phone'])}\n"
         f"⭐ Reyting: {driver['rating']}\n\n"
         "Haydovchi buyurtmangizni qabul qildi.",
-        reply_markup=passenger_booking_keyboard(
-            booking_id
-        ),
+        reply_markup=
+            passenger_booking_keyboard(
+                booking_id
+            ),
     )
 
     await callback.answer(
@@ -1920,7 +2142,9 @@ async def accept_request(
 # =========================================================
 
 @dp.callback_query(
-    F.data.startswith("reject_request:")
+    F.data.startswith(
+        "reject_request:"
+    )
 )
 async def reject_request(
     callback: CallbackQuery
@@ -1938,11 +2162,13 @@ async def reject_request(
 
 
 # =========================================================
-# PASSENGER CANCEL REQUEST
+# CANCEL REQUEST
 # =========================================================
 
 @dp.callback_query(
-    F.data.startswith("cancel_request:")
+    F.data.startswith(
+        "cancel_request:"
+    )
 )
 async def cancel_request(
     callback: CallbackQuery
@@ -1957,6 +2183,7 @@ async def cancel_request(
     )
 
     if not request:
+
         await callback.answer(
             "Buyurtma topilmadi.",
             show_alert=True,
@@ -2007,10 +2234,12 @@ async def cancel_request(
             """
             UPDATE rides
             SET
-                available_seats=available_seats+?,
+                available_seats=
+                    available_seats+?,
                 reserved_seats=
                     CASE
-                        WHEN reserved_seats>=? THEN reserved_seats-?
+                        WHEN reserved_seats>=?
+                        THEN reserved_seats-?
                         ELSE 0
                     END
             WHERE id=?
@@ -2045,18 +2274,16 @@ async def cancel_request(
 # =========================================================
 
 @dp.callback_query(
-    F.data.startswith("driver_location:")
+    F.data.startswith(
+        "driver_location:"
+    )
 )
 async def driver_location_request(
     callback: CallbackQuery
 ):
 
-    booking_id = int(
-        callback.data.split(":")[1]
-    )
-
     await callback.message.answer(
-        "📍 Telegram orqali hozirgi lokatsiyangizni yuboring.",
+        "📍 Hozirgi lokatsiyangizni yuboring.",
         reply_markup=ReplyKeyboardMarkup(
             keyboard=[
                 [
@@ -2086,7 +2313,11 @@ async def general_location_handler(
         FROM bookings
         WHERE
             driver_id=?
-            AND status IN ('accepted', 'arrived', 'onboard')
+            AND status IN (
+                'accepted',
+                'arrived',
+                'onboard'
+            )
         ORDER BY id DESC
         LIMIT 1
         """,
@@ -2101,8 +2332,8 @@ async def general_location_handler(
         )
         return
 
-    lat = message.location.latitude
-    lon = message.location.longitude
+    latitude = message.location.latitude
+    longitude = message.location.longitude
 
     await db_execute(
         """
@@ -2113,27 +2344,31 @@ async def general_location_handler(
         WHERE id=?
         """,
         (
-            lat,
-            lon,
+            latitude,
+            longitude,
             booking["id"],
         ),
     )
 
     await safe_send(
         booking["passenger_id"],
-        "📍 <b>Haydovchi lokatsiyasini yangiladi.</b>",
+        "📍 <b>Haydovchi lokatsiyasini yangiladi.</b>"
     )
 
     try:
 
         await bot.send_location(
             booking["passenger_id"],
-            latitude=lat,
-            longitude=lon,
+            latitude=latitude,
+            longitude=longitude,
         )
 
     except Exception as e:
-        print("send location error:", e)
+
+        print(
+            "send location error:",
+            e,
+        )
 
     await message.answer(
         "✅ Lokatsiyangiz yo‘lovchiga yuborildi.",
@@ -2146,7 +2381,9 @@ async def general_location_handler(
 # =========================================================
 
 @dp.callback_query(
-    F.data.startswith("driver_arrived:")
+    F.data.startswith(
+        "driver_arrived:"
+    )
 )
 async def driver_arrived(
     callback: CallbackQuery
@@ -2161,6 +2398,7 @@ async def driver_arrived(
     )
 
     if not booking:
+
         await callback.answer(
             "Buyurtma topilmadi."
         )
@@ -2186,7 +2424,9 @@ async def driver_arrived(
 
 
 @dp.callback_query(
-    F.data.startswith("driver_onboard:")
+    F.data.startswith(
+        "driver_onboard:"
+    )
 )
 async def driver_onboard(
     callback: CallbackQuery
@@ -2201,6 +2441,7 @@ async def driver_onboard(
     )
 
     if not booking:
+
         await callback.answer(
             "Buyurtma topilmadi."
         )
@@ -2227,7 +2468,9 @@ async def driver_onboard(
 
 
 @dp.callback_query(
-    F.data.startswith("driver_complete:")
+    F.data.startswith(
+        "driver_complete:"
+    )
 )
 async def driver_complete(
     callback: CallbackQuery
@@ -2242,6 +2485,7 @@ async def driver_complete(
     )
 
     if not booking:
+
         await callback.answer(
             "Buyurtma topilmadi."
         )
@@ -2277,7 +2521,9 @@ async def driver_complete(
 
 
 @dp.callback_query(
-    F.data.startswith("driver_cancel:")
+    F.data.startswith(
+        "driver_cancel:"
+    )
 )
 async def driver_cancel(
     callback: CallbackQuery
@@ -2292,6 +2538,7 @@ async def driver_cancel(
     )
 
     if not booking:
+
         await callback.answer(
             "Buyurtma topilmadi."
         )
@@ -2319,10 +2566,12 @@ async def driver_cancel(
         """
         UPDATE rides
         SET
-            available_seats=available_seats+?,
+            available_seats=
+                available_seats+?,
             reserved_seats=
                 CASE
-                    WHEN reserved_seats>=? THEN reserved_seats-?
+                    WHEN reserved_seats>=?
+                    THEN reserved_seats-?
                     ELSE 0
                 END
         WHERE id=?
@@ -2353,11 +2602,13 @@ async def driver_cancel(
 
 
 # =========================================================
-# PASSENGER TRACK DRIVER
+# TRACK DRIVER
 # =========================================================
 
 @dp.callback_query(
-    F.data.startswith("track_driver:")
+    F.data.startswith(
+        "track_driver:"
+    )
 )
 async def track_driver(
     callback: CallbackQuery
@@ -2372,13 +2623,14 @@ async def track_driver(
     )
 
     if not booking:
+
         await callback.answer(
             "Buyurtma topilmadi.",
             show_alert=True,
         )
         return
 
-    if not booking["driver_latitude"]:
+    if booking["driver_latitude"] is None:
 
         await callback.answer(
             "Haydovchi hali lokatsiyasini yubormadi.",
@@ -2411,7 +2663,9 @@ async def track_driver(
 # =========================================================
 
 @dp.callback_query(
-    F.data.startswith("passenger_cancel:")
+    F.data.startswith(
+        "passenger_cancel:"
+    )
 )
 async def passenger_cancel_booking(
     callback: CallbackQuery
@@ -2471,10 +2725,12 @@ async def passenger_cancel_booking(
         """
         UPDATE rides
         SET
-            available_seats=available_seats+?,
+            available_seats=
+                available_seats+?,
             reserved_seats=
                 CASE
-                    WHEN reserved_seats>=? THEN reserved_seats-?
+                    WHEN reserved_seats>=?
+                    THEN reserved_seats-?
                     ELSE 0
                 END
         WHERE id=?
@@ -2504,7 +2760,9 @@ async def passenger_cancel_booking(
 # SEARCH RIDES
 # =========================================================
 
-@dp.message(F.text == "🔎 Taksilarni qidirish")
+@dp.message(
+    F.text == "🔎 Taksilarni qidirish"
+)
 async def search_rides(
     message: Message
 ):
@@ -2552,7 +2810,8 @@ async def search_rides(
             f"🚘 {esc(ride['car_model'])}\n"
             f"🔢 {esc(ride['car_number'])}\n"
             f"⭐ {ride['rating']}\n"
-            f"💺 Bo‘sh joy: {ride['available_seats']}\n\n"
+            f"💺 Bo‘sh joy: "
+            f"{ride['available_seats']}\n\n"
         )
 
     await message.answer(
@@ -2565,7 +2824,9 @@ async def search_rides(
 # MY BOOKINGS
 # =========================================================
 
-@dp.message(F.text == "📋 Buyurtmalarim")
+@dp.message(
+    F.text == "📋 Buyurtmalarim"
+)
 async def my_bookings(
     message: Message
 ):
@@ -2620,7 +2881,9 @@ async def my_bookings(
 
     if passenger_bookings:
 
-        text += "<b>👤 Yo‘lovchi sifatida:</b>\n\n"
+        text += (
+            "<b>👤 Yo‘lovchi sifatida:</b>\n\n"
+        )
 
         for b in passenger_bookings:
 
@@ -2629,7 +2892,8 @@ async def my_bookings(
                 f"{esc(b['from_city'])} → "
                 f"{esc(b['to_city'])}\n"
                 f"🕐 {esc(b['ride_time'])}\n"
-                f"📌 Holat: {esc(b['status'])}\n"
+                f"📌 Holat: "
+                f"{esc(b['status'])}\n"
             )
 
             if b["driver_name"]:
@@ -2643,7 +2907,9 @@ async def my_bookings(
 
     if driver_bookings:
 
-        text += "<b>🚗 Haydovchi sifatida:</b>\n\n"
+        text += (
+            "<b>🚗 Haydovchi sifatida:</b>\n\n"
+        )
 
         for b in driver_bookings:
 
@@ -2654,12 +2920,18 @@ async def my_bookings(
                 f"🕐 {esc(b['ride_time'])}\n"
                 f"👤 {esc(b['passenger_name'])}\n"
                 f"📞 {esc(b['passenger_phone'])}\n"
-                f"📌 Holat: {esc(b['status'])}\n\n"
+                f"📌 Holat: "
+                f"{esc(b['status'])}\n\n"
             )
 
-    if not passenger_bookings and not driver_bookings:
+    if (
+        not passenger_bookings
+        and not driver_bookings
+    ):
 
-        text += "Hozircha buyurtmalar yo‘q."
+        text += (
+            "Hozircha buyurtmalar yo‘q."
+        )
 
     await message.answer(
         text,
@@ -2671,24 +2943,34 @@ async def my_bookings(
 # PROFILE
 # =========================================================
 
-@dp.message(F.text == "👤 Profil")
+@dp.message(
+    F.text == "👤 Profil"
+)
 async def profile(
     message: Message
 ):
 
     user_id = message.from_user.id
 
-    user = await get_user(user_id)
-    driver = await get_driver(user_id)
+    user = await get_user(
+        user_id
+    )
+
+    driver = await get_driver(
+        user_id
+    )
 
     text = "👤 <b>Profil</b>\n\n"
 
     if user:
 
         text += (
-            f"👤 Ism: {esc(user['full_name'])}\n"
-            f"📞 Telefon: {esc(user['phone'])}\n"
-            f"🆔 ID: <code>{user_id}</code>\n"
+            f"👤 Ism: "
+            f"{esc(user['full_name'])}\n"
+            f"📞 Telefon: "
+            f"{esc(user['phone'])}\n"
+            f"🆔 ID: "
+            f"<code>{user_id}</code>\n"
         )
 
     if driver:
@@ -2699,9 +2981,12 @@ async def profile(
             f"🚘 {esc(driver['car_model'])}\n"
             f"🔢 {esc(driver['car_number'])}\n"
             f"👥 O‘rin: {driver['seats']}\n"
-            f"📌 Status: {esc(driver['status'])}\n"
-            f"⭐ Reyting: {driver['rating']}\n"
-            f"🏁 Safarlar: {driver['trips']}\n"
+            f"📌 Status: "
+            f"{esc(driver['status'])}\n"
+            f"⭐ Reyting: "
+            f"{driver['rating']}\n"
+            f"🏁 Safarlar: "
+            f"{driver['trips']}\n"
         )
 
     await message.answer(
@@ -2714,19 +2999,27 @@ async def profile(
 # HELP
 # =========================================================
 
-@dp.message(F.text == "ℹ️ Yordam")
+@dp.message(
+    F.text == "ℹ️ Yordam"
+)
 async def help_handler(
     message: Message
 ):
 
     await message.answer(
         "ℹ️ <b>OPPER TAXI yordam</b>\n\n"
-        "🚕 <b>Taksi chaqirish</b> — yo‘lovchi sifatida buyurtma berish.\n\n"
-        "🚗 <b>Haydovchi bo‘lish</b> — haydovchi sifatida ro‘yxatdan o‘tish.\n\n"
-        "🔎 <b>Taksilarni qidirish</b> — faol safarlarni ko‘rish.\n\n"
-        "📋 <b>Buyurtmalarim</b> — buyurtmalar tarixi.\n\n"
-        "👤 <b>Profil</b> — shaxsiy ma’lumotlar.\n\n"
-        "📱 <b>OPPER TAXI</b> — Mini App orqali tezkor foydalanish.",
+        "🚕 <b>Taksi chaqirish</b> — "
+        "yo‘lovchi sifatida buyurtma berish.\n\n"
+        "🚗 <b>Haydovchi bo‘lish</b> — "
+        "haydovchi sifatida ro‘yxatdan o‘tish.\n\n"
+        "🔎 <b>Taksilarni qidirish</b> — "
+        "faol safarlarni ko‘rish.\n\n"
+        "📋 <b>Buyurtmalarim</b> — "
+        "buyurtmalar tarixi.\n\n"
+        "👤 <b>Profil</b> — "
+        "shaxsiy ma’lumotlar.\n\n"
+        "📱 <b>OPPER TAXI</b> — "
+        "Mini App orqali foydalanish.",
         reply_markup=main_menu(),
     )
 
@@ -2735,7 +3028,9 @@ async def help_handler(
 # ADMIN
 # =========================================================
 
-@dp.message(Command("drivers"))
+@dp.message(
+    Command("drivers")
+)
 async def pending_drivers(
     message: Message
 ):
@@ -2756,31 +3051,31 @@ async def pending_drivers(
     if not drivers:
 
         await message.answer(
-            "⏳ Kutilayotgan haydovchi arizalari yo‘q."
+            "⏳ Kutilayotgan haydovchi "
+            "arizalari yo‘q."
         )
         return
 
     for driver in drivers:
 
-        text = (
+        await message.answer(
             "🚗 <b>Haydovchi arizasi</b>\n\n"
             f"👤 {esc(driver['full_name'])}\n"
             f"📞 {esc(driver['phone'])}\n"
             f"🚘 {esc(driver['car_model'])}\n"
             f"🔢 {esc(driver['car_number'])}\n"
             f"👥 O‘rin: {driver['seats']}\n"
-            f"🆔 <code>{driver['user_id']}</code>"
-        )
-
-        await message.answer(
-            text,
-            reply_markup=admin_driver_keyboard(
-                driver["user_id"]
-            ),
+            f"🆔 <code>{driver['user_id']}</code>",
+            reply_markup=
+                admin_driver_keyboard(
+                    driver["user_id"]
+                ),
         )
 
 
-@dp.message(Command("admin"))
+@dp.message(
+    Command("admin")
+)
 async def admin_panel(
     message: Message
 ):
@@ -2789,7 +3084,10 @@ async def admin_panel(
         return
 
     users = await db_execute(
-        "SELECT COUNT(*) AS c FROM users",
+        """
+        SELECT COUNT(*) AS c
+        FROM users
+        """,
         fetchone=True,
     )
 
@@ -2832,15 +3130,20 @@ async def admin_panel(
     await message.answer(
         "👑 <b>OPPER TAXI ADMIN</b>\n\n"
         f"👤 Foydalanuvchilar: {users['c']}\n"
-        f"🚗 Tasdiqlangan haydovchilar: {drivers['c']}\n"
-        f"⏳ Kutilayotgan haydovchilar: {pending['c']}\n"
+        f"🚗 Tasdiqlangan haydovchilar: "
+        f"{drivers['c']}\n"
+        f"⏳ Kutilayotgan haydovchilar: "
+        f"{pending['c']}\n"
         f"🚕 Faol safarlar: {rides['c']}\n"
-        f"🔎 Qidirilayotgan buyurtmalar: {requests['c']}"
+        f"🔎 Qidirilayotgan buyurtmalar: "
+        f"{requests['c']}"
     )
 
 
 @dp.callback_query(
-    F.data.startswith("admin_approve:")
+    F.data.startswith(
+        "admin_approve:"
+    )
 )
 async def admin_approve(
     callback: CallbackQuery
@@ -2858,7 +3161,9 @@ async def admin_approve(
         callback.data.split(":")[1]
     )
 
-    driver = await get_driver(user_id)
+    driver = await get_driver(
+        user_id
+    )
 
     if not driver:
 
@@ -2880,8 +3185,10 @@ async def admin_approve(
     await safe_send(
         user_id,
         "🎉 <b>Tabriklaymiz!</b>\n\n"
-        "Sizning OPPER TAXI haydovchi arizangiz tasdiqlandi.\n\n"
-        "Endi safarlaringizni e’lon qilishingiz mumkin."
+        "Sizning OPPER TAXI haydovchi "
+        "arizangiz tasdiqlandi.\n\n"
+        "Endi safarlaringizni e’lon "
+        "qilishingiz mumkin."
     )
 
     await callback.message.edit_reply_markup(
@@ -2889,7 +3196,8 @@ async def admin_approve(
     )
 
     await callback.message.answer(
-        f"✅ {esc(driver['full_name'])} tasdiqlandi."
+        f"✅ {esc(driver['full_name'])} "
+        "tasdiqlandi."
     )
 
     await callback.answer(
@@ -2898,7 +3206,9 @@ async def admin_approve(
 
 
 @dp.callback_query(
-    F.data.startswith("admin_reject:")
+    F.data.startswith(
+        "admin_reject:"
+    )
 )
 async def admin_reject(
     callback: CallbackQuery
@@ -2916,7 +3226,9 @@ async def admin_reject(
         callback.data.split(":")[1]
     )
 
-    driver = await get_driver(user_id)
+    driver = await get_driver(
+        user_id
+    )
 
     await db_execute(
         """
@@ -2929,8 +3241,8 @@ async def admin_reject(
 
     await safe_send(
         user_id,
-        "❌ OPPER TAXI haydovchi arizangiz "
-        "hozircha tasdiqlanmadi."
+        "❌ OPPER TAXI haydovchi "
+        "arizangiz hozircha tasdiqlanmadi."
     )
 
     await callback.message.edit_reply_markup(
@@ -2940,7 +3252,8 @@ async def admin_reject(
     if driver:
 
         await callback.message.answer(
-            f"❌ {esc(driver['full_name'])} rad etildi."
+            f"❌ {esc(driver['full_name'])} "
+            "rad etildi."
         )
 
     await callback.answer(
@@ -2949,10 +3262,12 @@ async def admin_reject(
 
 
 # =========================================================
-# MINI APP SECURITY
+# TELEGRAM MINI APP SECURITY
 # =========================================================
 
-def validate_telegram_webapp(init_data: str):
+def validate_telegram_webapp(
+    init_data: str
+):
 
     if not init_data:
         return None
@@ -2999,15 +3314,25 @@ def validate_telegram_webapp(init_data: str):
             return None
 
         auth_date = int(
-            parsed.get("auth_date", "0")
+            parsed.get(
+                "auth_date",
+                "0"
+            )
         )
 
-        # 24 soatlik xavfsizlik
-        if abs(time.time() - auth_date) > 86400:
+        if (
+            abs(
+                time.time() - auth_date
+            )
+            > 86400
+        ):
             return None
 
         user = json.loads(
-            parsed.get("user", "{}")
+            parsed.get(
+                "user",
+                "{}"
+            )
         )
 
         if not user.get("id"):
@@ -3028,14 +3353,20 @@ def validate_telegram_webapp(init_data: str):
 async def web_user(request):
 
     try:
+
         data = await request.json()
+
     except Exception:
 
         raise web.HTTPBadRequest(
-            text=json.dumps({
-                "error": "JSON noto‘g‘ri"
-            }),
-            content_type="application/json",
+            text=json.dumps(
+                {
+                    "error":
+                    "JSON noto‘g‘ri"
+                }
+            ),
+            content_type=
+                "application/json",
         )
 
     init_data = data.get(
@@ -3050,17 +3381,23 @@ async def web_user(request):
     if not user:
 
         raise web.HTTPUnauthorized(
-            text=json.dumps({
-                "error":
-                "Telegram autentifikatsiyasi noto‘g‘ri"
-            }),
-            content_type="application/json",
+            text=json.dumps(
+                {
+                    "error":
+                    "Telegram autentifikatsiyasi noto‘g‘ri"
+                }
+            ),
+            content_type=
+                "application/json",
         )
 
     return data, user
 
 
-def json_response(data, status=200):
+def json_response(
+    data,
+    status=200
+):
 
     return web.Response(
         status=status,
@@ -3068,21 +3405,25 @@ def json_response(data, status=200):
             data,
             ensure_ascii=False,
         ),
-        content_type="application/json",
+        content_type=
+            "application/json",
     )
 
 
 # =========================================================
-# MINI APP HOME
+# WEB HOME
 # =========================================================
 
-async def web_index(request):
+async def web_index(
+    request
+):
 
     if not INDEX_FILE.exists():
 
         return web.Response(
             status=500,
-            text="web/index.html topilmadi",
+            text=
+                "web/index.html topilmadi",
         )
 
     return web.FileResponse(
@@ -3091,39 +3432,78 @@ async def web_index(request):
 
 
 # =========================================================
-# MINI APP - PASSENGER ORDER
+# MINI APP PASSENGER
 # =========================================================
 
-async def web_passenger_order(request):
+@dp.message(
+    F.text == "🚕 OPPER TAXI"
+)
+async def mini_app_text_fallback(
+    message: Message
+):
+
+    await message.answer(
+        "📱 OPPER TAXI Mini App tugmasidan foydalaning.",
+        reply_markup=main_menu(),
+    )
+
+
+async def web_passenger_order(
+    request
+):
 
     try:
 
-        data, user = await web_user(request)
+        data, user = await web_user(
+            request
+        )
 
         from_city = str(
-            data.get("from_city", "")
+            data.get(
+                "from_city",
+                ""
+            )
         ).strip()
 
         to_city = str(
-            data.get("to_city", "")
+            data.get(
+                "to_city",
+                ""
+            )
         ).strip()
 
+        # MUHIM:
+        # Frontend ride_time yuboradi.
+        # Eski frontend time yuborsa ham ishlaydi.
         ride_time = str(
-            data.get("time", "")
-        ).strip()
-
-        seats = int(
-            data.get("seats", 1)
-        )
-
-        name = str(
-            data.get("name")
-            or user.get("first_name")
+            data.get("ride_time")
+            or data.get("time")
             or ""
         ).strip()
 
+        try:
+            seats = int(
+                data.get(
+                    "seats",
+                    1
+                )
+            )
+        except:
+            seats = 0
+
+        name = str(
+            data.get("name")
+            or user.get(
+                "first_name",
+                ""
+            )
+        ).strip()
+
         phone = str(
-            data.get("phone", "")
+            data.get(
+                "phone",
+                ""
+            )
         ).strip()
 
         latitude = data.get(
@@ -3189,16 +3569,18 @@ async def web_passenger_order(request):
                 400,
             )
 
-        request_id = await create_passenger_request(
-            user_id=user["id"],
-            from_city=from_city,
-            to_city=to_city,
-            ride_time=ride_time,
-            seats=seats,
-            name=name,
-            phone=phone,
-            latitude=latitude,
-            longitude=longitude,
+        request_id = (
+            await create_passenger_request(
+                user_id=user["id"],
+                from_city=from_city,
+                to_city=to_city,
+                ride_time=ride_time,
+                seats=seats,
+                name=name,
+                phone=phone,
+                latitude=latitude,
+                longitude=longitude,
+            )
         )
 
         count = await notify_matching_drivers(
@@ -3229,56 +3611,82 @@ async def web_passenger_order(request):
             {
                 "ok": False,
                 "error":
-                "Server xatosi"
+                    str(e)
             },
             500,
         )
 
 
 # =========================================================
-# MINI APP - DRIVER REGISTER
+# MINI APP DRIVER REGISTER
 # =========================================================
 
-async def web_driver_register(request):
+async def web_driver_register(
+    request
+):
 
     try:
 
-        data, user = await web_user(request)
+        data, user = await web_user(
+            request
+        )
 
         user_id = user["id"]
 
         full_name = str(
             data.get("full_name")
-            or user.get("first_name")
-            or ""
+            or user.get(
+                "first_name",
+                ""
+            )
         ).strip()
 
         last_name = str(
-            user.get("last_name")
-            or ""
+            user.get(
+                "last_name",
+                ""
+            )
         ).strip()
 
-        if last_name and last_name not in full_name:
+        if last_name:
 
-            full_name = (
-                f"{full_name} {last_name}"
-            ).strip()
+            if last_name not in full_name:
+
+                full_name = (
+                    f"{full_name} "
+                    f"{last_name}"
+                ).strip()
 
         phone = str(
-            data.get("phone", "")
+            data.get(
+                "phone",
+                ""
+            )
         ).strip()
 
         car_model = str(
-            data.get("car_model", "")
+            data.get(
+                "car_model",
+                ""
+            )
         ).strip()
 
         car_number = str(
-            data.get("car_number", "")
+            data.get(
+                "car_number",
+                ""
+            )
         ).strip()
 
-        seats = int(
-            data.get("seats", 4)
-        )
+        try:
+            seats = int(
+                data.get(
+                    "seats",
+                    4
+                )
+            )
+        except:
+            seats = 0
 
         if not full_name:
 
@@ -3340,7 +3748,7 @@ async def web_driver_register(request):
             full_name=full_name,
             username=user.get(
                 "username",
-                "",
+                ""
             ),
             phone=phone,
         )
@@ -3358,27 +3766,25 @@ async def web_driver_register(request):
             seats=seats,
         )
 
-        # Adminlarga faqat yangi yoki rejected profil qayta yuboriladi
         if (
             not old_driver
-            or old_driver["status"] == "rejected"
+            or old_driver["status"]
+            == "rejected"
         ):
 
-            text = (
-                "🚗 <b>MINI APP — YANGI HAYDOVCHI</b>\n\n"
+            await notify_admins(
+                "🚗 <b>MINI APP — "
+                "YANGI HAYDOVCHI</b>\n\n"
                 f"👤 {esc(full_name)}\n"
                 f"📞 {esc(phone)}\n"
                 f"🚘 {esc(car_model)}\n"
                 f"🔢 {esc(car_number)}\n"
                 f"👥 O‘rin: {seats}\n"
-                f"🆔 <code>{user_id}</code>"
-            )
-
-            await notify_admins(
-                text,
-                reply_markup=admin_driver_keyboard(
-                    user_id
-                ),
+                f"🆔 <code>{user_id}</code>",
+                reply_markup=
+                    admin_driver_keyboard(
+                        user_id
+                    ),
             )
 
         return json_response(
@@ -3404,21 +3810,25 @@ async def web_driver_register(request):
             {
                 "ok": False,
                 "error":
-                "Server xatosi"
+                    str(e)
             },
             500,
         )
 
 
 # =========================================================
-# MINI APP - DRIVER RIDE
+# MINI APP DRIVER RIDE
 # =========================================================
 
-async def web_driver_ride(request):
+async def web_driver_ride(
+    request
+):
 
     try:
 
-        data, user = await web_user(request)
+        data, user = await web_user(
+            request
+        )
 
         user_id = user["id"]
 
@@ -3449,22 +3859,39 @@ async def web_driver_ride(request):
             )
 
         from_city = str(
-            data.get("from_city", "")
+            data.get(
+                "from_city",
+                ""
+            )
         ).strip()
 
         to_city = str(
-            data.get("to_city", "")
+            data.get(
+                "to_city",
+                ""
+            )
         ).strip()
 
+        # ENG MUHIM TUZATISH
+        # Mini App ride_time yuboradi.
         ride_time = str(
-            data.get("time", "")
+            data.get("ride_time")
+            or data.get("time")
+            or ""
         ).strip()
 
-        seats = int(
-            data.get("seats", 1)
-        )
+        try:
+            seats = int(
+                data.get(
+                    "seats",
+                    1
+                )
+            )
+        except:
+            seats = 0
 
         if from_city not in CITIES:
+
             return json_response(
                 {
                     "ok": False,
@@ -3475,6 +3902,7 @@ async def web_driver_ride(request):
             )
 
         if to_city not in CITIES:
+
             return json_response(
                 {
                     "ok": False,
@@ -3553,21 +3981,25 @@ async def web_driver_ride(request):
             {
                 "ok": False,
                 "error":
-                "Server xatosi"
+                    str(e)
             },
             500,
         )
 
 
 # =========================================================
-# MINI APP - ORDERS
+# MINI APP ORDERS
 # =========================================================
 
-async def web_orders(request):
+async def web_orders(
+    request
+):
 
     try:
 
-        data, user = await web_user(request)
+        data, user = await web_user(
+            request
+        )
 
         user_id = user["id"]
 
@@ -3647,21 +4079,25 @@ async def web_orders(request):
             {
                 "ok": False,
                 "error":
-                "Server xatosi"
+                    str(e)
             },
             500,
         )
 
 
 # =========================================================
-# MINI APP - PROFILE
+# MINI APP PROFILE
 # =========================================================
 
-async def web_profile(request):
+async def web_profile(
+    request
+):
 
     try:
 
-        data, user = await web_user(request)
+        data, user = await web_user(
+            request
+        )
 
         user_id = user["id"]
 
@@ -3676,22 +4112,24 @@ async def web_profile(request):
         return json_response(
             {
                 "ok": True,
-                "user": dict(db_user)
-                if db_user
-                else {
-                    "user_id": user_id,
-                    "full_name":
-                        user.get(
-                            "first_name",
-                            "",
-                        ),
-                    "username":
-                        user.get(
-                            "username",
-                            "",
-                        ),
-                    "phone": "",
-                },
+                "user":
+                    dict(db_user)
+                    if db_user
+                    else {
+                        "user_id":
+                            user_id,
+                        "full_name":
+                            user.get(
+                                "first_name",
+                                ""
+                            ),
+                        "username":
+                            user.get(
+                                "username",
+                                ""
+                            ),
+                        "phone": "",
+                    },
                 "driver":
                     dict(driver)
                     if driver
@@ -3713,30 +4151,40 @@ async def web_profile(request):
             {
                 "ok": False,
                 "error":
-                "Server xatosi"
+                    str(e)
             },
             500,
         )
 
 
 # =========================================================
-# MINI APP - PROFILE UPDATE
+# MINI APP PROFILE UPDATE
 # =========================================================
 
-async def web_profile_update(request):
+async def web_profile_update(
+    request
+):
 
     try:
 
-        data, user = await web_user(request)
+        data, user = await web_user(
+            request
+        )
 
         user_id = user["id"]
 
         full_name = str(
-            data.get("full_name", "")
+            data.get(
+                "full_name",
+                ""
+            )
         ).strip()
 
         phone = str(
-            data.get("phone", "")
+            data.get(
+                "phone",
+                ""
+            )
         ).strip()
 
         await save_user(
@@ -3744,7 +4192,7 @@ async def web_profile_update(request):
             full_name=full_name,
             username=user.get(
                 "username",
-                "",
+                ""
             ),
             phone=phone,
         )
@@ -3771,21 +4219,25 @@ async def web_profile_update(request):
             {
                 "ok": False,
                 "error":
-                "Server xatosi"
+                    str(e)
             },
             500,
         )
 
 
 # =========================================================
-# MINI APP - ACTIVE RIDES
+# MINI APP RIDES
 # =========================================================
 
-async def web_rides(request):
+async def web_rides(
+    request
+):
 
     try:
 
-        await web_user(request)
+        await web_user(
+            request
+        )
 
         rides = await db_execute(
             """
@@ -3834,25 +4286,44 @@ async def web_rides(request):
             {
                 "ok": False,
                 "error":
-                "Server xatosi"
+                    str(e)
             },
             500,
         )
 
 
 # =========================================================
-# MINI APP - CANCEL REQUEST
+# MINI APP CANCEL
 # =========================================================
 
-async def web_cancel_order(request):
+async def web_cancel_order(
+    request
+):
 
     try:
 
-        data, user = await web_user(request)
-
-        request_id = int(
-            data.get("request_id")
+        data, user = await web_user(
+            request
         )
+
+        try:
+
+            request_id = int(
+                data.get(
+                    "request_id"
+                )
+            )
+
+        except:
+
+            return json_response(
+                {
+                    "ok": False,
+                    "error":
+                    "request_id noto‘g‘ri"
+                },
+                400,
+            )
 
         passenger_request = await get_request(
             request_id
@@ -3869,7 +4340,12 @@ async def web_cancel_order(request):
                 404,
             )
 
-        if passenger_request["passenger_id"] != user["id"]:
+        if (
+            passenger_request[
+                "passenger_id"
+            ]
+            != user["id"]
+        ):
 
             return json_response(
                 {
@@ -3916,10 +4392,12 @@ async def web_cancel_order(request):
                 """
                 UPDATE rides
                 SET
-                    available_seats=available_seats+?,
+                    available_seats=
+                        available_seats+?,
                     reserved_seats=
                         CASE
-                            WHEN reserved_seats>=? THEN reserved_seats-?
+                            WHEN reserved_seats>=?
+                            THEN reserved_seats-?
                             ELSE 0
                         END
                 WHERE id=?
@@ -3959,7 +4437,7 @@ async def web_cancel_order(request):
             {
                 "ok": False,
                 "error":
-                "Server xatosi"
+                    str(e)
             },
             500,
         )
@@ -3986,7 +4464,6 @@ async def start_web_server():
 
     app = web.Application()
 
-    # Frontend
     app.router.add_get(
         "/",
         web_index,
@@ -3997,13 +4474,11 @@ async def start_web_server():
         web_index,
     )
 
-    # Health
     app.router.add_get(
         "/health",
         health_handler,
     )
 
-    # Mini App API
     app.router.add_post(
         "/api/passenger/order",
         web_passenger_order,
@@ -4076,33 +4551,39 @@ async def start_web_server():
 
 
 # =========================================================
-# BOT MENU BUTTON
+# TELEGRAM MINI APP MENU
 # =========================================================
 
 async def setup_bot_menu():
 
     if not MINI_APP_URL:
+
         print(
-            "⚠️ MINI_APP_URL yo‘q. "
-            "Telegram Mini App tugmasi o‘rnatilmadi."
+            "⚠️ MINI_APP_URL yo‘q."
         )
+
         return
 
     try:
 
-        from aiogram.types import MenuButtonWebApp
+        from aiogram.types import (
+            MenuButtonWebApp
+        )
 
         await bot.set_chat_menu_button(
-            menu_button=MenuButtonWebApp(
-                text="OPPER TAXI",
-                web_app=WebAppInfo(
-                    url=MINI_APP_URL
-                ),
-            )
+            menu_button=
+                MenuButtonWebApp(
+                    text="OPPER TAXI",
+                    web_app=
+                        WebAppInfo(
+                            url=MINI_APP_URL
+                        ),
+                )
         )
 
         print(
-            "✅ Telegram Mini App menu button o‘rnatildi."
+            "✅ Telegram Mini App "
+            "menu button o‘rnatildi."
         )
 
     except Exception as e:
@@ -4167,7 +4648,10 @@ async def main():
 if __name__ == "__main__":
 
     try:
-        asyncio.run(main())
+
+        asyncio.run(
+            main()
+        )
 
     except KeyboardInterrupt:
 
