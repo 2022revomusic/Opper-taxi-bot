@@ -2,6 +2,7 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
@@ -11,7 +12,18 @@
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
+    <!-- MAP -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
+
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    ></script>
+
     <style>
+
         * {
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
@@ -70,9 +82,7 @@
             margin: 0 auto;
         }
 
-        /* =================================================
-           TOP BAR
-        ================================================= */
+        /* TOP BAR */
 
         .topbar {
             position: sticky;
@@ -130,11 +140,42 @@
             border-radius: 50%;
 
             font-size: 18px;
+
+            position: relative;
         }
 
-        /* =================================================
-           SCREENS
-        ================================================= */
+        /* notification badge */
+
+        .notification-badge {
+            position: absolute;
+            top: -3px;
+            right: -3px;
+
+            min-width: 18px;
+            height: 18px;
+
+            padding: 0 4px;
+
+            display: none;
+            align-items: center;
+            justify-content: center;
+
+            background: #e5484d;
+            color: white;
+
+            border-radius: 50%;
+
+            font-size: 10px;
+            font-weight: 900;
+
+            border: 2px solid white;
+        }
+
+        .notification-badge.show {
+            display: flex;
+        }
+
+        /* SCREENS */
 
         .screen {
             display: none;
@@ -158,9 +199,7 @@
             }
         }
 
-        /* =================================================
-           HOME
-        ================================================= */
+        /* HOME */
 
         .hero {
             background: var(--yellow);
@@ -258,9 +297,7 @@
             font-size: 12px;
         }
 
-        /* =================================================
-           CARDS
-        ================================================= */
+        /* CARDS */
 
         .card {
             background: #fff;
@@ -277,9 +314,7 @@
             font-weight: 800;
         }
 
-        /* =================================================
-           FORM
-        ================================================= */
+        /* FORM */
 
         .field {
             margin-bottom: 13px;
@@ -331,9 +366,7 @@
             gap: 10px;
         }
 
-        /* =================================================
-           ROUTE
-        ================================================= */
+        /* ROUTE */
 
         .route-box {
             position: relative;
@@ -379,9 +412,7 @@
             background: var(--yellow-dark);
         }
 
-        /* =================================================
-           BUTTONS
-        ================================================= */
+        /* BUTTONS */
 
         .btn {
             width: 100%;
@@ -432,13 +463,16 @@
             color: #087a49;
         }
 
+        .btn-blue {
+            background: #eaf1ff;
+            color: #175fc9;
+        }
+
         .btn + .btn {
             margin-top: 9px;
         }
 
-        /* =================================================
-           SEARCH
-        ================================================= */
+        /* SEARCH */
 
         .search-head {
             margin-bottom: 14px;
@@ -471,9 +505,34 @@
             color: #666;
         }
 
-        /* =================================================
-           RIDE RESULT
-        ================================================= */
+        /* LOCATION */
+
+        .location-box {
+            margin-top: 11px;
+            padding: 12px;
+
+            background: #f7f7f7;
+            border-radius: 15px;
+
+            border: 1px solid #e7e7e7;
+        }
+
+        .location-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            font-size: 12px;
+            color: #666;
+
+            margin-bottom: 9px;
+        }
+
+        .location-status strong {
+            color: #111;
+        }
+
+        /* RIDE RESULT */
 
         .ride-card {
             background: #fff;
@@ -590,11 +649,44 @@
             color: #138453;
 
             font-size: 18px;
+
+            text-decoration: none;
         }
 
-        /* =================================================
-           PROFILE
-        ================================================= */
+        /* STATUS */
+
+        .order-status {
+            margin-top: 12px;
+            padding: 12px;
+
+            background: #f7f7f7;
+            border-radius: 14px;
+
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .order-status.pending {
+            background: #fff7d6;
+            color: #765900;
+        }
+
+        .order-status.accepted {
+            background: #e5f8ef;
+            color: #087a49;
+        }
+
+        .order-status.rejected {
+            background: #ffe8e8;
+            color: #c92e35;
+        }
+
+        .order-status.arriving {
+            background: #eaf1ff;
+            color: #175fc9;
+        }
+
+        /* PROFILE */
 
         .profile-header {
             background: #111;
@@ -632,9 +724,7 @@
             font-size: 13px;
         }
 
-        /* =================================================
-           MY TRIPS
-        ================================================= */
+        /* MY TRIPS */
 
         .trip-card {
             background: #fff;
@@ -666,9 +756,7 @@
             line-height: 1.6;
         }
 
-        /* =================================================
-           EMPTY
-        ================================================= */
+        /* EMPTY */
 
         .empty {
             text-align: center;
@@ -693,9 +781,7 @@
             line-height: 1.5;
         }
 
-        /* =================================================
-           LOADING
-        ================================================= */
+        /* LOADING */
 
         .loading {
             display: flex;
@@ -726,9 +812,7 @@
             }
         }
 
-        /* =================================================
-           TOAST
-        ================================================= */
+        /* TOAST */
 
         .toast {
             position: fixed;
@@ -773,9 +857,7 @@
             background: #c92e35;
         }
 
-        /* =================================================
-           MODAL
-        ================================================= */
+        /* MODAL */
 
         .modal {
             position: fixed;
@@ -835,9 +917,149 @@
             margin-bottom: 15px;
         }
 
-        /* =================================================
-           BOTTOM NAV
-        ================================================= */
+        /* ORDER NOTIFICATION */
+
+        .order-notification {
+            position: fixed;
+            inset: 0;
+            z-index: 500;
+
+            display: none;
+            align-items: center;
+            justify-content: center;
+
+            padding: 16px;
+
+            background: rgba(0,0,0,.58);
+        }
+
+        .order-notification.show {
+            display: flex;
+        }
+
+        .order-notification-card {
+            width: 100%;
+            max-width: 470px;
+
+            background: white;
+            border-radius: 25px;
+
+            padding: 20px;
+
+            box-shadow:
+                0 20px 70px rgba(0,0,0,.3);
+
+            animation: notificationPop .22s ease;
+        }
+
+        @keyframes notificationPop {
+            from {
+                opacity: 0;
+                transform: scale(.94) translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .new-order-icon {
+            width: 65px;
+            height: 65px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            margin: 0 auto 12px;
+
+            background: var(--yellow);
+            border-radius: 20px;
+
+            font-size: 34px;
+
+            animation: pulseOrder 1s infinite;
+        }
+
+        @keyframes pulseOrder {
+            0%,100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.07);
+            }
+        }
+
+        .new-order-title {
+            text-align: center;
+            font-size: 23px;
+            font-weight: 900;
+            margin-bottom: 5px;
+        }
+
+        .new-order-subtitle {
+            text-align: center;
+            color: #777;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        .order-detail {
+            padding: 12px;
+            border-radius: 15px;
+            background: #f7f7f7;
+            margin-bottom: 8px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .order-detail strong {
+            font-weight: 900;
+        }
+
+        .order-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 9px;
+            margin-top: 13px;
+        }
+
+        .order-actions .btn {
+            margin: 0;
+        }
+
+        /* MAP */
+
+        #live-map {
+            width: 100%;
+            height: 300px;
+            border-radius: 18px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .map-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 13px;
+            margin-bottom: 13px;
+        }
+
+        .map-title {
+            font-size: 15px;
+            font-weight: 900;
+            margin-bottom: 4px;
+        }
+
+        .map-subtitle {
+            font-size: 11px;
+            color: #777;
+        }
+
+        /* BOTTOM NAV */
 
         .bottom-nav {
             position: fixed;
@@ -877,6 +1099,8 @@
 
             font-size: 10px;
             font-weight: 700;
+
+            position: relative;
         }
 
         .nav-btn .nav-icon {
@@ -894,9 +1118,33 @@
             padding: 4px 8px;
         }
 
-        /* =================================================
-           DRIVER BADGE
-        ================================================= */
+        .nav-badge {
+            position: absolute;
+            top: 3px;
+            right: 20%;
+
+            display: none;
+
+            min-width: 17px;
+            height: 17px;
+
+            align-items: center;
+            justify-content: center;
+
+            background: #e5484d;
+            color: white;
+
+            border-radius: 50%;
+
+            font-size: 9px;
+            font-weight: 900;
+        }
+
+        .nav-badge.show {
+            display: flex;
+        }
+
+        /* BADGE */
 
         .badge {
             display: inline-flex;
@@ -924,9 +1172,7 @@
             color: #c92e35;
         }
 
-        /* =================================================
-           RESPONSIVE
-        ================================================= */
+        /* RESPONSIVE */
 
         @media (min-width: 600px) {
 
@@ -943,6 +1189,7 @@
                 min-height: 150px;
             }
         }
+
     </style>
 </head>
 
@@ -950,30 +1197,43 @@
 
 <div class="app">
 
-    <!-- =================================================
-         TOP BAR
-    ================================================= -->
+    <!-- TOP BAR -->
 
     <header class="topbar">
 
         <div class="brand">
-            <div class="brand-logo">🚕</div>
-            <div class="brand-text">OPPER TAXI</div>
+
+            <div class="brand-logo">
+                🚕
+            </div>
+
+            <div class="brand-text">
+                OPPER TAXI
+            </div>
+
         </div>
+
 
         <button
             class="profile-mini"
             onclick="showScreen('profile')"
         >
+
             👤
+
+            <span
+                id="notification-badge"
+                class="notification-badge"
+            >
+                0
+            </span>
+
         </button>
 
     </header>
 
 
-    <!-- =================================================
-         HOME
-    ================================================= -->
+    <!-- HOME -->
 
     <section
         id="screen-home"
@@ -982,7 +1242,10 @@
 
         <div class="hero">
 
-            <h1>Yo‘lingiz<br>OPPER bilan.</h1>
+            <h1>
+                Yo‘lingiz<br>
+                OPPER bilan.
+            </h1>
 
             <p>
                 Safar toping yoki o‘zingizning
@@ -1009,11 +1272,15 @@
                 </div>
 
                 <div>
-                    <strong>Safar qidirish</strong>
+
+                    <strong>
+                        Safar qidirish
+                    </strong>
 
                     <span>
                         Kerakli yo‘nalishdagi taksini toping
                     </span>
+
                 </div>
 
             </button>
@@ -1029,11 +1296,15 @@
                 </div>
 
                 <div>
-                    <strong>Haydovchi bo‘lish</strong>
+
+                    <strong>
+                        Haydovchi bo‘lish
+                    </strong>
 
                     <span>
                         O‘z safaringizni qo‘shing
                     </span>
+
                 </div>
 
             </button>
@@ -1054,15 +1325,28 @@
 
             <div class="trip-info">
 
-                <b>1.</b> Haydovchi safarini qo‘shadi.<br>
+                <b>1.</b>
+                Haydovchi safarini qo‘shadi.
+                <br>
 
-                <b>2.</b> Yo‘lovchi yo‘nalishni qidiradi.<br>
+                <b>2.</b>
+                Yo‘lovchi yo‘nalishni qidiradi.
+                <br>
 
-                <b>3.</b> Mavjud mashinalar chiqadi.<br>
+                <b>3.</b>
+                Mavjud mashinalar chiqadi.
+                <br>
 
-                <b>4.</b> Yo‘lovchi joy buyurtma qiladi.<br>
+                <b>4.</b>
+                Yo‘lovchi joy buyurtma qiladi.
+                <br>
 
-                <b>5.</b> Haydovchi bilan bog‘lanadi.
+                <b>5.</b>
+                Haydovchi buyurtmani qabul qiladi.
+                <br>
+
+                <b>6.</b>
+                Yo‘lovchi va haydovchi xaritada ko‘rinadi.
 
             </div>
 
@@ -1071,9 +1355,7 @@
     </section>
 
 
-    <!-- =================================================
-         SEARCH
-    ================================================= -->
+    <!-- SEARCH -->
 
     <section
         id="screen-search"
@@ -1082,7 +1364,9 @@
 
         <div class="search-head">
 
-            <h2>Safar qidirish</h2>
+            <h2>
+                Safar qidirish
+            </h2>
 
             <p>
                 Kerakli yo‘nalishni tanlang.
@@ -1104,15 +1388,19 @@
 
                     <div class="field">
 
-                        <label>Qayerdan?</label>
+                        <label>
+                            Qayerdan?
+                        </label>
 
                         <select
                             id="search-from"
                             class="select"
                         >
+
                             <option value="">
                                 Shaharni tanlang
                             </option>
+
                         </select>
 
                     </div>
@@ -1126,15 +1414,19 @@
 
                     <div class="field">
 
-                        <label>Qayerga?</label>
+                        <label>
+                            Qayerga?
+                        </label>
 
                         <select
                             id="search-to"
                             class="select"
                         >
+
                             <option value="">
                                 Shaharni tanlang
                             </option>
+
                         </select>
 
                     </div>
@@ -1148,7 +1440,9 @@
 
                 <div class="field">
 
-                    <label>Sana</label>
+                    <label>
+                        Sana
+                    </label>
 
                     <input
                         id="search-date"
@@ -1161,7 +1455,9 @@
 
                 <div class="field">
 
-                    <label>Vaqt</label>
+                    <label>
+                        Vaqt
+                    </label>
 
                     <input
                         id="search-time"
@@ -1174,8 +1470,36 @@
             </div>
 
 
+            <!-- LOCATION -->
+
+            <div class="location-box">
+
+                <div class="location-status">
+
+                    <span>
+                        📍
+                    </span>
+
+                    <span id="search-location-status">
+                        Lokatsiya yuborilmagan
+                    </span>
+
+                </div>
+
+
+                <button
+                    class="btn btn-light"
+                    onclick="getPassengerLocation()"
+                >
+                    📍 Lokatsiyamni yuborish
+                </button>
+
+            </div>
+
+
             <button
                 class="btn btn-primary"
+                style="margin-top:11px;"
                 onclick="searchRides()"
             >
                 🔎 Safarlarni topish
@@ -1189,9 +1513,7 @@
     </section>
 
 
-    <!-- =================================================
-         DRIVER
-    ================================================= -->
+    <!-- DRIVER -->
 
     <section
         id="screen-driver"
@@ -1200,7 +1522,9 @@
 
         <div class="search-head">
 
-            <h2>Haydovchi</h2>
+            <h2>
+                Haydovchi
+            </h2>
 
             <p>
                 Ma’lumotlaringizni kiriting va safaringizni qo‘shing.
@@ -1220,7 +1544,9 @@
 
             <div class="field">
 
-                <label>F.I.Sh.</label>
+                <label>
+                    F.I.Sh.
+                </label>
 
                 <input
                     id="driver-name"
@@ -1234,7 +1560,9 @@
 
             <div class="field">
 
-                <label>Telefon raqam</label>
+                <label>
+                    Telefon raqam
+                </label>
 
                 <input
                     id="driver-phone"
@@ -1250,7 +1578,9 @@
 
                 <div class="field">
 
-                    <label>Mashina</label>
+                    <label>
+                        Mashina
+                    </label>
 
                     <input
                         id="driver-car"
@@ -1264,7 +1594,9 @@
 
                 <div class="field">
 
-                    <label>Davlat raqami</label>
+                    <label>
+                        Davlat raqami
+                    </label>
 
                     <input
                         id="driver-number"
@@ -1280,7 +1612,9 @@
 
             <div class="field">
 
-                <label>Bo‘sh joylar</label>
+                <label>
+                    Bo‘sh joylar
+                </label>
 
                 <input
                     id="driver-seats"
@@ -1324,15 +1658,19 @@
 
                     <div class="field">
 
-                        <label>Qayerdan?</label>
+                        <label>
+                            Qayerdan?
+                        </label>
 
                         <select
                             id="driver-from"
                             class="select"
                         >
+
                             <option value="">
                                 Shaharni tanlang
                             </option>
+
                         </select>
 
                     </div>
@@ -1346,15 +1684,19 @@
 
                     <div class="field">
 
-                        <label>Qayerga?</label>
+                        <label>
+                            Qayerga?
+                        </label>
 
                         <select
                             id="driver-to"
                             class="select"
                         >
+
                             <option value="">
                                 Shaharni tanlang
                             </option>
+
                         </select>
 
                     </div>
@@ -1368,7 +1710,9 @@
 
                 <div class="field">
 
-                    <label>Sana</label>
+                    <label>
+                        Sana
+                    </label>
 
                     <input
                         id="driver-date"
@@ -1381,7 +1725,9 @@
 
                 <div class="field">
 
-                    <label>Vaqt</label>
+                    <label>
+                        Vaqt
+                    </label>
 
                     <input
                         id="driver-time"
@@ -1398,7 +1744,9 @@
 
                 <div class="field">
 
-                    <label>Bo‘sh joy</label>
+                    <label>
+                        Bo‘sh joy
+                    </label>
 
                     <input
                         id="ride-seats"
@@ -1414,7 +1762,9 @@
 
                 <div class="field">
 
-                    <label>Narx, so‘m</label>
+                    <label>
+                        Narx, so‘m
+                    </label>
 
                     <input
                         id="ride-price"
@@ -1430,8 +1780,34 @@
             </div>
 
 
+            <!-- DRIVER LOCATION -->
+
+            <div class="location-box">
+
+                <div class="location-status">
+
+                    📍
+
+                    <span id="driver-location-status">
+                        Lokatsiya yuborilmagan
+                    </span>
+
+                </div>
+
+
+                <button
+                    class="btn btn-light"
+                    onclick="startDriverLocation()"
+                >
+                    📍 Lokatsiyamni yuborish
+                </button>
+
+            </div>
+
+
             <button
                 class="btn btn-primary"
+                style="margin-top:11px;"
                 onclick="addRide()"
             >
                 🚕 Safarni e’lon qilish
@@ -1439,12 +1815,17 @@
 
         </div>
 
+
+        <!-- DRIVER INCOMING ORDERS -->
+
+        <div
+            id="driver-orders-area"
+        ></div>
+
     </section>
 
 
-    <!-- =================================================
-         MY TRIPS
-    ================================================= -->
+    <!-- MY TRIPS -->
 
     <section
         id="screen-trips"
@@ -1453,7 +1834,9 @@
 
         <div class="search-head">
 
-            <h2>Mening safarlarim</h2>
+            <h2>
+                Mening safarlarim
+            </h2>
 
             <p>
                 Siz qo‘shgan safarlar va buyurtmalar.
@@ -1477,9 +1860,7 @@
     </section>
 
 
-    <!-- =================================================
-         PROFILE
-    ================================================= -->
+    <!-- PROFILE -->
 
     <section
         id="screen-profile"
@@ -1512,7 +1893,9 @@
 
             <div class="field">
 
-                <label>F.I.Sh.</label>
+                <label>
+                    F.I.Sh.
+                </label>
 
                 <input
                     id="profile-name"
@@ -1526,7 +1909,9 @@
 
             <div class="field">
 
-                <label>Telefon</label>
+                <label>
+                    Telefon
+                </label>
 
                 <input
                     id="profile-phone"
@@ -1570,9 +1955,11 @@
             </div>
 
             <div class="trip-info">
+
                 Haydovchilar o‘z safarlarini e’lon qiladi,
                 yo‘lovchilar esa kerakli yo‘nalish bo‘yicha
                 mavjud safarlarni topadi.
+
             </div>
 
         </div>
@@ -1580,9 +1967,7 @@
     </section>
 
 
-    <!-- =================================================
-         BOTTOM NAV
-    ================================================= -->
+    <!-- BOTTOM NAV -->
 
     <nav class="bottom-nav">
 
@@ -1591,8 +1976,13 @@
             class="nav-btn active"
             onclick="showScreen('home')"
         >
-            <span class="nav-icon">🏠</span>
+
+            <span class="nav-icon">
+                🏠
+            </span>
+
             Bosh sahifa
+
         </button>
 
 
@@ -1601,8 +1991,13 @@
             class="nav-btn"
             onclick="openSearch()"
         >
-            <span class="nav-icon">🔎</span>
+
+            <span class="nav-icon">
+                🔎
+            </span>
+
             Qidirish
+
         </button>
 
 
@@ -1611,8 +2006,20 @@
             class="nav-btn"
             onclick="openTrips()"
         >
-            <span class="nav-icon">📋</span>
+
+            <span class="nav-icon">
+                📋
+            </span>
+
             Safarlar
+
+            <span
+                id="nav-orders-badge"
+                class="nav-badge"
+            >
+                0
+            </span>
+
         </button>
 
 
@@ -1621,8 +2028,13 @@
             class="nav-btn"
             onclick="showScreen('profile')"
         >
-            <span class="nav-icon">👤</span>
+
+            <span class="nav-icon">
+                👤
+            </span>
+
             Profil
+
         </button>
 
     </nav>
@@ -1630,9 +2042,7 @@
 </div>
 
 
-<!-- =====================================================
-     MODAL
-===================================================== -->
+<!-- MODAL -->
 
 <div
     id="modal"
@@ -1647,18 +2057,83 @@
 
         <div class="modal-handle"></div>
 
-        <div
-            id="modal-body"
-        ></div>
+        <div id="modal-body"></div>
 
     </div>
 
 </div>
 
 
-<!-- =====================================================
-     TOAST
-===================================================== -->
+<!-- NEW ORDER -->
+
+<div
+    id="new-order-notification"
+    class="order-notification"
+>
+
+    <div class="order-notification-card">
+
+        <div class="new-order-icon">
+            🔔
+        </div>
+
+
+        <div class="new-order-title">
+            Sizga zakaz tushdi!
+        </div>
+
+
+        <div class="new-order-subtitle">
+            Yangi yo‘lovchi sizning safaringizni tanladi.
+        </div>
+
+
+        <div id="new-order-content"></div>
+
+
+        <div class="order-actions">
+
+            <button
+                class="btn btn-green"
+                onclick="acceptCurrentOrder()"
+            >
+                ✅ Qabul qilish
+            </button>
+
+
+            <button
+                class="btn btn-danger"
+                onclick="rejectCurrentOrder()"
+            >
+                ❌ Rad etish
+            </button>
+
+        </div>
+
+
+        <button
+            id="new-order-call"
+            class="btn btn-dark"
+            style="margin-top:9px;"
+        >
+            📞 Yo‘lovchiga qo‘ng‘iroq
+        </button>
+
+
+        <button
+            class="btn btn-light"
+            style="margin-top:9px;"
+            onclick="closeNewOrderNotification()"
+        >
+            Keyinroq
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- TOAST -->
 
 <div
     id="toast"
@@ -1672,7 +2147,10 @@
        TELEGRAM
     ===================================================== */
 
-    const tg = window.Telegram?.WebApp || null;
+    const tg =
+        window.Telegram?.WebApp ||
+        null;
+
 
     if (tg) {
 
@@ -1681,8 +2159,15 @@
         tg.expand();
 
         try {
-            tg.setHeaderColor("#ffffff");
-            tg.setBackgroundColor("#f6f6f6");
+
+            tg.setHeaderColor(
+                "#ffffff"
+            );
+
+            tg.setBackgroundColor(
+                "#f6f6f6"
+            );
+
         } catch (e) {}
 
     }
@@ -1709,15 +2194,51 @@
        GLOBAL
     ===================================================== */
 
-    let currentScreen = "home";
+    let currentScreen =
+        "home";
 
-    let currentRides = [];
+    let currentRides =
+        [];
 
-    let profileLoaded = false;
+    let profileLoaded =
+        false;
+
+    let currentOrder =
+        null;
+
+    let notificationTimer =
+        null;
+
+    let locationWatchId =
+        null;
+
+    let passengerLocation =
+        null;
+
+    let driverLocation =
+        null;
+
+    let liveMap =
+        null;
+
+    let driverMarker =
+        null;
+
+    let passengerMarker =
+        null;
+
+    let routeLine =
+        null;
+
+    let lastNotificationIds =
+        new Set();
+
+    let audioContext =
+        null;
 
 
     /* =====================================================
-       TELEGRAM INIT DATA
+       INIT DATA
     ===================================================== */
 
     function getInitData() {
@@ -1726,10 +2247,13 @@
             tg &&
             tg.initData
         ) {
+
             return tg.initData;
+
         }
 
         return "";
+
     }
 
 
@@ -1743,28 +2267,39 @@
     ) {
 
         const method =
-            options.method || "POST";
+            options.method ||
+            "POST";
 
 
         let body = {};
 
-        if (options.body) {
+
+        if (
+            options.body
+        ) {
 
             if (
-                typeof options.body === "string"
+                typeof options.body ===
+                "string"
             ) {
 
                 try {
-                    body = JSON.parse(
-                        options.body
-                    );
+
+                    body =
+                        JSON.parse(
+                            options.body
+                        );
+
                 } catch (e) {
+
                     body = {};
+
                 }
 
             } else {
 
-                body = options.body;
+                body =
+                    options.body;
 
             }
 
@@ -1780,20 +2315,23 @@
 
         try {
 
-            response = await fetch(
-                API_BASE + url,
-                {
-                    method,
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-                    body:
-                        method === "GET"
-                            ? undefined
-                            : JSON.stringify(body)
-                }
-            );
+            response =
+                await fetch(
+                    API_BASE + url,
+                    {
+                        method,
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+                        body:
+                            method === "GET"
+                                ? undefined
+                                : JSON.stringify(
+                                    body
+                                )
+                    }
+                );
 
         } catch (error) {
 
@@ -1835,6 +2373,7 @@
 
 
         return result;
+
     }
 
 
@@ -1842,7 +2381,8 @@
        TOAST
     ===================================================== */
 
-    let toastTimer = null;
+    let toastTimer =
+        null;
 
 
     function showToast(
@@ -1861,7 +2401,8 @@
 
 
         toast.className =
-            "toast show " + type;
+            "toast show " +
+            type;
 
 
         clearTimeout(
@@ -1877,8 +2418,130 @@
                         "toast";
 
                 },
-                3000
+                3500
             );
+
+    }
+
+
+    /* =====================================================
+       SOUND
+    ===================================================== */
+
+    function playNotificationSound() {
+
+        try {
+
+            if (
+                !audioContext
+            ) {
+
+                audioContext =
+                    new (
+                        window.AudioContext ||
+                        window.webkitAudioContext
+                    )();
+
+            }
+
+
+            if (
+                audioContext.state ===
+                "suspended"
+            ) {
+
+                audioContext.resume();
+
+            }
+
+
+            const now =
+                audioContext.currentTime;
+
+
+            [0, .18, .36].forEach(
+                (offset, index) => {
+
+                    const oscillator =
+                        audioContext.createOscillator();
+
+                    const gain =
+                        audioContext.createGain();
+
+
+                    oscillator.type =
+                        "sine";
+
+
+                    oscillator.frequency.value =
+                        index === 1
+                            ? 880
+                            : 660;
+
+
+                    gain.gain.setValueAtTime(
+                        0.001,
+                        now + offset
+                    );
+
+
+                    gain.gain.exponentialRampToValueAtTime(
+                        0.25,
+                        now + offset + .03
+                    );
+
+
+                    gain.gain.exponentialRampToValueAtTime(
+                        0.001,
+                        now + offset + .16
+                    );
+
+
+                    oscillator.connect(
+                        gain
+                    );
+
+                    gain.connect(
+                        audioContext.destination
+                    );
+
+
+                    oscillator.start(
+                        now + offset
+                    );
+
+
+                    oscillator.stop(
+                        now + offset + .18
+                    );
+
+                }
+            );
+
+        } catch (e) {
+
+            console.log(
+                "Audio:",
+                e
+            );
+
+        }
+
+
+        try {
+
+            if (
+                tg &&
+                tg.HapticFeedback
+            ) {
+
+                tg.HapticFeedback.notificationOccurred(
+                    "success"
+                );
+
+            }
+
+        } catch (e) {}
 
     }
 
@@ -1896,7 +2559,9 @@
 
 
         document
-            .querySelectorAll(".screen")
+            .querySelectorAll(
+                ".screen"
+            )
             .forEach(
                 element => {
 
@@ -1910,7 +2575,8 @@
 
         const target =
             document.getElementById(
-                "screen-" + screen
+                "screen-" +
+                screen
             );
 
 
@@ -1924,7 +2590,9 @@
 
 
         document
-            .querySelectorAll(".nav-btn")
+            .querySelectorAll(
+                ".nav-btn"
+            )
             .forEach(
                 element => {
 
@@ -1938,7 +2606,8 @@
 
         const nav =
             document.getElementById(
-                "nav-" + screen
+                "nav-" +
+                screen
             );
 
 
@@ -1958,7 +2627,8 @@
 
 
         if (
-            screen === "trips"
+            screen ===
+            "trips"
         ) {
 
             loadTrips();
@@ -1967,10 +2637,24 @@
 
 
         if (
-            screen === "profile"
+            screen ===
+            "profile"
         ) {
 
+            profileLoaded =
+                false;
+
             loadProfile();
+
+        }
+
+
+        if (
+            screen ===
+            "driver"
+        ) {
+
+            checkDriverOrders();
 
         }
 
@@ -1985,19 +2669,6 @@
 
         showScreen(
             "search"
-        );
-
-        setTimeout(
-            () => {
-
-                document
-                    .getElementById(
-                        "search-from"
-                    )
-                    ?.focus();
-
-            },
-            150
         );
 
     }
@@ -2024,7 +2695,7 @@
 
 
     /* =====================================================
-       CITY OPTIONS
+       CITY
     ===================================================== */
 
     function fillCities() {
@@ -2051,10 +2722,6 @@
                 }
 
 
-                const current =
-                    select.value;
-
-
                 select.innerHTML =
                     `
                     <option value="">
@@ -2075,6 +2742,7 @@
                         option.value =
                             city;
 
+
                         option.textContent =
                             city;
 
@@ -2085,12 +2753,6 @@
 
                     }
                 );
-
-
-                if (current) {
-                    select.value =
-                        current;
-                }
 
             }
         );
@@ -2168,19 +2830,26 @@
     ) {
 
         const number =
-            Number(value || 0);
+            Number(
+                value || 0
+            );
 
 
         if (!number) {
+
             return "Kelishiladi";
+
         }
 
 
         return (
             new Intl.NumberFormat(
                 "uz-UZ"
-            ).format(number)
-            + " so‘m"
+            ).format(
+                number
+            )
+            +
+            " so‘m"
         );
 
     }
@@ -2188,8 +2857,6 @@
 
     /* =====================================================
        FORMAT DATE
-       UTC siljishi bo‘lmasligi uchun
-       new Date() ishlatilmaydi.
     ===================================================== */
 
     function formatDate(
@@ -2202,8 +2869,9 @@
 
 
         const text =
-            String(value)
-                .trim();
+            String(
+                value
+            ).trim();
 
 
         const match =
@@ -2220,11 +2888,11 @@
 
 
         return (
-            match[3]
-            + "."
-            + match[2]
-            + "."
-            + match[1]
+            match[3] +
+            "." +
+            match[2] +
+            "." +
+            match[1]
         );
 
     }
@@ -2244,8 +2912,9 @@
 
 
         const text =
-            String(value)
-                .trim();
+            String(
+                value
+            ).trim();
 
 
         const match =
@@ -2262,16 +2931,16 @@
 
 
         return (
-            match[1]
-            + ":"
-            + match[2]
+            match[1] +
+            ":" +
+            match[2]
         );
 
     }
 
 
     /* =====================================================
-       ESCAPE HTML
+       ESCAPE
     ===================================================== */
 
     function escapeHtml(
@@ -2306,54 +2975,40 @@
 
 
     /* =====================================================
-       REGISTER DRIVER
+       DRIVER REGISTER
     ===================================================== */
 
     async function registerDriver() {
 
         const fullName =
-            document
-                .getElementById(
-                    "driver-name"
-                )
-                .value
-                .trim();
+            document.getElementById(
+                "driver-name"
+            ).value.trim();
 
 
         const phone =
-            document
-                .getElementById(
-                    "driver-phone"
-                )
-                .value
-                .trim();
+            document.getElementById(
+                "driver-phone"
+            ).value.trim();
 
 
         const carModel =
-            document
-                .getElementById(
-                    "driver-car"
-                )
-                .value
-                .trim();
+            document.getElementById(
+                "driver-car"
+            ).value.trim();
 
 
         const carNumber =
-            document
-                .getElementById(
-                    "driver-number"
-                )
-                .value
-                .trim();
+            document.getElementById(
+                "driver-number"
+            ).value.trim();
 
 
         const seats =
             Number(
-                document
-                    .getElementById(
-                        "driver-seats"
-                    )
-                    .value
+                document.getElementById(
+                    "driver-seats"
+                ).value
             );
 
 
@@ -2456,6 +3111,10 @@
             );
 
 
+            profileLoaded =
+                false;
+
+
             loadProfile();
 
         } catch (error) {
@@ -2477,54 +3136,42 @@
     async function addRide() {
 
         const fromCity =
-            document
-                .getElementById(
-                    "driver-from"
-                )
-                .value;
+            document.getElementById(
+                "driver-from"
+            ).value;
 
 
         const toCity =
-            document
-                .getElementById(
-                    "driver-to"
-                )
-                .value;
+            document.getElementById(
+                "driver-to"
+            ).value;
 
 
         const rideDate =
-            document
-                .getElementById(
-                    "driver-date"
-                )
-                .value;
+            document.getElementById(
+                "driver-date"
+            ).value;
 
 
         const rideTime =
-            document
-                .getElementById(
-                    "driver-time"
-                )
-                .value;
+            document.getElementById(
+                "driver-time"
+            ).value;
 
 
         const seats =
             Number(
-                document
-                    .getElementById(
-                        "ride-seats"
-                    )
-                    .value
+                document.getElementById(
+                    "ride-seats"
+                ).value
             );
 
 
         const price =
             Number(
-                document
-                    .getElementById(
-                        "ride-price"
-                    )
-                    .value
+                document.getElementById(
+                    "ride-price"
+                ).value
             );
 
 
@@ -2648,7 +3295,17 @@
                                 seats,
 
                             price:
-                                price
+                                price,
+
+                            latitude:
+                                driverLocation
+                                    ?.latitude ||
+                                null,
+
+                            longitude:
+                                driverLocation
+                                    ?.longitude ||
+                                null
 
                         })
                     }
@@ -2662,37 +3319,22 @@
             );
 
 
-            // Formani tozalash
-
-            document
-                .getElementById(
-                    "driver-price"
-                );
+            document.getElementById(
+                "ride-price"
+            ).value = "";
 
 
-            document
-                .getElementById(
-                    "ride-price"
-                )
-                .value = "";
+            document.getElementById(
+                "driver-from"
+            ).value = "";
 
 
-            document
-                .getElementById(
-                    "driver-from"
-                )
-                .value = "";
-
-
-            document
-                .getElementById(
-                    "driver-to"
-                )
-                .value = "";
+            document.getElementById(
+                "driver-to"
+            ).value = "";
 
 
             openTrips();
-
 
         } catch (error) {
 
@@ -2707,41 +3349,33 @@
 
 
     /* =====================================================
-       SEARCH RIDES
+       SEARCH
     ===================================================== */
 
     async function searchRides() {
 
         const fromCity =
-            document
-                .getElementById(
-                    "search-from"
-                )
-                .value;
+            document.getElementById(
+                "search-from"
+            ).value;
 
 
         const toCity =
-            document
-                .getElementById(
-                    "search-to"
-                )
-                .value;
+            document.getElementById(
+                "search-to"
+            ).value;
 
 
         const rideDate =
-            document
-                .getElementById(
-                    "search-date"
-                )
-                .value;
+            document.getElementById(
+                "search-date"
+            ).value;
 
 
         const rideTime =
-            document
-                .getElementById(
-                    "search-time"
-                )
-                .value;
+            document.getElementById(
+                "search-time"
+            ).value;
 
 
         if (!fromCity) {
@@ -2784,10 +3418,9 @@
 
 
         const container =
-            document
-                .getElementById(
-                    "search-results"
-                );
+            document.getElementById(
+                "search-results"
+            );
 
 
         container.innerHTML =
@@ -2819,7 +3452,17 @@
                                 rideDate,
 
                             ride_time:
-                                rideTime
+                                rideTime,
+
+                            latitude:
+                                passengerLocation
+                                    ?.latitude ||
+                                null,
+
+                            longitude:
+                                passengerLocation
+                                    ?.longitude ||
+                                null
 
                         })
                     }
@@ -2835,19 +3478,30 @@
                 currentRides
             );
 
-
         } catch (error) {
 
             container.innerHTML =
                 `
                 <div class="card">
+
                     <div class="empty">
-                        <div class="empty-icon">⚠️</div>
-                        <strong>Xatolik yuz berdi</strong>
+
+                        <div class="empty-icon">
+                            ⚠️
+                        </div>
+
+                        <strong>
+                            Xatolik yuz berdi
+                        </strong>
+
                         <span>
-                            ${escapeHtml(error.message)}
+                            ${escapeHtml(
+                                error.message
+                            )}
                         </span>
+
                     </div>
+
                 </div>
                 `;
 
@@ -2865,10 +3519,9 @@
     ) {
 
         const container =
-            document
-                .getElementById(
-                    "search-results"
-                );
+            document.getElementById(
+                "search-results"
+            );
 
 
         if (
@@ -2879,8 +3532,12 @@
             container.innerHTML =
                 `
                 <div class="card">
+
                     <div class="empty">
-                        <div class="empty-icon">🚕</div>
+
+                        <div class="empty-icon">
+                            🚕
+                        </div>
 
                         <strong>
                             Safar topilmadi
@@ -2889,10 +3546,10 @@
                         <span>
                             Hozircha ushbu yo‘nalishda
                             mavjud safar yo‘q.
-                            Boshqa sana yoki vaqtni
-                            tekshirib ko‘ring.
                         </span>
+
                     </div>
+
                 </div>
                 `;
 
@@ -2975,6 +3632,11 @@
             );
 
 
+        const status =
+            ride.status ||
+            "active";
+
+
         return `
         <div class="ride-card">
 
@@ -2993,13 +3655,22 @@
                     )}
 
                     <small>
+
                         <br>
-                        ${escapeHtml(date)}
-                        ${time
-                            ? " • " +
-                              escapeHtml(time)
-                            : ""
+
+                        ${escapeHtml(
+                            date
+                        )}
+
+                        ${
+                            time
+                                ? " • " +
+                                  escapeHtml(
+                                      time
+                                  )
+                                : ""
                         }
+
                     </small>
 
                 </div>
@@ -3022,10 +3693,14 @@
 
                 <div class="meta-item">
 
-                    <span>🚗 Mashina</span>
+                    <span>
+                        🚗 Mashina
+                    </span>
 
                     <strong>
-                        ${escapeHtml(car)}
+                        ${escapeHtml(
+                            car
+                        )}
                     </strong>
 
                 </div>
@@ -3033,10 +3708,14 @@
 
                 <div class="meta-item">
 
-                    <span>🔢 Raqam</span>
+                    <span>
+                        🔢 Raqam
+                    </span>
 
                     <strong>
-                        ${escapeHtml(number)}
+                        ${escapeHtml(
+                            number
+                        )}
                     </strong>
 
                 </div>
@@ -3044,7 +3723,9 @@
 
                 <div class="meta-item">
 
-                    <span>💺 Bo‘sh joy</span>
+                    <span>
+                        💺 Bo‘sh joy
+                    </span>
 
                     <strong>
                         ${available} ta
@@ -3055,10 +3736,14 @@
 
                 <div class="meta-item">
 
-                    <span>🕐 Vaqt</span>
+                    <span>
+                        🕐 Vaqt
+                    </span>
 
                     <strong>
-                        ${escapeHtml(time)}
+                        ${escapeHtml(
+                            time
+                        )}
                     </strong>
 
                 </div>
@@ -3076,7 +3761,9 @@
                 <div class="driver-info">
 
                     <strong>
-                        ${escapeHtml(name)}
+                        ${escapeHtml(
+                            name
+                        )}
                     </strong>
 
                     <span>
@@ -3091,7 +3778,9 @@
                         ? `
                         <a
                             class="contact-btn"
-                            href="tel:${escapeHtml(phone)}"
+                            href="tel:${escapeHtml(
+                                phone
+                            )}"
                         >
                             📞
                         </a>
@@ -3102,16 +3791,286 @@
             </div>
 
 
-            <button
-                class="btn btn-primary"
-                style="margin-top:12px;"
-                onclick="openOrderModal(${ride.id})"
-            >
-                💺 Joy buyurtma qilish
-            </button>
+            ${
+                status === "active" &&
+                available > 0
+                    ? `
+                    <button
+                        class="btn btn-primary"
+                        style="margin-top:12px;"
+                        onclick="openOrderModal(${ride.id})"
+                    >
+                        💺 Joy buyurtma qilish
+                    </button>
+                    `
+                    : `
+                    <div
+                        class="order-status rejected"
+                        style="margin-top:12px;"
+                    >
+                        ❌ Bu safarda hozircha joy yo‘q.
+                    </div>
+                    `
+            }
 
         </div>
         `;
+
+    }
+
+
+    /* =====================================================
+       PASSENGER LOCATION
+    ===================================================== */
+
+    function getPassengerLocation() {
+
+        if (
+            !navigator.geolocation
+        ) {
+
+            showToast(
+                "Telefoningiz lokatsiyani qo‘llab-quvvatlamaydi.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        showToast(
+            "Lokatsiya aniqlanmoqda..."
+        );
+
+
+        navigator.geolocation.getCurrentPosition(
+            position => {
+
+                passengerLocation = {
+                    latitude:
+                        position.coords.latitude,
+
+                    longitude:
+                        position.coords.longitude
+                };
+
+
+                const status =
+                    document.getElementById(
+                        "search-location-status"
+                    );
+
+
+                if (status) {
+
+                    status.innerHTML =
+                        "<strong>Lokatsiya yuborildi ✓</strong>";
+
+                }
+
+
+                showToast(
+                    "📍 Lokatsiyangiz olindi.",
+                    "success"
+                );
+
+            },
+
+            error => {
+
+                showToast(
+                    "Lokatsiyaga ruxsat berilmadi.",
+                    "error"
+                );
+
+            },
+
+            {
+                enableHighAccuracy:
+                    true,
+
+                timeout:
+                    15000,
+
+                maximumAge:
+                    5000
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       DRIVER LOCATION
+    ===================================================== */
+
+    function startDriverLocation() {
+
+        if (
+            !navigator.geolocation
+        ) {
+
+            showToast(
+                "Lokatsiya ishlamaydi.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        if (
+            locationWatchId !==
+            null
+        ) {
+
+            navigator.geolocation.clearWatch(
+                locationWatchId
+            );
+
+        }
+
+
+        showToast(
+            "Haydovchi lokatsiyasi yoqildi.",
+            "success"
+        );
+
+
+        locationWatchId =
+            navigator.geolocation.watchPosition(
+                position => {
+
+                    driverLocation = {
+
+                        latitude:
+                            position.coords.latitude,
+
+                        longitude:
+                            position.coords.longitude
+
+                    };
+
+
+                    const status =
+                        document.getElementById(
+                            "driver-location-status"
+                        );
+
+
+                    if (status) {
+
+                        status.innerHTML =
+                            "<strong>Lokatsiya faol ✓</strong>";
+
+                    }
+
+
+                    sendDriverLocation();
+
+                    updateLiveMap();
+
+                },
+
+                error => {
+
+                    showToast(
+                        "Haydovchi lokatsiyasini olish imkoni bo‘lmadi.",
+                        "error"
+                    );
+
+                },
+
+                {
+                    enableHighAccuracy:
+                        true,
+
+                    maximumAge:
+                        3000,
+
+                    timeout:
+                        15000
+                }
+            );
+
+    }
+
+
+    /* =====================================================
+       SEND DRIVER LOCATION
+    ===================================================== */
+
+    let lastLocationSent =
+        0;
+
+
+    async function sendDriverLocation() {
+
+        if (
+            !driverLocation
+        ) {
+
+            return;
+
+        }
+
+
+        const now =
+            Date.now();
+
+
+        if (
+            now -
+            lastLocationSent <
+            5000
+        ) {
+
+            return;
+
+        }
+
+
+        lastLocationSent =
+            now;
+
+
+        try {
+
+            await api(
+                "/api/location/update",
+                {
+                    method: "POST",
+
+                    body:
+                        JSON.stringify({
+
+                            latitude:
+                                driverLocation
+                                    .latitude,
+
+                            longitude:
+                                driverLocation
+                                    .longitude
+
+                        })
+                }
+            );
+
+        } catch (error) {
+
+            /*
+             Backend endpoint hali bo‘lmasa,
+             frontend ishlashdan to‘xtamaydi.
+            */
+
+            console.log(
+                "Location update:",
+                error.message
+            );
+
+        }
 
     }
 
@@ -3182,7 +4141,8 @@
 
                 <div class="trip-info">
 
-                    📅 ${escapeHtml(
+                    📅
+                    ${escapeHtml(
                         formatDate(
                             ride.ride_date
                         )
@@ -3190,7 +4150,8 @@
 
                     <br>
 
-                    🕐 ${escapeHtml(
+                    🕐
+                    ${escapeHtml(
                         formatTime(
                             ride.ride_time
                         )
@@ -3198,13 +4159,15 @@
 
                     <br>
 
-                    🚗 ${escapeHtml(
+                    🚗
+                    ${escapeHtml(
                         ride.car_model
                     )}
 
                     <br>
 
-                    💰 ${escapeHtml(
+                    💰
+                    ${escapeHtml(
                         formatPrice(
                             ride.price
                         )
@@ -3256,11 +4219,35 @@
             </div>
 
 
+            <div class="location-box">
+
+                <div class="location-status">
+
+                    📍
+
+                    <span id="order-location-status">
+                        Lokatsiya yuborilmagan
+                    </span>
+
+                </div>
+
+
+                <button
+                    class="btn btn-light"
+                    onclick="getOrderLocation()"
+                >
+                    📍 Lokatsiyamni yuborish
+                </button>
+
+            </div>
+
+
             <button
                 class="btn btn-primary"
+                style="margin-top:11px;"
                 onclick="submitOrder(${ride.id})"
             >
-                ✅ Buyurtmani tasdiqlash
+                ✅ Buyurtmani yuborish
             </button>
 
 
@@ -3284,7 +4271,86 @@
 
 
     /* =====================================================
-       LOAD PROFILE FOR ORDER
+       ORDER LOCATION
+    ===================================================== */
+
+    function getOrderLocation() {
+
+        if (
+            !navigator.geolocation
+        ) {
+
+            showToast(
+                "Lokatsiya ishlamaydi.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        navigator.geolocation.getCurrentPosition(
+            position => {
+
+                passengerLocation = {
+
+                    latitude:
+                        position.coords.latitude,
+
+                    longitude:
+                        position.coords.longitude
+
+                };
+
+
+                const status =
+                    document.getElementById(
+                        "order-location-status"
+                    );
+
+
+                if (status) {
+
+                    status.innerHTML =
+                        "<strong>Lokatsiya yuborildi ✓</strong>";
+
+                }
+
+
+                showToast(
+                    "📍 Lokatsiya olindi.",
+                    "success"
+                );
+
+            },
+
+            error => {
+
+                showToast(
+                    "Lokatsiyaga ruxsat berilmadi.",
+                    "error"
+                );
+
+            },
+
+            {
+                enableHighAccuracy:
+                    true,
+
+                timeout:
+                    15000,
+
+                maximumAge:
+                    5000
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       PROFILE FOR ORDER
     ===================================================== */
 
     async function loadProfileForOrder() {
@@ -3295,8 +4361,11 @@
                 await api(
                     "/api/profile",
                     {
-                        method: "POST",
-                        body: JSON.stringify({})
+                        method:
+                            "POST",
+
+                        body:
+                            JSON.stringify({})
                     }
                 );
 
@@ -3323,11 +4392,7 @@
 
             }
 
-        } catch (error) {
-
-            // Profil bo‘lmasa ham buyurtma oynasi ishlaydi.
-
-        }
+        } catch (error) {}
 
     }
 
@@ -3366,6 +4431,26 @@
                 : 1;
 
 
+        const ride =
+            currentRides.find(
+                item =>
+                    Number(item.id) ===
+                    Number(rideId)
+            );
+
+
+        if (!ride) {
+
+            showToast(
+                "Safar topilmadi.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
         if (!phone) {
 
             showToast(
@@ -3393,58 +4478,50 @@
         }
 
 
-        const ride =
-            currentRides.find(
-                item =>
-                    Number(item.id) ===
-                    Number(rideId)
-            );
-
-
-        if (!ride) {
-
-            showToast(
-                "Safar topilmadi.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
         try {
 
             const result =
                 await api(
                     "/api/passenger/order",
                     {
-                        method: "POST",
+                        method:
+                            "POST",
 
-                        body: JSON.stringify({
+                        body:
+                            JSON.stringify({
 
-                            ride_id:
-                                rideId,
+                                ride_id:
+                                    rideId,
 
-                            from_city:
-                                ride.from_city,
+                                from_city:
+                                    ride.from_city,
 
-                            to_city:
-                                ride.to_city,
+                                to_city:
+                                    ride.to_city,
 
-                            ride_date:
-                                ride.ride_date,
+                                ride_date:
+                                    ride.ride_date,
 
-                            ride_time:
-                                ride.ride_time,
+                                ride_time:
+                                    ride.ride_time,
 
-                            phone:
-                                phone,
+                                phone:
+                                    phone,
 
-                            seats:
-                                seats
+                                seats:
+                                    seats,
 
-                        })
+                                latitude:
+                                    passengerLocation
+                                        ?.latitude ||
+                                    null,
+
+                                longitude:
+                                    passengerLocation
+                                        ?.longitude ||
+                                    null
+
+                            })
                     }
                 );
 
@@ -3454,9 +4531,12 @@
 
             showToast(
                 result.message ||
-                "Buyurtma qabul qilindi.",
+                "Buyurtma haydovchiga yuborildi.",
                 "success"
             );
+
+
+            playNotificationSound();
 
 
             setTimeout(
@@ -3482,23 +4562,25 @@
 
 
     /* =====================================================
-       LOAD TRIPS
+       TRIPS
     ===================================================== */
 
     async function loadTrips() {
 
         const container =
-            document
-                .getElementById(
-                    "trips-container"
-                );
+            document.getElementById(
+                "trips-container"
+            );
 
 
         container.innerHTML =
             `
             <div class="loading">
+
                 <div class="spinner"></div>
+
                 Safarlar yuklanmoqda...
+
             </div>
             `;
 
@@ -3509,8 +4591,11 @@
                 await api(
                     "/api/orders",
                     {
-                        method: "POST",
-                        body: JSON.stringify({})
+                        method:
+                            "POST",
+
+                        body:
+                            JSON.stringify({})
                     }
                 );
 
@@ -3575,10 +4660,9 @@
     ) {
 
         const container =
-            document
-                .getElementById(
-                    "trips-container"
-                );
+            document.getElementById(
+                "trips-container"
+            );
 
 
         if (
@@ -3691,8 +4775,8 @@
         ride
     ) {
 
-        const active =
-            ride.status ===
+        const status =
+            ride.status ||
             "active";
 
 
@@ -3721,14 +4805,17 @@
 
             <div class="trip-info">
 
-                📅 ${escapeHtml(
+                📅
+                ${escapeHtml(
                     formatDate(
                         ride.ride_date
                     )
                 )}
 
                 •
-                🕐 ${escapeHtml(
+
+                🕐
+                ${escapeHtml(
                     formatTime(
                         ride.ride_time
                     )
@@ -3737,14 +4824,18 @@
                 <br>
 
                 💺 Bo‘sh joy:
-                ${ride.available_seats}
-
-                /
-                ${ride.seats}
+                ${escapeHtml(
+                    String(
+                        ride.available_seats ??
+                        ride.seats ??
+                        ""
+                    )
+                )}
 
                 <br>
 
-                💰 ${escapeHtml(
+                💰
+                ${escapeHtml(
                     formatPrice(
                         ride.price
                     )
@@ -3752,54 +4843,44 @@
 
                 <br>
 
-                🚗 ${escapeHtml(
+                🚗
+                ${escapeHtml(
                     ride.car_model
                 )}
 
-                ${
-                    ride.car_number
-                        ? `
-                        <br>
-                        🔢 ${escapeHtml(
-                            ride.car_number
+            </div>
+
+
+            ${
+                status === "active"
+                    ? `
+                    <span class="badge">
+                        ● Faol
+                    </span>
+                    `
+                    : `
+                    <span class="badge red">
+                        ${escapeHtml(
+                            status
                         )}
-                        `
-                        : ""
-                }
-
-            </div>
+                    </span>
+                    `
+            }
 
 
-            <div
-                style="
-                    margin-top:12px;
-                "
-            >
-
-                ${
-                    active
-                        ? `
-                        <span class="badge">
-                            ● Faol
-                        </span>
-
-                        <button
-                            class="btn btn-danger"
-                            style="margin-top:9px;"
-                            onclick="cancelRide(${ride.id})"
-                        >
-                            ❌ Safarni bekor qilish
-                        </button>
-                        `
-                        :
-                        `
-                        <span class="badge red">
-                            Bekor qilingan
-                        </span>
-                        `
-                }
-
-            </div>
+            ${
+                status === "active"
+                    ? `
+                    <button
+                        class="btn btn-danger"
+                        style="margin-top:9px;"
+                        onclick="cancelRide(${ride.id})"
+                    >
+                        ❌ Safarni bekor qilish
+                    </button>
+                    `
+                    : ""
+            }
 
         </div>
         `;
@@ -3815,9 +4896,9 @@
         order
     ) {
 
-        const active =
-            order.status ===
-            "active";
+        const status =
+            order.status ||
+            "pending";
 
 
         return `
@@ -3845,14 +4926,17 @@
 
             <div class="trip-info">
 
-                📅 ${escapeHtml(
+                📅
+                ${escapeHtml(
                     formatDate(
                         order.ride_date
                     )
                 )}
 
                 •
-                🕐 ${escapeHtml(
+
+                🕐
+                ${escapeHtml(
                     formatTime(
                         order.ride_time
                     )
@@ -3860,12 +4944,19 @@
 
                 <br>
 
-                💺 Buyurtma:
-                ${order.seats} ta joy
+                💺
+                ${escapeHtml(
+                    String(
+                        order.seats ||
+                        1
+                    )
+                )}
+                ta joy
 
                 <br>
 
-                💰 ${escapeHtml(
+                💰
+                ${escapeHtml(
                     formatPrice(
                         order.price
                     )
@@ -3873,7 +4964,8 @@
 
                 <br>
 
-                🚗 ${escapeHtml(
+                🚗
+                ${escapeHtml(
                     order.car_model ||
                     "Mashina"
                 )}
@@ -3882,10 +4974,50 @@
                     order.driver_name
                         ? `
                         <br>
-                        👤 ${escapeHtml(
+                        👤
+                        ${escapeHtml(
                             order.driver_name
                         )}
                         `
+                        : ""
+                }
+
+            </div>
+
+
+            <div
+                class="order-status ${escapeHtml(
+                    status
+                )}"
+            >
+
+                ${
+                    status === "pending"
+                        ? "⏳ Haydovchi javobini kutmoqda"
+                        : ""
+                }
+
+                ${
+                    status === "accepted"
+                        ? "✅ Haydovchi buyurtmangizni qabul qildi"
+                        : ""
+                }
+
+                ${
+                    status === "arriving"
+                        ? "🚕 Haydovchi sizning oldingizga kelyapti"
+                        : ""
+                }
+
+                ${
+                    status === "rejected"
+                        ? "❌ Haydovchi buyurtmani rad etdi"
+                        : ""
+                }
+
+                ${
+                    status === "completed"
+                        ? "🏁 Safar tugadi"
                         : ""
                 }
 
@@ -3913,32 +5045,762 @@
 
 
             ${
-                active
+                (
+                    status ===
+                    "accepted" ||
+                    status ===
+                    "arriving"
+                )
+                    ? `
+                    <button
+                        class="btn btn-blue"
+                        style="margin-top:9px;"
+                        onclick="openLiveMap(${Number(
+                            order.order_id ||
+                            order.id ||
+                            0
+                        )})"
+                    >
+                        🗺️ Haydovchini xaritada ko‘rish
+                    </button>
+                    `
+                    : ""
+            }
+
+
+            ${
+                status === "pending" ||
+                status === "accepted" ||
+                status === "arriving"
                     ? `
                     <button
                         class="btn btn-danger"
                         style="margin-top:9px;"
-                        onclick="cancelOrder(${order.order_id})"
+                        onclick="cancelOrder(${Number(
+                            order.order_id ||
+                            order.id ||
+                            0
+                        )})"
                     >
                         ❌ Buyurtmani bekor qilish
                     </button>
                     `
-                    :
-                    `
-                    <div
-                        style="
-                            margin-top:10px;
-                        "
-                    >
-                        <span class="badge red">
-                            Bekor qilingan
-                        </span>
-                    </div>
-                    `
+                    : ""
             }
 
         </div>
         `;
+
+    }
+
+
+    /* =====================================================
+       DRIVER INCOMING ORDERS
+    ===================================================== */
+
+    async function checkDriverOrders() {
+
+        try {
+
+            const result =
+                await api(
+                    "/api/orders",
+                    {
+                        method:
+                            "POST",
+
+                        body:
+                            JSON.stringify({})
+                    }
+                );
+
+
+            const incoming =
+                result.driver_orders ||
+                result.incoming_orders ||
+                result.new_orders ||
+                [];
+
+
+            renderDriverOrders(
+                incoming
+            );
+
+
+            checkNewOrders(
+                incoming
+            );
+
+
+        } catch (error) {
+
+            console.log(
+                "Driver orders:",
+                error.message
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       RENDER DRIVER ORDERS
+    ===================================================== */
+
+    function renderDriverOrders(
+        orders
+    ) {
+
+        const area =
+            document.getElementById(
+                "driver-orders-area"
+            );
+
+
+        if (
+            !area
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            !orders ||
+            !orders.length
+        ) {
+
+            area.innerHTML =
+                "";
+
+            return;
+
+        }
+
+
+        let html =
+            `
+            <div class="section-title">
+                🔔 Yangi zakazlar
+            </div>
+            `;
+
+
+        orders.forEach(
+            order => {
+
+                html +=
+                    createIncomingOrderCard(
+                        order
+                    );
+
+            }
+        );
+
+
+        area.innerHTML =
+            html;
+
+    }
+
+
+    /* =====================================================
+       INCOMING ORDER CARD
+    ===================================================== */
+
+    function createIncomingOrderCard(
+        order
+    ) {
+
+        const id =
+            order.order_id ||
+            order.id;
+
+
+        const status =
+            order.status ||
+            "pending";
+
+
+        return `
+        <div class="card">
+
+            <div class="card-title">
+                🔔 Yo‘lovchi zakazi
+            </div>
+
+
+            <div class="trip-route">
+
+                ${escapeHtml(
+                    order.from_city ||
+                    ""
+                )}
+
+                →
+
+                ${escapeHtml(
+                    order.to_city ||
+                    ""
+                )}
+
+            </div>
+
+
+            <div class="trip-info">
+
+                👤
+                ${escapeHtml(
+                    order.passenger_name ||
+                    "Yo‘lovchi"
+                )}
+
+                <br>
+
+                📞
+                ${escapeHtml(
+                    order.passenger_phone ||
+                    ""
+                )}
+
+                <br>
+
+                📅
+                ${escapeHtml(
+                    formatDate(
+                        order.ride_date
+                    )
+                )}
+
+                •
+
+                🕐
+                ${escapeHtml(
+                    formatTime(
+                        order.ride_time
+                    )
+                )}
+
+                <br>
+
+                💺
+                ${escapeHtml(
+                    String(
+                        order.seats ||
+                        1
+                    )
+                )}
+                ta joy
+
+                <br>
+
+                💰
+                ${escapeHtml(
+                    formatPrice(
+                        order.price
+                    )
+                )}
+
+            </div>
+
+
+            ${
+                order.passenger_phone
+                    ? `
+                    <a
+                        class="btn btn-green"
+                        style="
+                            margin-top:10px;
+                            text-decoration:none;
+                        "
+                        href="tel:${escapeHtml(
+                            order.passenger_phone
+                        )}"
+                    >
+                        📞 Yo‘lovchiga qo‘ng‘iroq
+                    </a>
+                    `
+                    : ""
+            }
+
+
+            ${
+                order.passenger_latitude ||
+                order.latitude
+                    ? `
+                    <button
+                        class="btn btn-blue"
+                        style="margin-top:9px;"
+                        onclick="openPassengerLocation(${Number(
+                            order.latitude ||
+                            order.passenger_latitude
+                        )}, ${Number(
+                            order.longitude ||
+                            order.passenger_longitude
+                        )})"
+                    >
+                        📍 Yo‘lovchi lokatsiyasi
+                    </button>
+                    `
+                    : ""
+            }
+
+
+            ${
+                status === "pending"
+                    ? `
+                    <div class="order-actions">
+
+                        <button
+                            class="btn btn-green"
+                            onclick="respondOrder(${Number(
+                                id
+                            )}, 'accept')"
+                        >
+                            ✅ Qabul qilish
+                        </button>
+
+                        <button
+                            class="btn btn-danger"
+                            onclick="respondOrder(${Number(
+                                id
+                            )}, 'reject')"
+                        >
+                            ❌ Rad etish
+                        </button>
+
+                    </div>
+                    `
+                    : ""
+            }
+
+
+            ${
+                status === "accepted"
+                    ? `
+                    <div class="order-status accepted">
+                        ✅ Buyurtma qabul qilindi.
+                        Yo‘lovchi sizni kutmoqda.
+                    </div>
+                    `
+                    : ""
+            }
+
+        </div>
+        `;
+
+    }
+
+
+    /* =====================================================
+       NEW ORDER CHECK
+    ===================================================== */
+
+    function checkNewOrders(
+        orders
+    ) {
+
+        if (
+            !orders ||
+            !orders.length
+        ) {
+
+            return;
+
+        }
+
+
+        const pending =
+            orders.filter(
+                order =>
+                    (
+                        order.status ||
+                        "pending"
+                    ) ===
+                    "pending"
+            );
+
+
+        if (
+            !pending.length
+        ) {
+
+            return;
+
+        }
+
+
+        const newest =
+            pending[0];
+
+
+        const id =
+            String(
+                newest.order_id ||
+                newest.id
+            );
+
+
+        if (
+            lastNotificationIds.has(
+                id
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        lastNotificationIds.add(
+            id
+        );
+
+
+        showNewOrderNotification(
+            newest
+        );
+
+    }
+
+
+    /* =====================================================
+       NEW ORDER NOTIFICATION
+    ===================================================== */
+
+    function showNewOrderNotification(
+        order
+    ) {
+
+        currentOrder =
+            order;
+
+
+        playNotificationSound();
+
+
+        const modal =
+            document.getElementById(
+                "new-order-notification"
+            );
+
+
+        const content =
+            document.getElementById(
+                "new-order-content"
+            );
+
+
+        content.innerHTML =
+            `
+            <div class="order-detail">
+
+                <strong>
+                    📍 Yo‘nalish
+                </strong>
+
+                <br>
+
+                ${escapeHtml(
+                    order.from_city ||
+                    ""
+                )}
+
+                →
+
+                ${escapeHtml(
+                    order.to_city ||
+                    ""
+                )}
+
+            </div>
+
+
+            <div class="order-detail">
+
+                <strong>
+                    👤 Yo‘lovchi
+                </strong>
+
+                <br>
+
+                ${escapeHtml(
+                    order.passenger_name ||
+                    "Yo‘lovchi"
+                )}
+
+            </div>
+
+
+            <div class="order-detail">
+
+                <strong>
+                    📞 Telefon
+                </strong>
+
+                <br>
+
+                ${escapeHtml(
+                    order.passenger_phone ||
+                    ""
+                )}
+
+            </div>
+
+
+            <div class="order-detail">
+
+                <strong>
+                    💺 Joy
+                </strong>
+
+                :
+
+                ${escapeHtml(
+                    String(
+                        order.seats ||
+                        1
+                    )
+                )}
+
+                ta
+
+                <br>
+
+                <strong>
+                    💰 Narx
+                </strong>
+
+                :
+
+                ${escapeHtml(
+                    formatPrice(
+                        order.price
+                    )
+                )}
+
+            </div>
+
+
+            ${
+                order.latitude ||
+                order.passenger_latitude
+                    ? `
+                    <div class="order-detail">
+
+                        📍
+                        Yo‘lovchining lokatsiyasi
+                        mavjud.
+
+                    </div>
+                    `
+                    : ""
+            }
+            `;
+
+
+        const call =
+            document.getElementById(
+                "new-order-call"
+            );
+
+
+        if (
+            call &&
+            order.passenger_phone
+        ) {
+
+            call.onclick =
+                () => {
+
+                    window.location.href =
+                        "tel:" +
+                        order.passenger_phone;
+
+                };
+
+        }
+
+
+        modal.classList.add(
+            "show"
+        );
+
+    }
+
+
+    /* =====================================================
+       CLOSE NEW ORDER
+    ===================================================== */
+
+    function closeNewOrderNotification() {
+
+        document
+            .getElementById(
+                "new-order-notification"
+            )
+            .classList.remove(
+                "show"
+            );
+
+    }
+
+
+    /* =====================================================
+       ACCEPT CURRENT ORDER
+    ===================================================== */
+
+    async function acceptCurrentOrder() {
+
+        if (
+            !currentOrder
+        ) {
+
+            return;
+
+        }
+
+
+        const id =
+            currentOrder.order_id ||
+            currentOrder.id;
+
+
+        await respondOrder(
+            id,
+            "accept"
+        );
+
+    }
+
+
+    /* =====================================================
+       REJECT CURRENT ORDER
+    ===================================================== */
+
+    async function rejectCurrentOrder() {
+
+        if (
+            !currentOrder
+        ) {
+
+            return;
+
+        }
+
+
+        const id =
+            currentOrder.order_id ||
+            currentOrder.id;
+
+
+        await respondOrder(
+            id,
+            "reject"
+        );
+
+    }
+
+
+    /* =====================================================
+       RESPOND ORDER
+    ===================================================== */
+
+    async function respondOrder(
+        orderId,
+        action
+    ) {
+
+        if (
+            !orderId
+        ) {
+
+            showToast(
+                "Zakaz ID topilmadi.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        try {
+
+            /*
+             Backend:
+             /api/order/respond
+
+             action:
+             accept / reject
+            */
+
+            const result =
+                await api(
+                    "/api/order/respond",
+                    {
+                        method:
+                            "POST",
+
+                        body:
+                            JSON.stringify({
+
+                                order_id:
+                                    orderId,
+
+                                action:
+                                    action
+
+                            })
+                    }
+                );
+
+
+            closeNewOrderNotification();
+
+
+            if (
+                action ===
+                "accept"
+            ) {
+
+                showToast(
+                    result.message ||
+                    "Zakaz qabul qilindi. Yo‘lovchiga xabar yuborildi.",
+                    "success"
+                );
+
+            } else {
+
+                showToast(
+                    result.message ||
+                    "Zakaz rad etildi.",
+                    "error"
+                );
+
+            }
+
+
+            currentOrder =
+                null;
+
+
+            checkDriverOrders();
+
+
+            loadTrips();
+
+
+        } catch (error) {
+
+            showToast(
+                error.message,
+                "error"
+            );
+
+        }
 
     }
 
@@ -3951,14 +5813,14 @@
         rideId
     ) {
 
-        const confirmed =
-            window.confirm(
+        if (
+            !window.confirm(
                 "Bu safarni bekor qilmoqchimisiz?"
-            );
+            )
+        ) {
 
-
-        if (!confirmed) {
             return;
+
         }
 
 
@@ -3968,14 +5830,16 @@
                 await api(
                     "/api/order/cancel",
                     {
-                        method: "POST",
+                        method:
+                            "POST",
 
-                        body: JSON.stringify({
+                        body:
+                            JSON.stringify({
 
-                            ride_id:
-                                rideId
+                                ride_id:
+                                    rideId
 
-                        })
+                            })
                     }
                 );
 
@@ -3988,7 +5852,6 @@
 
 
             loadTrips();
-
 
         } catch (error) {
 
@@ -4010,14 +5873,14 @@
         orderId
     ) {
 
-        const confirmed =
-            window.confirm(
+        if (
+            !window.confirm(
                 "Buyurtmani bekor qilmoqchimisiz?"
-            );
+            )
+        ) {
 
-
-        if (!confirmed) {
             return;
+
         }
 
 
@@ -4027,14 +5890,16 @@
                 await api(
                     "/api/order/cancel",
                     {
-                        method: "POST",
+                        method:
+                            "POST",
 
-                        body: JSON.stringify({
+                        body:
+                            JSON.stringify({
 
-                            order_id:
-                                orderId
+                                order_id:
+                                    orderId
 
-                        })
+                            })
                     }
                 );
 
@@ -4047,7 +5912,6 @@
 
 
             loadTrips();
-
 
         } catch (error) {
 
@@ -4062,13 +5926,17 @@
 
 
     /* =====================================================
-       LOAD PROFILE
+       PROFILE
     ===================================================== */
 
     async function loadProfile() {
 
-        if (profileLoaded) {
+        if (
+            profileLoaded
+        ) {
+
             return;
+
         }
 
 
@@ -4078,9 +5946,11 @@
                 await api(
                     "/api/profile",
                     {
-                        method: "POST",
+                        method:
+                            "POST",
 
-                        body: JSON.stringify({})
+                        body:
+                            JSON.stringify({})
                     }
                 );
 
@@ -4107,7 +5977,9 @@
                 );
 
 
-            if (nameInput) {
+            if (
+                nameInput
+            ) {
 
                 nameInput.value =
                     user.full_name ||
@@ -4116,7 +5988,9 @@
             }
 
 
-            if (phoneInput) {
+            if (
+                phoneInput
+            ) {
 
                 phoneInput.value =
                     user.phone ||
@@ -4157,7 +6031,9 @@
             }
 
 
-            if (driver) {
+            if (
+                driver
+            ) {
 
                 const card =
                     document.getElementById(
@@ -4179,127 +6055,90 @@
                     `
                     <div class="trip-info">
 
-                        👤 ${escapeHtml(
+                        👤
+                        ${escapeHtml(
                             driver.full_name ||
                             ""
                         )}
 
                         <br>
 
-                        📞 ${escapeHtml(
+                        📞
+                        ${escapeHtml(
                             driver.phone ||
                             ""
                         )}
 
                         <br>
 
-                        🚗 ${escapeHtml(
+                        🚗
+                        ${escapeHtml(
                             driver.car_model ||
                             ""
                         )}
 
                         <br>
 
-                        🔢 ${escapeHtml(
+                        🔢
+                        ${escapeHtml(
                             driver.car_number ||
                             ""
                         )}
 
                         <br>
 
-                        💺 ${escapeHtml(
+                        💺
+                        ${escapeHtml(
                             String(
                                 driver.seats ||
                                 ""
                             )
-                        )} ta joy
+                        )}
+                        ta joy
 
                     </div>
                     `;
 
 
-                // Driver formalarini ham to‘ldiramiz
-
-                const driverName =
-                    document.getElementById(
-                        "driver-name"
-                    );
-
-
-                const driverPhone =
-                    document.getElementById(
-                        "driver-phone"
-                    );
+                document.getElementById(
+                    "driver-name"
+                ).value =
+                    driver.full_name ||
+                    "";
 
 
-                const driverCar =
-                    document.getElementById(
-                        "driver-car"
-                    );
+                document.getElementById(
+                    "driver-phone"
+                ).value =
+                    driver.phone ||
+                    "";
 
 
-                const driverNumber =
-                    document.getElementById(
-                        "driver-number"
-                    );
+                document.getElementById(
+                    "driver-car"
+                ).value =
+                    driver.car_model ||
+                    "";
 
 
-                const driverSeats =
-                    document.getElementById(
-                        "driver-seats"
-                    );
+                document.getElementById(
+                    "driver-number"
+                ).value =
+                    driver.car_number ||
+                    "";
 
 
-                if (driverName) {
-
-                    driverName.value =
-                        driver.full_name ||
-                        "";
-
-                }
-
-
-                if (driverPhone) {
-
-                    driverPhone.value =
-                        driver.phone ||
-                        "";
-
-                }
-
-
-                if (driverCar) {
-
-                    driverCar.value =
-                        driver.car_model ||
-                        "";
-
-                }
-
-
-                if (driverNumber) {
-
-                    driverNumber.value =
-                        driver.car_number ||
-                        "";
-
-                }
-
-
-                if (driverSeats) {
-
-                    driverSeats.value =
-                        driver.seats ||
-                        3;
-
-                }
+                document.getElementById(
+                    "driver-seats"
+                ).value =
+                    driver.seats ||
+                    3;
 
             }
 
 
             profileLoaded =
                 true;
-
 
         } catch (error) {
 
@@ -4320,21 +6159,15 @@
     async function updateProfile() {
 
         const fullName =
-            document
-                .getElementById(
-                    "profile-name"
-                )
-                .value
-                .trim();
+            document.getElementById(
+                "profile-name"
+            ).value.trim();
 
 
         const phone =
-            document
-                .getElementById(
-                    "profile-phone"
-                )
-                .value
-                .trim();
+            document.getElementById(
+                "profile-phone"
+            ).value.trim();
 
 
         if (!fullName) {
@@ -4352,7 +6185,7 @@
         if (!phone) {
 
             showToast(
-                "Telefon raqamini kiriting.",
+                "Telefon raqamingizni kiriting.",
                 "error"
             );
 
@@ -4367,17 +6200,19 @@
                 await api(
                     "/api/profile/update",
                     {
-                        method: "POST",
+                        method:
+                            "POST",
 
-                        body: JSON.stringify({
+                        body:
+                            JSON.stringify({
 
-                            full_name:
-                                fullName,
+                                full_name:
+                                    fullName,
 
-                            phone:
-                                phone
+                                phone:
+                                    phone
 
-                        })
+                            })
                     }
                 );
 
@@ -4394,7 +6229,6 @@
 
 
             loadProfile();
-
 
         } catch (error) {
 
@@ -4441,6 +6275,678 @@
 
 
     /* =====================================================
+       LIVE MAP
+    ===================================================== */
+
+    function createLiveMap() {
+
+        const element =
+            document.getElementById(
+                "live-map"
+            );
+
+
+        if (
+            !element
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            liveMap
+        ) {
+
+            setTimeout(
+                () => {
+                    liveMap.invalidateSize();
+                },
+                100
+            );
+
+            return;
+
+        }
+
+
+        liveMap =
+            L.map(
+                "live-map"
+            ).setView(
+                [
+                    41.3111,
+                    69.2797
+                ],
+                12
+            );
+
+
+        L.tileLayer(
+            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            {
+                maxZoom: 19,
+                attribution:
+                    "© OpenStreetMap"
+            }
+        ).addTo(
+            liveMap
+        );
+
+    }
+
+
+    /* =====================================================
+       UPDATE MAP
+    ===================================================== */
+
+    function updateLiveMap() {
+
+        if (
+            !liveMap
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            driverLocation
+        ) {
+
+            if (
+                !driverMarker
+            ) {
+
+                driverMarker =
+                    L.marker(
+                        [
+                            driverLocation
+                                .latitude,
+
+                            driverLocation
+                                .longitude
+                        ]
+                    )
+                    .addTo(
+                        liveMap
+                    )
+                    .bindPopup(
+                        "🚕 Haydovchi"
+                    );
+
+            } else {
+
+                driverMarker.setLatLng(
+                    [
+                        driverLocation
+                            .latitude,
+
+                        driverLocation
+                            .longitude
+                    ]
+                );
+
+            }
+
+        }
+
+
+        if (
+            passengerLocation
+        ) {
+
+            if (
+                !passengerMarker
+            ) {
+
+                passengerMarker =
+                    L.marker(
+                        [
+                            passengerLocation
+                                .latitude,
+
+                            passengerLocation
+                                .longitude
+                        ]
+                    )
+                    .addTo(
+                        liveMap
+                    )
+                    .bindPopup(
+                        "📍 Yo‘lovchi"
+                    );
+
+            } else {
+
+                passengerMarker.setLatLng(
+                    [
+                        passengerLocation
+                            .latitude,
+
+                        passengerLocation
+                            .longitude
+                    ]
+                );
+
+            }
+
+        }
+
+
+        if (
+            driverLocation &&
+            passengerLocation
+        ) {
+
+            const points = [
+
+                [
+                    driverLocation
+                        .latitude,
+
+                    driverLocation
+                        .longitude
+                ],
+
+                [
+                    passengerLocation
+                        .latitude,
+
+                    passengerLocation
+                        .longitude
+                ]
+
+            ];
+
+
+            if (
+                routeLine
+            ) {
+
+                routeLine.setLatLngs(
+                    points
+                );
+
+            } else {
+
+                routeLine =
+                    L.polyline(
+                        points
+                    ).addTo(
+                        liveMap
+                    );
+
+            }
+
+
+            liveMap.fitBounds(
+                points,
+                {
+                    padding:
+                        [30, 30]
+                }
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       OPEN PASSENGER LOCATION
+    ===================================================== */
+
+    function openPassengerLocation(
+        latitude,
+        longitude
+    ) {
+
+        if (
+            !latitude ||
+            !longitude
+        ) {
+
+            showToast(
+                "Yo‘lovchi lokatsiyasi topilmadi.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        passengerLocation = {
+
+            latitude:
+                Number(
+                    latitude
+                ),
+
+            longitude:
+                Number(
+                    longitude
+                )
+
+        };
+
+
+        const modal =
+            document.getElementById(
+                "modal"
+            );
+
+
+        const body =
+            document.getElementById(
+                "modal-body"
+            );
+
+
+        body.innerHTML =
+            `
+            <div class="modal-title">
+                📍 Yo‘lovchi lokatsiyasi
+            </div>
+
+
+            <div class="map-card">
+
+                <div class="map-title">
+                    Yo‘lovchi qayerda?
+                </div>
+
+                <div class="map-subtitle">
+                    Xarita orqali joylashuvni ko‘ring.
+                </div>
+
+                <div id="live-map"></div>
+
+            </div>
+
+
+            <button
+                class="btn btn-primary"
+                onclick="openExternalNavigation(${Number(
+                    latitude
+                )}, ${Number(
+                    longitude
+                )})"
+            >
+                🧭 Navigatsiyani ochish
+            </button>
+
+
+            <button
+                class="btn btn-light"
+                onclick="closeModal()"
+            >
+                Yopish
+            </button>
+            `;
+
+
+        modal.classList.add(
+            "show"
+        );
+
+
+        setTimeout(
+            () => {
+
+                createLiveMap();
+
+                updateLiveMap();
+
+            },
+            150
+        );
+
+    }
+
+
+    /* =====================================================
+       LIVE MAP FOR PASSENGER
+    ===================================================== */
+
+    async function openLiveMap(
+        orderId
+    ) {
+
+        const modal =
+            document.getElementById(
+                "modal"
+            );
+
+
+        const body =
+            document.getElementById(
+                "modal-body"
+            );
+
+
+        body.innerHTML =
+            `
+            <div class="modal-title">
+                🚕 Haydovchi xaritada
+            </div>
+
+
+            <div class="map-card">
+
+                <div class="map-title">
+                    Haydovchi sizning oldingizga kelyapti
+                </div>
+
+                <div class="map-subtitle">
+                    Joylashuv avtomatik yangilanadi.
+                </div>
+
+                <div id="live-map"></div>
+
+            </div>
+
+
+            <button
+                class="btn btn-light"
+                onclick="closeModal()"
+            >
+                Yopish
+            </button>
+            `;
+
+
+        modal.classList.add(
+            "show"
+        );
+
+
+        setTimeout(
+            () => {
+
+                createLiveMap();
+
+                loadDriverLocation(
+                    orderId
+                );
+
+            },
+            150
+        );
+
+    }
+
+
+    /* =====================================================
+       GET DRIVER LOCATION
+    ===================================================== */
+
+    async function loadDriverLocation(
+        orderId
+    ) {
+
+        try {
+
+            const result =
+                await api(
+                    "/api/location/get",
+                    {
+                        method:
+                            "POST",
+
+                        body:
+                            JSON.stringify({
+
+                                order_id:
+                                    orderId
+
+                            })
+                    }
+                );
+
+
+            if (
+                result.driver
+            ) {
+
+                driverLocation = {
+
+                    latitude:
+                        Number(
+                            result.driver.latitude
+                        ),
+
+                    longitude:
+                        Number(
+                            result.driver.longitude
+                        )
+
+                };
+
+            }
+
+
+            updateLiveMap();
+
+
+        } catch (error) {
+
+            console.log(
+                "Driver location:",
+                error.message
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       EXTERNAL NAVIGATION
+    ===================================================== */
+
+    function openExternalNavigation(
+        latitude,
+        longitude
+    ) {
+
+        const url =
+            "https://www.google.com/maps/dir/?api=1&destination=" +
+            encodeURIComponent(
+                latitude +
+                "," +
+                longitude
+            );
+
+
+        window.open(
+            url,
+            "_blank"
+        );
+
+    }
+
+
+    /* =====================================================
+       NOTIFICATION BADGE
+    ===================================================== */
+
+    function updateNotificationBadge(
+        count
+    ) {
+
+        const badge =
+            document.getElementById(
+                "notification-badge"
+            );
+
+
+        const navBadge =
+            document.getElementById(
+                "nav-orders-badge"
+            );
+
+
+        const number =
+            Number(
+                count ||
+                0
+            );
+
+
+        if (
+            number > 0
+        ) {
+
+            badge.textContent =
+                number;
+
+            badge.classList.add(
+                "show"
+            );
+
+
+            navBadge.textContent =
+                number;
+
+            navBadge.classList.add(
+                "show"
+            );
+
+        } else {
+
+            badge.classList.remove(
+                "show"
+            );
+
+            navBadge.classList.remove(
+                "show"
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       BACKGROUND CHECK
+    ===================================================== */
+
+    async function backgroundCheck() {
+
+        try {
+
+            const result =
+                await api(
+                    "/api/orders",
+                    {
+                        method:
+                            "POST",
+
+                        body:
+                            JSON.stringify({})
+                    }
+                );
+
+
+            const incoming =
+                result.driver_orders ||
+                result.incoming_orders ||
+                result.new_orders ||
+                [];
+
+
+            const pendingCount =
+                incoming.filter(
+                    order =>
+                        (
+                            order.status ||
+                            "pending"
+                        ) ===
+                        "pending"
+                ).length;
+
+
+            updateNotificationBadge(
+                pendingCount
+            );
+
+
+            checkNewOrders(
+                incoming
+            );
+
+
+            /*
+             Yo‘lovchi buyurtmasining
+             statusini ham kuzatamiz.
+            */
+
+            const passengerOrders =
+                result.passenger_orders ||
+                result.orders ||
+                [];
+
+
+            const arriving =
+                passengerOrders.find(
+                    order =>
+                        order.status ===
+                        "arriving"
+                );
+
+
+            if (
+                arriving
+            ) {
+
+                const key =
+                    "arriving_" +
+                    (
+                        arriving.order_id ||
+                        arriving.id
+                    );
+
+
+                if (
+                    !lastNotificationIds.has(
+                        key
+                    )
+                {
+
+                    lastNotificationIds.add(
+                        key
+                    );
+
+
+                    showToast(
+                        "🚕 Haydovchi sizning oldingizga kelyapti.",
+                        "success"
+                    );
+
+
+                    playNotificationSound();
+
+                }
+
+            }
+
+        } catch (error) {
+
+            console.log(
+                "Background:",
+                error.message
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
        STARTUP
     ===================================================== */
 
@@ -4452,15 +6958,43 @@
 
             setMinDates();
 
-            // Profilni oldindan yuklamaymiz.
-            // Kerak bo‘lganda yuklanadi.
+
+            /*
+             Ilova ochilganda
+             birinchi tekshiruv.
+            */
+
+            setTimeout(
+                () => {
+
+                    backgroundCheck();
+
+                },
+                1200
+            );
+
+
+            /*
+             Har 5 soniyada
+             yangi zakaz/status tekshiriladi.
+            */
+
+            notificationTimer =
+                setInterval(
+                    () => {
+
+                        backgroundCheck();
+
+                    },
+                    5000
+                );
 
         }
     );
 
 
     /* =====================================================
-       BACK BUTTON TELEGRAM
+       TELEGRAM BACK BUTTON
     ===================================================== */
 
     if (tg) {
@@ -4496,7 +7030,7 @@
 
 
     /* =====================================================
-       SCREEN CHANGE + TELEGRAM BACK BUTTON
+       SCREEN + TELEGRAM BACK BUTTON
     ===================================================== */
 
     const originalShowScreen =
@@ -4504,7 +7038,9 @@
 
 
     showScreen =
-        function(screen) {
+        function(
+            screen
+        ) {
 
             originalShowScreen(
                 screen
