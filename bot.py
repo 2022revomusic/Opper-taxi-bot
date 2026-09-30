@@ -220,6 +220,8 @@ async def driver_phone_contact(message: Message, state: FSMContext):
         "📍 Qayerdan yo‘lga chiqasiz?",
         reply_markup=cities
     )
+
+
 @dp.message(DriverState.phone)
 async def driver_phone_text(message: Message, state: FSMContext):
     phone = message.text
@@ -306,6 +308,7 @@ async def driver_seats(message: Message, state: FSMContext):
         "Masalan: 150000 so‘m"
     )
 
+
 @dp.message(DriverState.price)
 async def driver_price(message: Message, state: FSMContext):
     await state.update_data(price=message.text)
@@ -314,8 +317,9 @@ async def driver_price(message: Message, state: FSMContext):
 
     try:
         driver_seats = int(data["seats"])
-    except ValueError:
+    except (ValueError, TypeError):
         await state.clear()
+
         await message.answer(
             "❗ Bo‘sh joy sonini faqat raqam bilan yozing.\n\n"
             "Masalan: 3",
@@ -324,6 +328,7 @@ async def driver_price(message: Message, state: FSMContext):
         return
 
     async with aiosqlite.connect(DB) as db:
+
         # Haydovchi safarini saqlash
         await db.execute("""
             INSERT INTO rides
@@ -346,10 +351,10 @@ async def driver_price(message: Message, state: FSMContext):
 
         await db.commit()
 
-        # Shu yo‘nalish va sanaga mos yo‘lovchilarni topish
+        # Shu yo‘nalish va sanaga mos yo‘lovchilar
         cursor = await db.execute("""
             SELECT telegram_id, name, phone, from_city, to_city,
-       date, time, seats
+                   date, time, seats
             FROM rides
             WHERE role = 'passenger'
             AND from_city = ?
@@ -365,10 +370,10 @@ async def driver_price(message: Message, state: FSMContext):
 
     passengers = []
 
-    # Haydovchining bo‘sh joyiga sig‘adigan yo‘lovchilarni tanlash
+    # Haydovchining bo‘sh joyiga sig‘adigan yo‘lovchilar
     for passenger in all_passengers:
         try:
-           passenger_count = int(passenger[7]) 
+            passenger_count = int(passenger[7])
 
             if passenger_count <= driver_seats:
                 passengers.append(passenger)
@@ -394,16 +399,17 @@ async def driver_price(message: Message, state: FSMContext):
         text += "\n👤 <b>Sizga mos yo‘lovchilar:</b>\n\n"
 
         for i, passenger in enumerate(passengers, 1):
-(
-    passenger_id,
-    name,
-    phone,
-    from_city,
-    to_city,
-    date,
-    time,
-    passenger_seats
-) = passenger
+            (
+                passenger_id,
+                name,
+                phone,
+                from_city,
+                to_city,
+                date,
+                time,
+                passenger_seats
+            ) = passenger
+
             text += (
                 f"<b>{i}. {name}</b>\n"
                 f"📍 {from_city} → {to_city}\n"
@@ -411,22 +417,25 @@ async def driver_price(message: Message, state: FSMContext):
                 f"👥 Yo‘lovchilar: {passenger_seats}\n"
                 f"📱 {phone}\n\n"
             )
-try:
-    await bot.send_message(
-        passenger_id,
-        "🚕 <b>Sizga mos haydovchi topildi!</b>\n\n"
-        f"📍 {data['from_city']} → {data['to_city']}\n"
-        f"📅 {data['date']}\n"
-        f"⏰ {data['time']}\n"
-        f"🚗 {data['car']}\n"
-        f"💺 Bo‘sh joy: {data['seats']}\n"
-        f"💰 Narx: {data['price']}\n"
-        f"👤 Haydovchi: {data['name']}\n"
-        f"📱 Telefon: {data['phone']}",
-        parse_mode="HTML"
-    )
-except Exception:
-    pass
+
+            # Yo‘lovchiga avtomatik xabar
+            try:
+                await bot.send_message(
+                    passenger_id,
+                    "🚕 <b>Sizga mos haydovchi topildi!</b>\n\n"
+                    f"📍 {data['from_city']} → {data['to_city']}\n"
+                    f"📅 {data['date']}\n"
+                    f"⏰ {data['time']}\n"
+                    f"🚗 {data['car']}\n"
+                    f"💺 Bo‘sh joy: {data['seats']}\n"
+                    f"💰 Narx: {data['price']}\n"
+                    f"👤 Haydovchi: {data['name']}\n"
+                    f"📱 Telefon: {data['phone']}",
+                    parse_mode="HTML"
+                )
+            except Exception:
+                pass
+
     else:
         text += (
             "\n😔 Hozircha shu safarga mos yo‘lovchi topilmadi."
@@ -581,8 +590,9 @@ async def passenger_finish(message: Message, state: FSMContext):
 
     try:
         passenger_count = int(data["passengers"])
-    except ValueError:
+    except (ValueError, TypeError):
         await state.clear()
+
         await message.answer(
             "❗ Yo‘lovchilar sonini faqat raqam bilan yozing.\n\n"
             "Masalan: 2",
@@ -591,6 +601,8 @@ async def passenger_finish(message: Message, state: FSMContext):
         return
 
     async with aiosqlite.connect(DB) as db:
+
+        # Yo‘lovchi safarini saqlash
         await db.execute("""
             INSERT INTO rides
             (telegram_id, name, phone, role, from_city, to_city,
@@ -607,10 +619,12 @@ async def passenger_finish(message: Message, state: FSMContext):
             data["time"],
             data["passengers"]
         ))
+
         await db.commit()
 
+        # Shu yo‘nalish va sanaga mos haydovchilar
         cursor = await db.execute("""
-            SELECT name, phone, from_city, to_city,
+            SELECT telegram_id, name, phone, from_city, to_city,
                    date, time, car, seats, price
             FROM rides
             WHERE role = 'driver'
@@ -627,9 +641,10 @@ async def passenger_finish(message: Message, state: FSMContext):
 
     drivers = []
 
+    # Yo‘lovchilar soniga yetadigan haydovchilar
     for driver in all_drivers:
         try:
-            driver_seats = int(driver[7])
+            driver_seats = int(driver[8])
 
             if driver_seats >= passenger_count:
                 drivers.append(driver)
@@ -664,6 +679,7 @@ async def passenger_finish(message: Message, state: FSMContext):
 
     for i, driver in enumerate(drivers, 1):
         (
+            driver_id,
             name,
             phone,
             from_city,
@@ -684,6 +700,22 @@ async def passenger_finish(message: Message, state: FSMContext):
             f"💰 Narx: {price}\n"
             f"📱 {phone}\n\n"
         )
+
+        # Haydovchiga avtomatik xabar
+        try:
+            await bot.send_message(
+                driver_id,
+                "👤 <b>Sizga mos yo‘lovchi topildi!</b>\n\n"
+                f"📍 {data['from_city']} → {data['to_city']}\n"
+                f"📅 {data['date']}\n"
+                f"⏰ {data['time']}\n"
+                f"👥 Yo‘lovchilar: {data['passengers']}\n"
+                f"👤 Yo‘lovchi: {data['name']}\n"
+                f"📱 Telefon: {data['phone']}",
+                parse_mode="HTML"
+            )
+        except Exception:
+            pass
 
     await message.answer(
         text,
