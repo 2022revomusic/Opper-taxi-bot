@@ -411,6 +411,22 @@ async def driver_price(message: Message, state: FSMContext):
                 f"👥 Yo‘lovchilar: {passenger_seats}\n"
                 f"📱 {phone}\n\n"
             )
+try:
+    await bot.send_message(
+        passenger_id,
+        "🚕 <b>Sizga mos haydovchi topildi!</b>\n\n"
+        f"📍 {data['from_city']} → {data['to_city']}\n"
+        f"📅 {data['date']}\n"
+        f"⏰ {data['time']}\n"
+        f"🚗 {data['car']}\n"
+        f"💺 Bo‘sh joy: {data['seats']}\n"
+        f"💰 Narx: {data['price']}\n"
+        f"👤 Haydovchi: {data['name']}\n"
+        f"📱 Telefon: {data['phone']}",
+        parse_mode="HTML"
+    )
+except Exception:
+    pass
     else:
         text += (
             "\n😔 Hozircha shu safarga mos yo‘lovchi topilmadi."
