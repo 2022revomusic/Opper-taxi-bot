@@ -1,0 +1,1893 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <title>OPPER TAXI</title>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      background: #f5f5f5;
+      color: #171717;
+    }
+
+    button,
+    input,
+    select {
+      font-family: inherit;
+    }
+
+    .app {
+      min-height: 100vh;
+      padding-bottom: 85px;
+    }
+
+    /* HEADER */
+
+    .header {
+      background: #ffd400;
+      padding: 18px 18px 22px;
+      border-radius: 0 0 25px 25px;
+      box-shadow: 0 3px 12px rgba(0,0,0,.08);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      background: #111;
+      color: #ffd400;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    .brand-text h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .brand-text p {
+      margin: 2px 0 0;
+      font-size: 12px;
+      opacity: .7;
+    }
+
+    /* CONTENT */
+
+    .content {
+      padding: 16px;
+    }
+
+    .welcome {
+      margin: 4px 2px 18px;
+    }
+
+    .welcome h2 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .welcome p {
+      margin: 5px 0 0;
+      color: #777;
+      font-size: 14px;
+    }
+
+    /* CARDS */
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .action-card {
+      border: 0;
+      background: white;
+      border-radius: 20px;
+      padding: 20px 15px;
+      text-align: left;
+      box-shadow: 0 3px 15px rgba(0,0,0,.06);
+      cursor: pointer;
+      min-height: 135px;
+    }
+
+    .action-card:active {
+      transform: scale(.97);
+    }
+
+    .action-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 15px;
+      background: #fff0a3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 25px;
+      margin-bottom: 13px;
+    }
+
+    .action-card h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .action-card p {
+      margin: 5px 0 0;
+      color: #888;
+      font-size: 12px;
+    }
+
+    /* SECTION */
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 24px 2px 10px;
+    }
+
+    .section-title h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    /* FORM */
+
+    .form-card {
+      background: white;
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 3px 15px rgba(0,0,0,.05);
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      border: 1px solid #e1e1e1;
+      border-radius: 13px;
+      padding: 14px;
+      font-size: 15px;
+      outline: none;
+      background: #fafafa;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: #ffd400;
+      background: white;
+    }
+
+    .primary-btn {
+      width: 100%;
+      border: 0;
+      border-radius: 15px;
+      padding: 15px;
+      background: #ffd400;
+      color: #111;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 5px;
+    }
+
+    .primary-btn:active {
+      transform: scale(.98);
+    }
+
+    .black-btn {
+      width: 100%;
+      border: 0;
+      border-radius: 15px;
+      padding: 15px;
+      background: #111;
+      color: white;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    /* LOCATION */
+
+    .location-box {
+      background: #fff;
+      border-radius: 17px;
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+      box-shadow: 0 3px 12px rgba(0,0,0,.05);
+    }
+
+    .location-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+      background: #fff1a6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .location-text {
+      flex: 1;
+    }
+
+    .location-text strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .location-text span {
+      color: #888;
+      font-size: 12px;
+    }
+
+    /* LIST */
+
+    .ride-card,
+    .order-card {
+      background: white;
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 3px 14px rgba(0,0,0,.05);
+    }
+
+    .route {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 15px;
+    }
+
+    .route-line {
+      color: #aaa;
+    }
+
+    .ride-info {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .tag {
+      background: #f4f4f4;
+      border-radius: 9px;
+      padding: 6px 9px;
+      font-size: 11px;
+      color: #666;
+    }
+
+    /* PROFILE */
+
+    .profile-card {
+      background: white;
+      border-radius: 22px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 3px 15px rgba(0,0,0,.05);
+    }
+
+    .avatar {
+      width: 75px;
+      height: 75px;
+      border-radius: 50%;
+      background: #ffd400;
+      margin: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      font-weight: 900;
+    }
+
+    .profile-card h2 {
+      margin: 12px 0 3px;
+    }
+
+    .profile-card p {
+      margin: 0;
+      color: #888;
+    }
+
+    /* NAV */
+
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 72px;
+      background: rgba(255,255,255,.97);
+      border-top: 1px solid #eee;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      z-index: 100;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .nav-btn {
+      border: 0;
+      background: transparent;
+      color: #888;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+    }
+
+    .nav-btn span {
+      font-size: 22px;
+    }
+
+    .nav-btn.active {
+      color: #111;
+      font-weight: 800;
+    }
+
+    .nav-btn.active span {
+      background: #ffd400;
+      border-radius: 12px;
+      padding: 3px 10px;
+    }
+
+    /* PAGE */
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .back {
+      border: 0;
+      background: transparent;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 0 0 15px;
+      cursor: pointer;
+    }
+
+    /* EMPTY */
+
+    .empty {
+      background: white;
+      border-radius: 20px;
+      padding: 35px 20px;
+      text-align: center;
+      color: #888;
+    }
+
+    .empty-icon {
+      font-size: 45px;
+      margin-bottom: 10px;
+    }
+
+    /* TOAST */
+
+    .toast {
+      position: fixed;
+      left: 18px;
+      right: 18px;
+      bottom: 90px;
+      background: #111;
+      color: white;
+      padding: 14px 16px;
+      border-radius: 14px;
+      text-align: center;
+      font-size: 14px;
+      z-index: 999;
+      display: none;
+    }
+
+    .toast.show {
+      display: block;
+    }
+
+    /* LOADING */
+
+    .loading {
+      text-align: center;
+      padding: 30px;
+      color: #777;
+    }
+
+    /* DESKTOP */
+
+    @media (min-width: 700px) {
+      body {
+        background: #e9e9e9;
+      }
+
+      .app {
+        max-width: 600px;
+        margin: auto;
+        background: #f5f5f5;
+        min-height: 100vh;
+      }
+
+      .bottom-nav {
+        max-width: 600px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+
+  <header class="header">
+    <div class="brand">
+      <div class="logo">🚕</div>
+
+      <div class="brand-text">
+        <h1>OPPER TAXI</h1>
+        <p>Tezkor va qulay safarlar</p>
+      </div>
+    </div>
+  </header>
+
+
+  <main class="content">
+
+    <!-- HOME -->
+
+    <section id="homePage" class="page active">
+
+      <div class="welcome">
+        <h2 id="welcomeName">Assalomu alaykum 👋</h2>
+        <p>Qayerga boramiz?</p>
+      </div>
+
+      <div class="grid">
+
+        <button class="action-card" onclick="openPage('passengerPage')">
+          <div class="action-icon">🚕</div>
+          <h3>Taksi chaqirish</h3>
+          <p>Yo‘lovchi sifatida</p>
+        </button>
+
+        <button class="action-card" onclick="openPage('driverPage')">
+          <div class="action-icon">🚗</div>
+          <h3>Haydovchi</h3>
+          <p>Haydovchi bo‘lish</p>
+        </button>
+
+        <button class="action-card" onclick="openPage('ridesPage')">
+          <div class="action-icon">🛣</div>
+          <h3>Safarlar</h3>
+          <p>Mavjud safarlarni ko‘rish</p>
+        </button>
+
+        <button class="action-card" onclick="openPage('ordersPage')">
+          <div class="action-icon">📋</div>
+          <h3>Buyurtmalarim</h3>
+          <p>Buyurtmalar holati</p>
+        </button>
+
+      </div>
+
+      <div class="section-title">
+        <h3>📍 Lokatsiya</h3>
+      </div>
+
+      <div class="location-box" onclick="getLocation()">
+
+        <div class="location-icon">📍</div>
+
+        <div class="location-text">
+          <strong id="locationStatus">Lokatsiyani aniqlash</strong>
+          <span id="locationCoords">Bosish orqali aniqlanadi</span>
+        </div>
+
+        <div>›</div>
+
+      </div>
+
+    </section>
+
+
+    <!-- PASSENGER -->
+
+    <section id="passengerPage" class="page">
+
+      <button class="back" onclick="goHome()">‹ Orqaga</button>
+
+      <div class="section-title">
+        <h3>🚕 Taksi chaqirish</h3>
+      </div>
+
+      <div class="form-card">
+
+        <div class="field">
+          <label>Qayerdan?</label>
+          <input
+            id="fromCity"
+            type="text"
+            placeholder="Masalan: Toshkent"
+          >
+        </div>
+
+        <div class="field">
+          <label>Qayerga?</label>
+          <input
+            id="toCity"
+            type="text"
+            placeholder="Masalan: Samarqand"
+          >
+        </div>
+
+        <div class="field">
+          <label>Vaqt</label>
+          <input
+            id="rideTime"
+            type="datetime-local"
+          >
+        </div>
+
+        <div class="field">
+          <label>Yo‘lovchilar soni</label>
+
+          <select id="passengerSeats">
+            <option value="1">1 kishi</option>
+            <option value="2">2 kishi</option>
+            <option value="3">3 kishi</option>
+            <option value="4">4 kishi</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Telefon raqam</label>
+
+          <input
+            id="passengerPhone"
+            type="tel"
+            placeholder="+998 90 123 45 67"
+          >
+        </div>
+
+        <button class="primary-btn" onclick="createPassengerOrder()">
+          🚕 Taksi qidirish
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- DRIVER -->
+
+    <section id="driverPage" class="page">
+
+      <button class="back" onclick="goHome()">‹ Orqaga</button>
+
+      <div class="section-title">
+        <h3>🚗 Haydovchi bo‘limi</h3>
+      </div>
+
+      <div class="form-card">
+
+        <div class="field">
+          <label>Ism familiya</label>
+          <input
+            id="driverName"
+            type="text"
+            placeholder="Ism Familiya"
+          >
+        </div>
+
+        <div class="field">
+          <label>Telefon</label>
+          <input
+            id="driverPhone"
+            type="tel"
+            placeholder="+998..."
+          >
+        </div>
+
+        <div class="field">
+          <label>Avtomobil</label>
+          <input
+            id="carModel"
+            type="text"
+            placeholder="Chevrolet Cobalt"
+          >
+        </div>
+
+        <div class="field">
+          <label>Davlat raqami</label>
+          <input
+            id="carNumber"
+            type="text"
+            placeholder="01 A 123 BC"
+          >
+        </div>
+
+        <div class="field">
+          <label>O‘rindiqlar soni</label>
+
+          <select id="driverSeats">
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4" selected>4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+          </select>
+        </div>
+
+        <button class="primary-btn" onclick="registerDriver()">
+          🚗 Haydovchi sifatida ro‘yxatdan o‘tish
+        </button>
+
+      </div>
+
+
+      <div class="section-title">
+        <h3>🛣 Safar joylash</h3>
+      </div>
+
+      <div class="form-card">
+
+        <div class="field">
+          <label>Qayerdan?</label>
+          <input
+            id="driverFrom"
+            type="text"
+            placeholder="Toshkent"
+          >
+        </div>
+
+        <div class="field">
+          <label>Qayerga?</label>
+          <input
+            id="driverTo"
+            type="text"
+            placeholder="Samarqand"
+          >
+        </div>
+
+        <div class="field">
+          <label>Safar vaqti</label>
+          <input
+            id="driverTime"
+            type="datetime-local"
+          >
+        </div>
+
+        <div class="field">
+          <label>Bo‘sh joylar</label>
+          <select id="driverAvailableSeats">
+            <option value="1">1 ta</option>
+            <option value="2">2 ta</option>
+            <option value="3">3 ta</option>
+            <option value="4" selected>4 ta</option>
+            <option value="5">5 ta</option>
+            <option value="6">6 ta</option>
+            <option value="7">7 ta</option>
+          </select>
+        </div>
+
+        <button class="primary-btn" onclick="createRide()">
+          🛣 Safarni joylash
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- RIDES -->
+
+    <section id="ridesPage" class="page">
+
+      <button class="back" onclick="goHome()">‹ Orqaga</button>
+
+      <div class="section-title">
+        <h3>🛣 Mavjud safarlar</h3>
+
+        <button
+          onclick="loadRides()"
+          style="border:0;background:none;font-size:20px;"
+        >
+          🔄
+        </button>
+      </div>
+
+      <div id="ridesList">
+        <div class="loading">Safarlar yuklanmoqda...</div>
+      </div>
+
+    </section>
+
+
+    <!-- ORDERS -->
+
+    <section id="ordersPage" class="page">
+
+      <button class="back" onclick="goHome()">‹ Orqaga</button>
+
+      <div class="section-title">
+        <h3>📋 Buyurtmalarim</h3>
+
+        <button
+          onclick="loadOrders()"
+          style="border:0;background:none;font-size:20px;"
+        >
+          🔄
+        </button>
+      </div>
+
+      <div id="ordersList">
+        <div class="loading">Buyurtmalar yuklanmoqda...</div>
+      </div>
+
+    </section>
+
+
+    <!-- PROFILE -->
+
+    <section id="profilePage" class="page">
+
+      <button class="back" onclick="goHome()">‹ Orqaga</button>
+
+      <div class="profile-card">
+
+        <div class="avatar" id="avatar">
+          👤
+        </div>
+
+        <h2 id="profileName">
+          Foydalanuvchi
+        </h2>
+
+        <p id="profileUsername">
+          Telegram foydalanuvchisi
+        </p>
+
+      </div>
+
+
+      <div class="section-title">
+        <h3>👤 Profil ma’lumotlari</h3>
+      </div>
+
+      <div class="form-card">
+
+        <div class="field">
+          <label>Ism</label>
+
+          <input
+            id="profileFullName"
+            type="text"
+          >
+        </div>
+
+        <div class="field">
+          <label>Telefon</label>
+
+          <input
+            id="profilePhone"
+            type="tel"
+            placeholder="+998..."
+          >
+        </div>
+
+        <button
+          class="primary-btn"
+          onclick="saveProfile()"
+        >
+          💾 Saqlash
+        </button>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- BOTTOM NAV -->
+
+  <nav class="bottom-nav">
+
+    <button
+      class="nav-btn active"
+      id="navHome"
+      onclick="navigate('homePage', this)"
+    >
+      <span>🏠</span>
+      Bosh sahifa
+    </button>
+
+    <button
+      class="nav-btn"
+      id="navRides"
+      onclick="navigate('ridesPage', this)"
+    >
+      <span>🚕</span>
+      Safarlar
+    </button>
+
+    <button
+      class="nav-btn"
+      id="navOrders"
+      onclick="navigate('ordersPage', this)"
+    >
+      <span>📋</span>
+      Buyurtmalar
+    </button>
+
+    <button
+      class="nav-btn"
+      id="navProfile"
+      onclick="navigate('profilePage', this)"
+    >
+      <span>👤</span>
+      Profil
+    </button>
+
+  </nav>
+
+</div>
+
+
+<div id="toast" class="toast"></div>
+
+
+<script>
+
+  /* =========================
+     TELEGRAM
+  ========================= */
+
+  const tg = window.Telegram.WebApp;
+
+  tg.ready();
+  tg.expand();
+
+  try {
+    tg.setHeaderColor("#ffd400");
+    tg.setBackgroundColor("#f5f5f5");
+  } catch(e) {}
+
+
+  /* =========================
+     USER
+  ========================= */
+
+  const telegramUser = tg.initDataUnsafe?.user || null;
+
+  const initData = tg.initData || "";
+
+  let latitude = null;
+  let longitude = null;
+
+
+  if (telegramUser) {
+
+    const firstName =
+      telegramUser.first_name || "";
+
+    const lastName =
+      telegramUser.last_name || "";
+
+    const fullName =
+      `${firstName} ${lastName}`.trim();
+
+    document.getElementById("welcomeName").textContent =
+      `Salom, ${firstName || "do‘st"} 👋`;
+
+    document.getElementById("profileName").textContent =
+      fullName || "Foydalanuvchi";
+
+    document.getElementById("profileUsername").textContent =
+      telegramUser.username
+        ? `@${telegramUser.username}`
+        : "Telegram foydalanuvchisi";
+
+    if (firstName) {
+      document.getElementById("avatar").textContent =
+        firstName.charAt(0).toUpperCase();
+    }
+
+  }
+
+
+  /* =========================
+     API
+  ========================= */
+
+  async function api(url, data = {}) {
+
+    try {
+
+      data.init_data = initData;
+
+      const response = await fetch(url, {
+
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify(data)
+
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+
+        throw new Error(
+          result.detail ||
+          result.message ||
+          "Server xatosi"
+        );
+
+      }
+
+      return result;
+
+    } catch(error) {
+
+      console.error(error);
+
+      showToast(
+        error.message || "Xatolik yuz berdi"
+      );
+
+      throw error;
+    }
+
+  }
+
+
+  /* =========================
+     NAVIGATION
+  ========================= */
+
+  function openPage(pageId) {
+
+    document.querySelectorAll(".page")
+      .forEach(page => {
+        page.classList.remove("active");
+      });
+
+    const page =
+      document.getElementById(pageId);
+
+    if (page) {
+      page.classList.add("active");
+    }
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+
+  }
+
+
+  function goHome() {
+
+    openPage("homePage");
+
+    setActiveNav(
+      document.getElementById("navHome")
+    );
+
+  }
+
+
+  function navigate(pageId, button) {
+
+    openPage(pageId);
+
+    setActiveNav(button);
+
+    if (pageId === "ridesPage") {
+      loadRides();
+    }
+
+    if (pageId === "ordersPage") {
+      loadOrders();
+    }
+
+    if (pageId === "profilePage") {
+      loadProfile();
+    }
+
+  }
+
+
+  function setActiveNav(button) {
+
+    document.querySelectorAll(".nav-btn")
+      .forEach(btn => {
+        btn.classList.remove("active");
+      });
+
+    if (button) {
+      button.classList.add("active");
+    }
+
+  }
+
+
+  function setActivePageNav(pageId) {
+
+    const map = {
+      homePage: "navHome",
+      ridesPage: "navRides",
+      ordersPage: "navOrders",
+      profilePage: "navProfile"
+    };
+
+    const id = map[pageId];
+
+    if (id) {
+      setActiveNav(
+        document.getElementById(id)
+      );
+    }
+
+  }
+
+
+  /* =========================
+     TOAST
+  ========================= */
+
+  let toastTimer = null;
+
+  function showToast(message) {
+
+    const toast =
+      document.getElementById("toast");
+
+    toast.textContent = message;
+    toast.classList.add("show");
+
+    clearTimeout(toastTimer);
+
+    toastTimer =
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, 3000);
+
+  }
+
+
+  /* =========================
+     LOCATION
+  ========================= */
+
+  function getLocation() {
+
+    if (!navigator.geolocation) {
+
+      showToast(
+        "Telefon lokatsiyasini qo‘llab-quvvatlamaydi"
+      );
+
+      return;
+    }
+
+    document.getElementById(
+      "locationStatus"
+    ).textContent = "Aniqlanmoqda...";
+
+    navigator.geolocation.getCurrentPosition(
+
+      position => {
+
+        latitude =
+          position.coords.latitude;
+
+        longitude =
+          position.coords.longitude;
+
+        document.getElementById(
+          "locationStatus"
+        ).textContent =
+          "Lokatsiya aniqlandi ✅";
+
+        document.getElementById(
+          "locationCoords"
+        ).textContent =
+          `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+
+        showToast(
+          "Lokatsiyangiz aniqlandi"
+        );
+
+      },
+
+      error => {
+
+        console.error(error);
+
+        document.getElementById(
+          "locationStatus"
+        ).textContent =
+          "Lokatsiyani aniqlab bo‘lmadi";
+
+        document.getElementById(
+          "locationCoords"
+        ).textContent =
+          "Telegram uchun lokatsiyaga ruxsat bering";
+
+        showToast(
+          "Lokatsiyaga ruxsat bering"
+        );
+
+      },
+
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+
+    );
+
+  }
+
+
+  /* =========================
+     PASSENGER ORDER
+  ========================= */
+
+  async function createPassengerOrder() {
+
+    const fromCity =
+      document.getElementById(
+        "fromCity"
+      ).value.trim();
+
+    const toCity =
+      document.getElementById(
+        "toCity"
+      ).value.trim();
+
+    const rideTime =
+      document.getElementById(
+        "rideTime"
+      ).value;
+
+    const seats =
+      Number(
+        document.getElementById(
+          "passengerSeats"
+        ).value
+      );
+
+    const phone =
+      document.getElementById(
+        "passengerPhone"
+      ).value.trim();
+
+
+    if (!fromCity) {
+      showToast("Qayerdan borishingizni kiriting");
+      return;
+    }
+
+    if (!toCity) {
+      showToast("Qayerga borishingizni kiriting");
+      return;
+    }
+
+    if (!rideTime) {
+      showToast("Safar vaqtini tanlang");
+      return;
+    }
+
+    if (!phone) {
+      showToast("Telefon raqamingizni kiriting");
+      return;
+    }
+
+
+    try {
+
+      const result =
+        await api(
+          "/api/passenger/order",
+          {
+            from_city: fromCity,
+            to_city: toCity,
+            ride_time: rideTime,
+            seats: seats,
+            phone: phone,
+            latitude: latitude,
+            longitude: longitude
+          }
+        );
+
+
+      showToast(
+        result.message ||
+        "Buyurtma qabul qilindi ✅"
+      );
+
+
+      setTimeout(() => {
+
+        navigate(
+          "ordersPage",
+          document.getElementById(
+            "navOrders"
+          )
+        );
+
+        loadOrders();
+
+      }, 800);
+
+
+    } catch(error) {
+
+      console.error(error);
+
+    }
+
+  }
+
+
+  /* =========================
+     DRIVER REGISTER
+  ========================= */
+
+  async function registerDriver() {
+
+    const name =
+      document.getElementById(
+        "driverName"
+      ).value.trim();
+
+    const phone =
+      document.getElementById(
+        "driverPhone"
+      ).value.trim();
+
+    const carModel =
+      document.getElementById(
+        "carModel"
+      ).value.trim();
+
+    const carNumber =
+      document.getElementById(
+        "carNumber"
+      ).value.trim();
+
+    const seats =
+      Number(
+        document.getElementById(
+          "driverSeats"
+        ).value
+      );
+
+
+    if (!name) {
+      showToast("Ism familiyangizni kiriting");
+      return;
+    }
+
+    if (!phone) {
+      showToast("Telefon raqamingizni kiriting");
+      return;
+    }
+
+    if (!carModel) {
+      showToast("Avtomobil modelini kiriting");
+      return;
+    }
+
+    if (!carNumber) {
+      showToast("Avtomobil raqamini kiriting");
+      return;
+    }
+
+
+    try {
+
+      const result =
+        await api(
+          "/api/driver/register",
+          {
+            full_name: name,
+            phone: phone,
+            car_model: carModel,
+            car_number: carNumber,
+            seats: seats,
+            latitude: latitude,
+            longitude: longitude
+          }
+        );
+
+
+      showToast(
+        result.message ||
+        "Ariza yuborildi ✅"
+      );
+
+
+    } catch(error) {
+
+      console.error(error);
+
+    }
+
+  }
+
+
+  /* =========================
+     CREATE RIDE
+  ========================= */
+
+  async function createRide() {
+
+    const fromCity =
+      document.getElementById(
+        "driverFrom"
+      ).value.trim();
+
+    const toCity =
+      document.getElementById(
+        "driverTo"
+      ).value.trim();
+
+    const rideTime =
+      document.getElementById(
+        "driverTime"
+      ).value;
+
+    const seats =
+      Number(
+        document.getElementById(
+          "driverAvailableSeats"
+        ).value
+      );
+
+
+    if (!fromCity) {
+      showToast("Qayerdan ekanini kiriting");
+      return;
+    }
+
+    if (!toCity) {
+      showToast("Qayerga ekanini kiriting");
+      return;
+    }
+
+    if (!rideTime) {
+      showToast("Safar vaqtini tanlang");
+      return;
+    }
+
+
+    try {
+
+      const result =
+        await api(
+          "/api/driver/ride",
+          {
+            from_city: fromCity,
+            to_city: toCity,
+            ride_time: rideTime,
+            seats: seats
+          }
+        );
+
+
+      showToast(
+        result.message ||
+        "Safar joylandi ✅"
+      );
+
+      loadRides();
+
+
+    } catch(error) {
+
+      console.error(error);
+
+    }
+
+  }
+
+
+  /* =========================
+     RIDES
+  ========================= */
+
+  async function loadRides() {
+
+    const container =
+      document.getElementById(
+        "ridesList"
+      );
+
+    container.innerHTML =
+      `<div class="loading">
+        Safarlar yuklanmoqda...
+      </div>`;
+
+
+    try {
+
+      const result =
+        await api(
+          "/api/rides",
+          {}
+        );
+
+
+      const rides =
+        result.rides ||
+        result.data ||
+        [];
+
+
+      if (!rides.length) {
+
+        container.innerHTML =
+          `<div class="empty">
+
+            <div class="empty-icon">🚕</div>
+
+            <strong>Hozircha safarlar yo‘q</strong>
+
+            <p>
+              Yangi safarlar paydo bo‘lganda
+              shu yerda ko‘rinadi.
+            </p>
+
+          </div>`;
+
+        return;
+      }
+
+
+      container.innerHTML =
+        rides.map(ride => {
+
+          return `
+
+            <div class="ride-card">
+
+              <div class="route">
+
+                <span>📍</span>
+
+                <span>
+                  ${escapeHtml(
+                    ride.from_city ||
+                    ride.from ||
+                    "-"
+                  )}
+                </span>
+
+                <span class="route-line">→</span>
+
+                <span>
+                  ${escapeHtml(
+                    ride.to_city ||
+                    ride.to ||
+                    "-"
+                  )}
+                </span>
+
+              </div>
+
+              <div class="ride-info">
+
+                <span class="tag">
+                  🕐 ${escapeHtml(
+                    ride.ride_time ||
+                    ride.time ||
+                    "-"
+                  )}
+                </span>
+
+                <span class="tag">
+                  💺 ${ride.available_seats ??
+                    ride.seats ??
+                    "-"} joy
+                </span>
+
+                <span class="tag">
+                  🚗 ${escapeHtml(
+                    ride.car_model ||
+                    "Taksi"
+                  )}
+                </span>
+
+              </div>
+
+            </div>
+
+          `;
+
+        }).join("");
+
+
+    } catch(error) {
+
+      container.innerHTML =
+        `<div class="empty">
+
+          <div class="empty-icon">⚠️</div>
+
+          Safarlarni yuklashda xatolik.
+
+        </div>`;
+
+    }
+
+  }
+
+
+  /* =========================
+     ORDERS
+  ========================= */
+
+  async function loadOrders() {
+
+    const container =
+      document.getElementById(
+        "ordersList"
+      );
+
+    container.innerHTML =
+      `<div class="loading">
+        Buyurtmalar yuklanmoqda...
+      </div>`;
+
+
+    try {
+
+      const result =
+        await api(
+          "/api/orders",
+          {}
+        );
+
+
+      const orders =
+        result.orders ||
+        result.data ||
+        [];
+
+
+      if (!orders.length) {
+
+        container.innerHTML =
+          `<div class="empty">
+
+            <div class="empty-icon">📋</div>
+
+            <strong>Buyurtmalar yo‘q</strong>
+
+            <p>
+              Sizning buyurtmalaringiz shu yerda
+              ko‘rsatiladi.
+            </p>
+
+          </div>`;
+
+        return;
+      }
+
+
+      container.innerHTML =
+        orders.map(order => {
+
+          const status =
+            order.status ||
+            "unknown";
+
+
+          return `
+
+            <div class="order-card">
+
+              <div class="route">
+
+                📍
+
+                ${escapeHtml(
+                  order.from_city ||
+                  order.from ||
+                  "-"
+                )}
+
+                <span class="route-line">
+                  →
+                </span>
+
+                ${escapeHtml(
+                  order.to_city ||
+                  order.to ||
+                  "-"
+                )}
+
+              </div>
+
+              <div class="ride-info">
+
+                <span class="tag">
+                  🕐 ${escapeHtml(
+                    order.ride_time ||
+                    order.time ||
+                    "-"
+                  )}
+                </span>
+
+                <span class="tag">
+                  💺 ${order.seats || "-"}
+                </span>
+
+                <span class="tag">
+                  ${statusText(status)}
+                </span>
+
+              </div>
+
+            </div>
+
+          `;
+
+        }).join("");
+
+
+    } catch(error) {
+
+      container.innerHTML =
+        `<div class="empty">
+
+          <div class="empty-icon">⚠️</div>
+
+          Buyurtmalarni yuklashda xatolik.
+
+        </div>`;
+
+    }
+
+  }
+
+
+  /* =========================
+     PROFILE
+  ========================= */
+
+  async function loadProfile() {
+
+    try {
+
+      const result =
+        await api(
+          "/api/profile",
+          {}
+        );
+
+
+      const profile =
+        result.profile ||
+        result.data ||
+        result;
+
+
+      if (profile) {
+
+        document.getElementById(
+          "profileFullName"
+        ).value =
+          profile.full_name ||
+          "";
+
+        document.getElementById(
+          "profilePhone"
+        ).value =
+          profile.phone ||
+          "";
+
+      }
+
+
+    } catch(error) {
+
+      console.error(error);
+
+    }
+
+  }
+
+
+  /* =========================
+     SAVE PROFILE
+  ========================= */
+
+  async function saveProfile() {
+
+    const fullName =
+      document.getElementById(
+        "profileFullName"
+      ).value.trim();
+
+    const phone =
+      document.getElementById(
+        "profilePhone"
+      ).value.trim();
+
+
+    if (!fullName) {
+
+      showToast(
+        "Ismingizni kiriting"
+      );
+
+      return;
+
+    }
+
+
+    try {
+
+      const result =
+        await api(
+          "/api/profile/update",
+          {
+            full_name: fullName,
+            phone: phone
+          }
+        );
+
+
+      showToast(
+        result.message ||
+        "Profil saqlandi ✅"
+      );
+
+
+    } catch(error) {
+
+      console.error(error);
+
+    }
+
+  }
+
+
+  /* =========================
+     HELPERS
+  ========================= */
+
+  function statusText(status) {
+
+    const map = {
+
+      searching: "🔎 Qidirilmoqda",
+
+      pending_driver: "⏳ Haydovchi kutilyapti",
+
+      accepted: "✅ Qabul qilindi",
+
+      confirmed: "✅ Tasdiqlandi",
+
+      cancelled: "❌ Bekor qilindi",
+
+      completed: "🏁 Yakunlandi",
+
+      active: "🟢 Faol"
+
+    };
+
+    return map[status] ||
+      `📌 ${status}`;
+
+  }
+
+
+  function escapeHtml(value) {
+
+    if (value === null ||
+        value === undefined) {
+      return "";
+    }
+
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+
+  }
+
+
+  /* =========================
+     START
+  ========================= */
+
+  if (!initData) {
+
+    console.warn(
+      "Telegram initData mavjud emas."
+    );
+
+  }
+
+
+  // Dastlab lokatsiyani avtomatik so‘ramaymiz.
+  // Foydalanuvchi o‘zi bosganda ruxsat beradi.
+
+
+  // Telegram MainButton uchun tayyor holat
+  try {
+
+    tg.MainButton.setText(
+      "🚕 TAKSI CHAQRISH"
+    );
+
+    tg.MainButton.hide();
+
+  } catch(e) {}
+
+
+</script>
+
+</body>
+</html>
