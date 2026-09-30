@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    >
+
+    <title>Opper Taxi</title>
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .top-panel {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            z-index: 1000;
+            background: white;
+            border-radius: 16px;
+            padding: 14px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.18);
+        }
+
+        .title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .status {
+            margin-top: 5px;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .bottom-panel {
+            position: absolute;
+            left: 15px;
+            right: 15px;
+            bottom: 15px;
+            z-index: 1000;
+            background: white;
+            border-radius: 18px;
+            padding: 16px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.18);
+        }
+
+        .driver {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .info {
+            margin-top: 8px;
+            color: #555;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 12px;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: #2196f3;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="map"></div>
+
+<div class="top-panel">
+    <div class="title">🚕 Opper Taxi</div>
+    <div class="status" id="status">
+        Xarita yuklanmoqda...
+    </div>
+</div>
+
+<div class="bottom-panel">
+    <div class="driver">🚕 Haydovchi</div>
+
+    <div class="info">
+        📍 Lokatsiya aniqlanmoqda...
+    </div>
+
+    <button onclick="getLocation()">
+        📍 Mening lokatsiyam
+    </button>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    const map = L.map("map").setView([40.5, 70.9], 8);
+
+    L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+            maxZoom: 19,
+            attribution: "© OpenStreetMap"
+        }
+    ).addTo(map);
+
+    let userMarker = null;
+
+    function getLocation() {
+
+        if (!navigator.geolocation) {
+            document.getElementById("status").innerText =
+                "❌ Telefon lokatsiyasini qo‘llab-quvvatlamaydi";
+            return;
+        }
+
+        document.getElementById("status").innerText =
+            "📍 Lokatsiya olinmoqda...";
+
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+
+                if (userMarker) {
+                    map.removeLayer(userMarker);
+                }
+
+                userMarker = L.marker([lat, lon])
+                    .addTo(map)
+                    .bindPopup("📍 Siz")
+                    .openPopup();
+
+                map.setView([lat, lon], 15);
+
+                document.getElementById("status").innerText =
+                    "✅ Lokatsiyangiz aniqlandi";
+
+                console.log("LAT:", lat);
+                console.log("LON:", lon);
+            },
+
+            function(error) {
+
+                document.getElementById("status").innerText =
+                    "❌ Lokatsiyaga ruxsat berilmadi";
+            },
+
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    }
+</script>
+
+</body>
+</html>
