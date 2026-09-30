@@ -368,7 +368,7 @@ async def driver_price(message: Message, state: FSMContext):
     # Haydovchining bo‘sh joyiga sig‘adigan yo‘lovchilarni tanlash
     for passenger in all_passengers:
         try:
-            passenger_count = int(passenger[6])
+           passenger_count = int(passenger[7]) 
 
             if passenger_count <= driver_seats:
                 passengers.append(passenger)
@@ -394,16 +394,16 @@ async def driver_price(message: Message, state: FSMContext):
         text += "\n👤 <b>Sizga mos yo‘lovchilar:</b>\n\n"
 
         for i, passenger in enumerate(passengers, 1):
-            (
-                name,
-                phone,
-                from_city,
-                to_city,
-                date,
-                time,
-                passenger_seats
-            ) = passenger
-
+(
+    passenger_id,
+    name,
+    phone,
+    from_city,
+    to_city,
+    date,
+    time,
+    passenger_seats
+) = passenger
             text += (
                 f"<b>{i}. {name}</b>\n"
                 f"📍 {from_city} → {to_city}\n"
