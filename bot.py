@@ -222,100 +222,25 @@ async def driver_phone_contact(message: Message, state: FSMContext):
     )
 
 
-@dp.message(DriverState.phone)
-async def driver_phone_text(message: Message, state: FSMContext):
-    phone = message.text
-
-    await state.update_data(phone=phone)
-
-    async with aiosqlite.connect(DB) as db:
-        await db.execute(
-            "UPDATE users SET phone = ? WHERE telegram_id = ?",
-            (phone, message.from_user.id)
-        )
-        await db.commit()
-
-    await state.set_state(DriverState.from_city)
-
-    await message.answer(
-        "📍 Qayerdan yo‘lga chiqasiz?",
-        reply_markup=cities
-    )
-
-
-@dp.message(DriverState.from_city)
-async def driver_from(message: Message, state: FSMContext):
-    await state.update_data(from_city=message.text)
-    await state.set_state(DriverState.to_city)
-
-    await message.answer(
-        "📍 Qayerga borasiz?",
-        reply_markup=cities
-    )
-
-
-@dp.message(DriverState.to_city)
-async def driver_to(message: Message, state: FSMContext):
-    await state.update_data(to_city=message.text)
-    await state.set_state(DriverState.date)
-
-    await message.answer(
-        "📅 Safar sanasini yozing.\n\n"
-        "Masalan: 30.09.2026"
-    )
-
-
-@dp.message(DriverState.date)
-async def driver_date(message: Message, state: FSMContext):
-    await state.update_data(date=message.text)
-    await state.set_state(DriverState.time)
-
-    await message.answer(
-        "⏰ Jo‘nash vaqtini yozing.\n\n"
-        "Masalan: 08:00"
-    )
-
-
-@dp.message(DriverState.time)
-async def driver_time(message: Message, state: FSMContext):
-    await state.update_data(time=message.text)
-    await state.set_state(DriverState.car)
-
-    await message.answer(
-        "🚗 Mashinangizni yozing.\n\n"
-        "Masalan: Cobalt, Nexia 3, Malibu"
-    )
-
-
-@dp.message(DriverState.car)
-async def driver_car(message: Message, state: FSMContext):
-    await state.update_data(car=message.text)
-    await state.set_state(DriverState.seats)
-
-    await message.answer(
-        "💺 Nechta bo‘sh joy bor?\n\n"
-        "Masalan: 3"
-    )
-
-
-@dp.message(DriverState.seats)
-async def driver_seats(message: Message, state: FSMContext):
-    await state.update_data(seats=message.text)
-    await state.set_state(DriverState.price)
-
-    await message.answer(
-        "💰 Bir yo‘lovchi uchun narx qancha?\n\n"
-        "Masalan: 150000 so‘m"
-    )
-
-
 @dp.message(DriverState.price)
 async def driver_price(message: Message, state: FSMContext):
     await state.update_data(price=message.text)
 
     data = await state.get_data()
 
+    try:
+        driver_seats = int(data["seats"])
+    except ValueError:
+        await state.clear()
+        await message.answer(
+            "❗ Bo‘sh joy sonini faqat raqam bilan yozing.\n\n"
+            "Masalan: 3",
+            reply_markup=main_menu
+        )
+        return
+
     async with aiosqlite.connect(DB) as db:
+        # Haydovchi safarini saqlash
         await db.execute("""
             INSERT INTO rides
             (telegram_id, name, phone, role, from_city, to_city,
@@ -334,18 +259,81 @@ async def driver_price(message: Message, state: FSMContext):
             data["seats"],
             data["price"]
         ))
+
         await db.commit()
+
+        # Shu yo‘nalish va sanaga mos yo‘lovchilarni topish
+        cursor = await db.execute("""
+            SELECT name, phone, from_city, to_city,
+                   date, time, seats
+            FROM rides
+            WHERE role = 'passenger'
+            AND from_city = ?
+            AND to_city = ?
+            AND date = ?
+        """, (
+            data["from_city"],
+            data["to_city"],
+            data["date"]
+        ))
+
+        all_passengers = await cursor.fetchall()
+
+    passengers = []
+
+    # Haydovchining bo‘sh joyiga sig‘adigan yo‘lovchilarni tanlash
+    for passenger in all_passengers:
+        try:
+            passenger_count = int(passenger[6])
+
+            if passenger_count <= driver_seats:
+                passengers.append(passenger)
+
+        except (ValueError, TypeError):
+            continue
 
     await state.clear()
 
-    await message.answer(
+    # Haydovchiga asosiy e'lon
+    text = (
         "✅ <b>E’loningiz joylandi!</b>\n\n"
         f"🚕 {data['from_city']} → {data['to_city']}\n"
         f"📅 {data['date']}\n"
         f"⏰ {data['time']}\n"
         f"🚗 {data['car']}\n"
         f"💺 Bo‘sh joy: {data['seats']}\n"
-        f"💰 Narx: {data['price']}",
+        f"💰 Narx: {data['price']}\n"
+    )
+
+    # Mos yo‘lovchilar bo‘lsa
+    if passengers:
+        text += "\n👤 <b>Sizga mos yo‘lovchilar:</b>\n\n"
+
+        for i, passenger in enumerate(passengers, 1):
+            (
+                name,
+                phone,
+                from_city,
+                to_city,
+                date,
+                time,
+                passenger_seats
+            ) = passenger
+
+            text += (
+                f"<b>{i}. {name}</b>\n"
+                f"📍 {from_city} → {to_city}\n"
+                f"📅 {date} | ⏰ {time}\n"
+                f"👥 Yo‘lovchilar: {passenger_seats}\n"
+                f"📱 {phone}\n\n"
+            )
+    else:
+        text += (
+            "\n😔 Hozircha shu safarga mos yo‘lovchi topilmadi."
+        )
+
+    await message.answer(
+        text,
         reply_markup=main_menu,
         parse_mode="HTML"
     )
