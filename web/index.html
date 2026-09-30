@@ -1,1 +1,956 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
+  <title>OPPER TAXI</title>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      color: #111;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 600px;
+      margin: auto;
+      padding: 15px;
+    }
+
+    .header {
+      background: #111;
+      color: white;
+      padding: 18px;
+      border-radius: 18px;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 25px;
+    }
+
+    .header p {
+      margin: 7px 0 0;
+      color: #ccc;
+      font-size: 14px;
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 3px 12px rgba(0,0,0,.08);
+    }
+
+    .card h2 {
+      margin-top: 0;
+      font-size: 20px;
+    }
+
+    button {
+      width: 100%;
+      border: none;
+      border-radius: 14px;
+      padding: 15px;
+      margin-top: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #111;
+      color: white;
+    }
+
+    button:active {
+      transform: scale(.98);
+    }
+
+    .yellow {
+      background: #f5c400;
+      color: #111;
+    }
+
+    .gray {
+      background: #e8e8e8;
+      color: #111;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 14px;
+      margin-top: 8px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      font-size: 16px;
+      background: white;
+    }
+
+    label {
+      display: block;
+      margin-top: 12px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .back {
+      background: #ddd;
+      color: #111;
+    }
+
+    .ride {
+      border: 1px solid #ddd;
+      border-radius: 14px;
+      padding: 14px;
+      margin-top: 10px;
+      background: #fff;
+    }
+
+    .ride strong {
+      font-size: 17px;
+    }
+
+    #map {
+      width: 100%;
+      height: 260px;
+      border-radius: 14px;
+      margin-top: 12px;
+    }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .menu-grid button {
+      min-height: 80px;
+      margin: 0;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #777;
+    }
+
+    .error {
+      background: #ffe5e5;
+      color: #b00000;
+      padding: 12px;
+      border-radius: 12px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .success {
+      background: #e4f8e8;
+      color: #08751c;
+      padding: 12px;
+      border-radius: 12px;
+      margin-top: 10px;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <h1>🚕 OPPER TAXI</h1>
+    <p>Vodiy ↔ Toshkent safarlar xizmati</p>
+  </div>
+
+  <!-- HOME -->
+  <div id="homeScreen" class="screen active">
+
+    <div class="card">
+      <h2>🚕 OPPER TAXI</h2>
+      <p>Haydovchi yoki yo‘lovchi sifatida xizmatdan foydalaning.</p>
+
+      <div class="menu-grid">
+
+        <button class="yellow" onclick="showScreen('driverRegisterScreen')">
+          🚕 Haydovchi bo‘lish
+        </button>
+
+        <button onclick="showScreen('passengerScreen')">
+          👤 Yo‘lovchi bo‘lish
+        </button>
+
+        <button onclick="showScreen('searchScreen')">
+          🔎 Safar qidirish
+        </button>
+
+        <button onclick="showScreen('myTripsScreen')">
+          📋 Mening safarlarim
+        </button>
+
+        <button onclick="showScreen('profileScreen')">
+          👤 Profilim
+        </button>
+
+        <button onclick="showScreen('helpScreen')">
+          📞 Yordam
+        </button>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- DRIVER REGISTER -->
+  <div id="driverRegisterScreen" class="screen">
+
+    <div class="card">
+
+      <h2>🚕 Haydovchi bo‘lish</h2>
+
+      <label>F.I.Sh.</label>
+      <input id="driverFullName" type="text" placeholder="Ism Familiya">
+
+      <label>Telefon raqam</label>
+      <input id="driverPhone" type="tel" placeholder="+998901234567">
+
+      <label>Avtomobil modeli</label>
+      <input id="driverCarModel" type="text" placeholder="Cobalt">
+
+      <label>Avtomobil raqami</label>
+      <input id="driverCarNumber" type="text" placeholder="01 A 123 BC">
+
+      <label>Bo‘sh o‘rinlar soni</label>
+      <select id="driverSeats">
+        <option value="1">1 ta</option>
+        <option value="2">2 ta</option>
+        <option value="3">3 ta</option>
+        <option value="4">4 ta</option>
+      </select>
+
+      <button class="yellow" onclick="registerDriver()">
+        ✅ Ro‘yxatdan o‘tish
+      </button>
+
+      <button class="back" onclick="showScreen('homeScreen')">
+        ⬅️ Orqaga
+      </button>
+
+      <div id="driverRegisterError" class="error"></div>
+      <div id="driverRegisterSuccess" class="success"></div>
+
+    </div>
+
+  </div>
+
+  <!-- DRIVER RIDE -->
+  <div id="driverRideScreen" class="screen">
+
+    <div class="card">
+
+      <h2>🚕 Safar joylash</h2>
+
+      <label>Qayerdan</label>
+      <select id="driverFrom">
+        <option value="Toshkent">Toshkent</option>
+        <option value="Namangan">Namangan</option>
+        <option value="Andijon">Andijon</option>
+        <option value="Farg‘ona">Farg‘ona</option>
+        <option value="Qo‘qon">Qo‘qon</option>
+        <option value="Marg‘ilon">Marg‘ilon</option>
+      </select>
+
+      <label>Qayerga</label>
+      <select id="driverTo">
+        <option value="Farg‘ona">Farg‘ona</option>
+        <option value="Toshkent">Toshkent</option>
+        <option value="Namangan">Namangan</option>
+        <option value="Andijon">Andijon</option>
+        <option value="Qo‘qon">Qo‘qon</option>
+        <option value="Marg‘ilon">Marg‘ilon</option>
+      </select>
+
+      <label>Sana va vaqt</label>
+      <input id="driverRideTime" type="datetime-local">
+
+      <label>Bo‘sh o‘rin</label>
+      <select id="driverRideSeats">
+        <option value="1">1 ta</option>
+        <option value="2">2 ta</option>
+        <option value="3">3 ta</option>
+        <option value="4">4 ta</option>
+      </select>
+
+      <button class="yellow" onclick="createDriverRide()">
+        🚕 Safarni joylash
+      </button>
+
+      <button class="back" onclick="showScreen('homeScreen')">
+        ⬅️ Orqaga
+      </button>
+
+      <div id="driverRideError" class="error"></div>
+      <div id="driverRideSuccess" class="success"></div>
+
+    </div>
+
+  </div>
+
+  <!-- PASSENGER -->
+  <div id="passengerScreen" class="screen">
+
+    <div class="card">
+
+      <h2>👤 Yo‘lovchi</h2>
+
+      <label>Qayerdan</label>
+      <select id="passengerFrom">
+        <option value="Toshkent">Toshkent</option>
+        <option value="Namangan">Namangan</option>
+        <option value="Andijon">Andijon</option>
+        <option value="Farg‘ona">Farg‘ona</option>
+        <option value="Qo‘qon">Qo‘qon</option>
+        <option value="Marg‘ilon">Marg‘ilon</option>
+      </select>
+
+      <label>Qayerga</label>
+      <select id="passengerTo">
+        <option value="Farg‘ona">Farg‘ona</option>
+        <option value="Toshkent">Toshkent</option>
+        <option value="Namangan">Namangan</option>
+        <option value="Andijon">Andijon</option>
+        <option value="Qo‘qon">Qo‘qon</option>
+        <option value="Marg‘ilon">Marg‘ilon</option>
+      </select>
+
+      <label>Sana va vaqt</label>
+      <input id="passengerRideTime" type="datetime-local">
+
+      <label>Kerakli o‘rin</label>
+      <select id="passengerSeats">
+        <option value="1">1 ta</option>
+        <option value="2">2 ta</option>
+        <option value="3">3 ta</option>
+        <option value="4">4 ta</option>
+      </select>
+
+      <label>Telefon raqam</label>
+      <input id="passengerPhone" type="tel" placeholder="+998901234567">
+
+      <button class="yellow" onclick="getLocation()">
+        📍 Joylashuvni aniqlash
+      </button>
+
+      <div id="map"></div>
+
+      <button onclick="createPassengerOrder()">
+        👤 Buyurtma berish
+      </button>
+
+      <button class="back" onclick="showScreen('homeScreen')">
+        ⬅️ Orqaga
+      </button>
+
+      <div id="passengerError" class="error"></div>
+      <div id="passengerSuccess" class="success"></div>
+
+    </div>
+
+  </div>
+
+  <!-- SEARCH -->
+  <div id="searchScreen" class="screen">
+
+    <div class="card">
+
+      <h2>🔎 Safar qidirish</h2>
+
+      <label>Qayerdan</label>
+      <select id="searchFrom">
+        <option value="">Barchasi</option>
+        <option value="Toshkent">Toshkent</option>
+        <option value="Namangan">Namangan</option>
+        <option value="Andijon">Andijon</option>
+        <option value="Farg‘ona">Farg‘ona</option>
+        <option value="Qo‘qon">Qo‘qon</option>
+        <option value="Marg‘ilon">Marg‘ilon</option>
+      </select>
+
+      <label>Qayerga</label>
+      <select id="searchTo">
+        <option value="">Barchasi</option>
+        <option value="Toshkent">Toshkent</option>
+        <option value="Namangan">Namangan</option>
+        <option value="Andijon">Andijon</option>
+        <option value="Farg‘ona">Farg‘ona</option>
+        <option value="Qo‘qon">Qo‘qon</option>
+        <option value="Marg‘ilon">Marg‘ilon</option>
+      </select>
+
+      <button class="yellow" onclick="searchRides()">
+        🔎 Qidirish
+      </button>
+
+      <div id="ridesList"></div>
+
+      <button class="back" onclick="showScreen('homeScreen')">
+        ⬅️ Orqaga
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- MY TRIPS -->
+  <div id="myTripsScreen" class="screen">
+
+    <div class="card">
+
+      <h2>📋 Mening safarlarim</h2>
+
+      <button class="yellow" onclick="loadMyTrips()">
+        🔄 Yangilash
+      </button>
+
+      <div id="myTripsList"></div>
+
+      <button class="back" onclick="showScreen('homeScreen')">
+        ⬅️ Orqaga
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- PROFILE -->
+  <div id="profileScreen" class="screen">
+
+    <div class="card">
+
+      <h2>👤 Profilim</h2>
+
+      <div id="profileInfo" class="loading">
+        Profil yuklanmoqda...
+      </div>
+
+      <label>F.I.Sh.</label>
+      <input id="profileName" type="text">
+
+      <label>Telefon</label>
+      <input id="profilePhone" type="tel">
+
+      <button class="yellow" onclick="updateProfile()">
+        💾 Saqlash
+      </button>
+
+      <button class="back" onclick="showScreen('homeScreen')">
+        ⬅️ Orqaga
+      </button>
+
+      <div id="profileError" class="error"></div>
+      <div id="profileSuccess" class="success"></div>
+
+    </div>
+
+  </div>
+
+  <!-- HELP -->
+  <div id="helpScreen" class="screen">
+
+    <div class="card">
+
+      <h2>📞 Yordam</h2>
+
+      <p><b>OPPER TAXI</b> — Vodiy ↔ Toshkent yo‘nalishlarida haydovchi va yo‘lovchilarni bog‘lovchi xizmat.</p>
+
+      <p>Muammo yoki savollar bo‘lsa, bot orqali administrator bilan bog‘laning.</p>
+
+      <button onclick="openTelegramAdmin()">
+        📞 Administrator
+      </button>
+
+      <button class="back" onclick="showScreen('homeScreen')">
+        ⬅️ Orqaga
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  const tg = window.Telegram && window.Telegram.WebApp
+    ? window.Telegram.WebApp
+    : null;
+
+  if (tg) {
+    tg.ready();
+    tg.expand();
+  }
+
+  let latitude = null;
+  let longitude = null;
+  let map = null;
+  let marker = null;
+
+  function showScreen(id) {
+    document.querySelectorAll(".screen").forEach(screen => {
+      screen.classList.remove("active");
+    });
+
+    const target = document.getElementById(id);
+
+    if (target) {
+      target.classList.add("active");
+    }
+
+    window.scrollTo(0, 0);
+
+    if (id === "profileScreen") {
+      loadProfile();
+    }
+  }
+
+  function getInitData() {
+    if (tg && tg.initData) {
+      return tg.initData;
+    }
+
+    return "";
+  }
+
+  async function api(url, options = {}) {
+
+    const headers = {
+      "Content-Type": "application/json"
+    };
+
+    const body = options.body
+      ? JSON.parse(options.body)
+      : {};
+
+    body.init_data = getInitData();
+
+    const response = await fetch(url, {
+      method: options.method || "POST",
+      headers,
+      body: JSON.stringify(body)
+    });
+
+    let result;
+
+    try {
+      result = await response.json();
+    } catch (e) {
+      throw new Error("Serverdan noto‘g‘ri javob keldi.");
+    }
+
+    if (!response.ok || result.error) {
+      throw new Error(result.error || "Xatolik yuz berdi.");
+    }
+
+    return result;
+  }
+
+  async function registerDriver() {
+
+    const errorBox = document.getElementById("driverRegisterError");
+    const successBox = document.getElementById("driverRegisterSuccess");
+
+    errorBox.style.display = "none";
+    successBox.style.display = "none";
+
+    const full_name = document.getElementById("driverFullName").value.trim();
+    const phone = document.getElementById("driverPhone").value.trim();
+    const car_model = document.getElementById("driverCarModel").value.trim();
+    const car_number = document.getElementById("driverCarNumber").value.trim();
+    const seats = Number(document.getElementById("driverSeats").value);
+
+    if (!full_name || !phone || !car_model || !car_number) {
+      errorBox.textContent = "Barcha ma’lumotlarni kiriting.";
+      errorBox.style.display = "block";
+      return;
+    }
+
+    try {
+
+      const result = await api("/api/driver/register", {
+        method: "POST",
+        body: JSON.stringify({
+          full_name,
+          phone,
+          car_model,
+          car_number,
+          seats
+        })
+      });
+
+      successBox.textContent = result.message || "Ro‘yxatdan o‘tish muvaffaqiyatli.";
+      successBox.style.display = "block";
+
+      setTimeout(() => {
+        showScreen("driverRideScreen");
+      }, 1000);
+
+    } catch (error) {
+
+      errorBox.textContent = error.message;
+      errorBox.style.display = "block";
+    }
+  }
+
+  async function createDriverRide() {
+
+    const errorBox = document.getElementById("driverRideError");
+    const successBox = document.getElementById("driverRideSuccess");
+
+    errorBox.style.display = "none";
+    successBox.style.display = "none";
+
+    const from_city = document.getElementById("driverFrom").value;
+    const to_city = document.getElementById("driverTo").value;
+    const ride_time = document.getElementById("driverRideTime").value;
+    const seats = Number(document.getElementById("driverRideSeats").value);
+
+    if (!ride_time) {
+      errorBox.textContent = "Sana va vaqtni tanlang.";
+      errorBox.style.display = "block";
+      return;
+    }
+
+    if (from_city === to_city) {
+      errorBox.textContent = "Qayerdan va qayerga bir xil bo‘lmasin.";
+      errorBox.style.display = "block";
+      return;
+    }
+
+    try {
+
+      const result = await api("/api/driver/ride", {
+        method: "POST",
+        body: JSON.stringify({
+          from_city,
+          to_city,
+          ride_time,
+          seats
+        })
+      });
+
+      successBox.textContent = result.message || "Safar muvaffaqiyatli joylandi.";
+      successBox.style.display = "block";
+
+    } catch (error) {
+
+      errorBox.textContent = error.message;
+      errorBox.style.display = "block";
+    }
+  }
+
+  function getLocation() {
+
+    if (!navigator.geolocation) {
+      alert("Telefoningiz joylashuvni aniqlashni qo‘llab-quvvatlamaydi.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      position => {
+
+        latitude = position.coords.latitude;
+        longitude = position.coords.longitude;
+
+        initMap(latitude, longitude);
+
+      },
+      error => {
+
+        alert("Joylashuvni aniqlashga ruxsat bering.");
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  }
+
+  function initMap(lat, lng) {
+
+    if (!map) {
+
+      map = L.map("map").setView([lat, lng], 15);
+
+      L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+          maxZoom: 19,
+          attribution: "&copy; OpenStreetMap"
+        }
+      ).addTo(map);
+
+      marker = L.marker([lat, lng]).addTo(map);
+
+    } else {
+
+      map.setView([lat, lng], 15);
+      marker.setLatLng([lat, lng]);
+    }
+  }
+
+  async function createPassengerOrder() {
+
+    const errorBox = document.getElementById("passengerError");
+    const successBox = document.getElementById("passengerSuccess");
+
+    errorBox.style.display = "none";
+    successBox.style.display = "none";
+
+    const from_city = document.getElementById("passengerFrom").value;
+    const to_city = document.getElementById("passengerTo").value;
+    const ride_time = document.getElementById("passengerRideTime").value;
+    const seats = Number(document.getElementById("passengerSeats").value);
+    const phone = document.getElementById("passengerPhone").value.trim();
+
+    if (!ride_time || !phone) {
+      errorBox.textContent = "Sana, vaqt va telefon raqamni kiriting.";
+      errorBox.style.display = "block";
+      return;
+    }
+
+    if (from_city === to_city) {
+      errorBox.textContent = "Qayerdan va qayerga bir xil bo‘lmasin.";
+      errorBox.style.display = "block";
+      return;
+    }
+
+    try {
+
+      const result = await api("/api/passenger/order", {
+        method: "POST",
+        body: JSON.stringify({
+          from_city,
+          to_city,
+          ride_time,
+          seats,
+          phone,
+          latitude,
+          longitude
+        })
+      });
+
+      successBox.textContent = result.message || "Buyurtma muvaffaqiyatli berildi.";
+      successBox.style.display = "block";
+
+    } catch (error) {
+
+      errorBox.textContent = error.message;
+      errorBox.style.display = "block";
+    }
+  }
+
+  async function searchRides() {
+
+    const list = document.getElementById("ridesList");
+
+    list.innerHTML = '<div class="loading">Safarlar qidirilmoqda...</div>';
+
+    const from_city = document.getElementById("searchFrom").value;
+    const to_city = document.getElementById("searchTo").value;
+
+    try {
+
+      const result = await api("/api/rides", {
+        method: "POST",
+        body: JSON.stringify({
+          from_city,
+          to_city
+        })
+      });
+
+      const rides = result.rides || [];
+
+      if (!rides.length) {
+        list.innerHTML = '<div class="loading">Hozircha mos safar topilmadi.</div>';
+        return;
+      }
+
+      list.innerHTML = rides.map(ride => {
+
+        return `
+          <div class="ride">
+            <strong>${escapeHtml(ride.from_city || "")} → ${escapeHtml(ride.to_city || "")}</strong>
+            <p>🕐 ${escapeHtml(ride.ride_time || "")}</p>
+            <p>🚕 ${escapeHtml(ride.car_model || "")}</p>
+            <p>💺 Bo‘sh joy: ${escapeHtml(String(ride.seats || ""))}</p>
+            <p>📞 ${escapeHtml(ride.phone || "")}</p>
+          </div>
+        `;
+
+      }).join("");
+
+    } catch (error) {
+
+      list.innerHTML = `
+        <div class="error" style="display:block;">
+          ${escapeHtml(error.message)}
+        </div>
+      `;
+    }
+  }
+
+  async function loadMyTrips() {
+
+    const list = document.getElementById("myTripsList");
+
+    list.innerHTML = '<div class="loading">Yuklanmoqda...</div>';
+
+    try {
+
+      const result = await api("/api/orders", {
+        method: "POST",
+        body: JSON.stringify({})
+      });
+
+      const orders = result.orders || [];
+
+      if (!orders.length) {
+        list.innerHTML = '<div class="loading">Sizda hali safarlar yo‘q.</div>';
+        return;
+      }
+
+      list.innerHTML = orders.map(order => {
+
+        return `
+          <div class="ride">
+            <strong>${escapeHtml(order.from_city || "")} → ${escapeHtml(order.to_city || "")}</strong>
+            <p>🕐 ${escapeHtml(order.ride_time || "")}</p>
+            <p>💺 O‘rin: ${escapeHtml(String(order.seats || ""))}</p>
+            <p>📌 Holat: ${escapeHtml(order.status || "")}</p>
+          </div>
+        `;
+
+      }).join("");
+
+    } catch (error) {
+
+      list.innerHTML = `
+        <div class="error" style="display:block;">
+          ${escapeHtml(error.message)}
+        </div>
+      `;
+    }
+  }
+
+  async function loadProfile() {
+
+    const info = document.getElementById("profileInfo");
+
+    info.innerHTML = "Profil yuklanmoqda...";
+
+    try {
+
+      const result = await api("/api/profile", {
+        method: "POST",
+        body: JSON.stringify({})
+      });
+
+      const profile = result.profile || result;
+
+      document.getElementById("profileName").value =
+        profile.full_name || "";
+
+      document.getElementById("profilePhone").value =
+        profile.phone || "";
+
+      info.innerHTML = `
+        <p><b>ID:</b> ${escapeHtml(String(profile.user_id || ""))}</p>
+      `;
+
+    } catch (error) {
+
+      info.innerHTML = `
+        <div class="error" style="display:block;">
+          ${escapeHtml(error.message)}
+        </div>
+      `;
+    }
+  }
+
+  async function updateProfile() {
+
+    const errorBox = document.getElementById("profileError");
+    const successBox = document.getElementById("profileSuccess");
+
+    errorBox.style.display = "none";
+    successBox.style.display = "none";
+
+    const full_name = document.getElementById("profileName").value.trim();
+    const phone = document.getElementById("profilePhone").value.trim();
+
+    try {
+
+      const result = await api("/api/profile/update", {
+        method: "POST",
+        body: JSON.stringify({
+          full_name,
+          phone
+        })
+      });
+
+      successBox.textContent = result.message || "Profil saqlandi.";
+      successBox.style.display = "block";
+
+    } catch (error) {
+
+      errorBox.textContent = error.message;
+      errorBox.style.display = "block";
+    }
+  }
+
+  function openTelegramAdmin() {
+    window.open("https://t.me/Oppertaxibot", "_blank");
+  }
+
+  function escapeHtml(value) {
+
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+</script>
+
+</body>
+</html>
