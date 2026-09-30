@@ -1,4854 +1,4538 @@
 <!DOCTYPE html>
 <html lang="uz">
 <head>
-  <meta charset="UTF-8">
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    >
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
-  >
+    <title>OPPER TAXI</title>
 
-  <meta name="theme-color" content="#ffffff">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <title>OPPER TAXI</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+        :root {
+            --yellow: #ffd21f;
+            --yellow-dark: #f2bd00;
+            --black: #111111;
+            --dark: #181818;
+            --gray: #737373;
+            --light: #f5f5f5;
+            --white: #ffffff;
+            --border: #e8e8e8;
+            --green: #22a06b;
+            --red: #e5484d;
+            --blue: #2477ff;
+        }
 
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  >
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100%;
+            background: #f6f6f6;
+            color: var(--black);
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Arial,
+                sans-serif;
+        }
 
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-  </script>
+        body {
+            min-height: 100vh;
+            padding-bottom: 90px;
+        }
 
-  <style>
+        button,
+        input,
+        select {
+            font-family: inherit;
+        }
+
+        button {
+            border: 0;
+            cursor: pointer;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 620px;
+            margin: 0 auto;
+        }
+
+        /* =================================================
+           TOP BAR
+        ================================================= */
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            height: 62px;
+            padding: 0 18px;
+
+            background: rgba(255,255,255,.96);
+            backdrop-filter: blur(15px);
+
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand-logo {
+            width: 38px;
+            height: 38px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background: var(--yellow);
+            border-radius: 12px;
+
+            font-size: 21px;
+        }
+
+        .brand-text {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: -.4px;
+        }
+
+        .profile-mini {
+            width: 38px;
+            height: 38px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background: #f1f1f1;
+            border-radius: 50%;
+
+            font-size: 18px;
+        }
+
+        /* =================================================
+           SCREENS
+        ================================================= */
+
+        .screen {
+            display: none;
+            padding: 18px 16px 24px;
+            animation: fadeIn .18s ease;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(4px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* =================================================
+           HOME
+        ================================================= */
+
+        .hero {
+            background: var(--yellow);
+            border-radius: 24px;
+            padding: 23px 20px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .hero:after {
+            content: "🚕";
+            position: absolute;
+            right: -5px;
+            bottom: -17px;
+            font-size: 100px;
+            opacity: .13;
+            transform: rotate(-7deg);
+        }
+
+        .hero h1 {
+            margin: 0 0 7px;
+            font-size: 29px;
+            line-height: 1.08;
+            letter-spacing: -.8px;
+        }
+
+        .hero p {
+            margin: 0;
+            max-width: 320px;
+            font-size: 14px;
+            line-height: 1.45;
+            color: #4b3d00;
+        }
+
+        .section-title {
+            margin: 22px 3px 11px;
+            font-size: 19px;
+            font-weight: 800;
+            letter-spacing: -.3px;
+        }
+
+        .mode-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 11px;
+        }
+
+        .mode-card {
+            min-height: 135px;
+            padding: 17px;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+
+            text-align: left;
+
+            box-shadow: 0 4px 16px rgba(0,0,0,.035);
+            transition: transform .12s ease;
+        }
+
+        .mode-card:active {
+            transform: scale(.98);
+        }
+
+        .mode-icon {
+            width: 45px;
+            height: 45px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 14px;
+            background: var(--yellow);
+
+            font-size: 23px;
+        }
+
+        .mode-card strong {
+            display: block;
+            margin-top: 14px;
+            font-size: 16px;
+        }
+
+        .mode-card span {
+            display: block;
+            margin-top: 4px;
+            color: var(--gray);
+            font-size: 12px;
+        }
+
+        /* =================================================
+           CARDS
+        ================================================= */
+
+        .card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 17px;
+            margin-bottom: 13px;
+            box-shadow: 0 4px 16px rgba(0,0,0,.035);
+        }
+
+        .card-title {
+            margin: 0 0 14px;
+            font-size: 17px;
+            font-weight: 800;
+        }
+
+        /* =================================================
+           FORM
+        ================================================= */
+
+        .field {
+            margin-bottom: 13px;
+        }
+
+        .field:last-child {
+            margin-bottom: 0;
+        }
+
+        .field label {
+            display: block;
+            margin: 0 0 7px 3px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #666;
+        }
+
+        .input,
+        .select {
+            width: 100%;
+            height: 50px;
+
+            border: 1px solid #dedede;
+            border-radius: 14px;
+
+            padding: 0 14px;
+
+            background: #fafafa;
+            color: #111;
+
+            font-size: 15px;
+            outline: none;
+
+            transition:
+                border-color .15s ease,
+                box-shadow .15s ease;
+        }
+
+        .input:focus,
+        .select:focus {
+            border-color: #c6a900;
+            box-shadow: 0 0 0 3px rgba(255,210,31,.18);
+            background: #fff;
+        }
+
+        .two-cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        /* =================================================
+           ROUTE
+        ================================================= */
+
+        .route-box {
+            position: relative;
+            background: #fafafa;
+            border: 1px solid #e8e8e8;
+            border-radius: 17px;
+            padding: 13px 13px 13px 46px;
+        }
+
+        .route-line {
+            position: absolute;
+            left: 23px;
+            top: 30px;
+            bottom: 30px;
+            width: 2px;
+            background: #d3d3d3;
+        }
+
+        .route-point {
+            position: relative;
+            margin-bottom: 11px;
+        }
+
+        .route-point:last-child {
+            margin-bottom: 0;
+        }
+
+        .route-dot {
+            position: absolute;
+            left: -29px;
+            top: 17px;
+
+            width: 11px;
+            height: 11px;
+
+            border-radius: 50%;
+            background: var(--black);
+            border: 3px solid white;
+            box-shadow: 0 0 0 1px #ddd;
+        }
+
+        .route-point:last-child .route-dot {
+            background: var(--yellow-dark);
+        }
+
+        /* =================================================
+           BUTTONS
+        ================================================= */
+
+        .btn {
+            width: 100%;
+            min-height: 50px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 15px;
+
+            padding: 12px 16px;
+
+            font-size: 15px;
+            font-weight: 800;
+
+            transition:
+                transform .12s ease,
+                opacity .12s ease;
+        }
+
+        .btn:active {
+            transform: scale(.98);
+        }
+
+        .btn-primary {
+            background: var(--yellow);
+            color: #111;
+        }
+
+        .btn-dark {
+            background: #111;
+            color: #fff;
+        }
+
+        .btn-light {
+            background: #f1f1f1;
+            color: #111;
+        }
+
+        .btn-danger {
+            background: #ffe8e8;
+            color: #c92e35;
+        }
+
+        .btn-green {
+            background: #e5f8ef;
+            color: #087a49;
+        }
+
+        .btn + .btn {
+            margin-top: 9px;
+        }
+
+        /* =================================================
+           SEARCH
+        ================================================= */
+
+        .search-head {
+            margin-bottom: 14px;
+        }
+
+        .search-head h2 {
+            margin: 0;
+            font-size: 24px;
+            letter-spacing: -.6px;
+        }
+
+        .search-head p {
+            margin: 5px 0 0;
+            color: var(--gray);
+            font-size: 13px;
+        }
+
+        .search-route {
+            background: white;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            padding: 15px;
+            margin-bottom: 13px;
+        }
+
+        .result-count {
+            margin: 15px 3px 9px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #666;
+        }
+
+        /* =================================================
+           RIDE RESULT
+        ================================================= */
+
+        .ride-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 21px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 18px rgba(0,0,0,.045);
+        }
+
+        .ride-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .ride-route {
+            font-size: 16px;
+            font-weight: 800;
+            line-height: 1.3;
+        }
+
+        .ride-route small {
+            color: #777;
+            font-weight: 600;
+        }
+
+        .price {
+            white-space: nowrap;
+            font-size: 16px;
+            font-weight: 900;
+        }
+
+        .ride-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin: 14px 0;
+        }
+
+        .meta-item {
+            padding: 10px;
+            border-radius: 13px;
+            background: #f7f7f7;
+        }
+
+        .meta-item span {
+            display: block;
+            color: #888;
+            font-size: 10px;
+            margin-bottom: 3px;
+        }
+
+        .meta-item strong {
+            display: block;
+            font-size: 13px;
+        }
+
+        .driver-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-top: 12px;
+            margin-top: 12px;
+            border-top: 1px solid #eee;
+        }
+
+        .driver-avatar {
+            width: 42px;
+            height: 42px;
+            flex: 0 0 42px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 50%;
+            background: var(--yellow);
+
+            font-size: 18px;
+        }
+
+        .driver-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .driver-info strong {
+            display: block;
+            font-size: 14px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .driver-info span {
+            display: block;
+            color: #777;
+            font-size: 11px;
+            margin-top: 3px;
+        }
+
+        .contact-btn {
+            width: 42px;
+            height: 42px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 13px;
+            background: #eaf7f0;
+            color: #138453;
+
+            font-size: 18px;
+        }
+
+        /* =================================================
+           PROFILE
+        ================================================= */
+
+        .profile-header {
+            background: #111;
+            color: #fff;
+            border-radius: 22px;
+            padding: 21px;
+            margin-bottom: 13px;
+        }
+
+        .profile-avatar {
+            width: 60px;
+            height: 60px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 20px;
+            background: var(--yellow);
+
+            color: #111;
+            font-size: 26px;
+
+            margin-bottom: 14px;
+        }
+
+        .profile-header h2 {
+            margin: 0;
+            font-size: 21px;
+        }
+
+        .profile-header p {
+            margin: 4px 0 0;
+            color: #aaa;
+            font-size: 13px;
+        }
+
+        /* =================================================
+           MY TRIPS
+        ================================================= */
+
+        .trip-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 19px;
+            padding: 15px;
+            margin-bottom: 11px;
+        }
+
+        .trip-type {
+            display: inline-flex;
+            padding: 6px 9px;
+            border-radius: 8px;
+            background: #f1f1f1;
+            font-size: 10px;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .trip-route {
+            font-size: 16px;
+            font-weight: 800;
+        }
+
+        .trip-info {
+            margin-top: 8px;
+            color: #666;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        /* =================================================
+           EMPTY
+        ================================================= */
+
+        .empty {
+            text-align: center;
+            padding: 35px 18px;
+            color: #777;
+        }
+
+        .empty-icon {
+            font-size: 42px;
+            margin-bottom: 9px;
+        }
+
+        .empty strong {
+            display: block;
+            color: #222;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
+
+        .empty span {
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        /* =================================================
+           LOADING
+        ================================================= */
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 35px;
+            color: #777;
+            font-size: 13px;
+        }
+
+        .spinner {
+            width: 31px;
+            height: 31px;
+
+            border: 3px solid #ddd;
+            border-top-color: #111;
+
+            border-radius: 50%;
+
+            animation: spin .7s linear infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* =================================================
+           TOAST
+        ================================================= */
+
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: 88px;
+            z-index: 200;
+
+            width: calc(100% - 32px);
+            max-width: 580px;
+
+            transform: translate(-50%, 120px);
+
+            padding: 13px 16px;
+
+            background: #111;
+            color: #fff;
+
+            border-radius: 14px;
+
+            font-size: 13px;
+            font-weight: 600;
+
+            box-shadow: 0 10px 35px rgba(0,0,0,.25);
+
+            opacity: 0;
+
+            transition:
+                transform .25s ease,
+                opacity .25s ease;
+        }
+
+        .toast.show {
+            transform: translate(-50%, 0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: #087a49;
+        }
+
+        .toast.error {
+            background: #c92e35;
+        }
+
+        /* =================================================
+           MODAL
+        ================================================= */
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            z-index: 150;
+
+            display: none;
+            align-items: flex-end;
+
+            background: rgba(0,0,0,.48);
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            width: 100%;
+            max-width: 620px;
+            margin: 0 auto;
+
+            background: #fff;
+
+            border-radius: 25px 25px 0 0;
+
+            padding: 20px 16px 30px;
+
+            max-height: 88vh;
+            overflow-y: auto;
+
+            animation: modalUp .22s ease;
+        }
+
+        @keyframes modalUp {
+            from {
+                transform: translateY(100%);
+            }
+
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .modal-handle {
+            width: 42px;
+            height: 4px;
+
+            background: #ddd;
+            border-radius: 10px;
+
+            margin: 0 auto 18px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 900;
+            margin-bottom: 15px;
+        }
+
+        /* =================================================
+           BOTTOM NAV
+        ================================================= */
+
+        .bottom-nav {
+            position: fixed;
+            left: 50%;
+            bottom: 0;
+            z-index: 100;
+
+            transform: translateX(-50%);
+
+            width: 100%;
+            max-width: 620px;
+
+            height: 72px;
+
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+
+            padding: 7px 8px calc(7px + env(safe-area-inset-bottom));
+
+            background: rgba(255,255,255,.97);
+            backdrop-filter: blur(15px);
+
+            border-top: 1px solid var(--border);
+        }
+
+        .nav-btn {
+            background: transparent;
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+
+            gap: 3px;
+
+            color: #8a8a8a;
+
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .nav-btn .nav-icon {
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .nav-btn.active {
+            color: #111;
+        }
+
+        .nav-btn.active .nav-icon {
+            background: var(--yellow);
+            border-radius: 10px;
+            padding: 4px 8px;
+        }
+
+        /* =================================================
+           DRIVER BADGE
+        ================================================= */
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+
+            padding: 6px 9px;
+
+            border-radius: 8px;
+
+            background: #eaf7f0;
+            color: #087a49;
+
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        .badge.gray {
+            background: #eee;
+            color: #666;
+        }
+
+        .badge.red {
+            background: #ffe7e7;
+            color: #c92e35;
+        }
+
+        /* =================================================
+           RESPONSIVE
+        ================================================= */
+
+        @media (min-width: 600px) {
+
+            .screen {
+                padding-left: 22px;
+                padding-right: 22px;
+            }
+
+            .mode-grid {
+                gap: 14px;
+            }
+
+            .mode-card {
+                min-height: 150px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- =================================================
+         TOP BAR
+    ================================================= -->
+
+    <header class="topbar">
+
+        <div class="brand">
+            <div class="brand-logo">🚕</div>
+            <div class="brand-text">OPPER TAXI</div>
+        </div>
+
+        <button
+            class="profile-mini"
+            onclick="showScreen('profile')"
+        >
+            👤
+        </button>
+
+    </header>
+
+
+    <!-- =================================================
+         HOME
+    ================================================= -->
+
+    <section
+        id="screen-home"
+        class="screen active"
+    >
+
+        <div class="hero">
+
+            <h1>Yo‘lingiz<br>OPPER bilan.</h1>
+
+            <p>
+                Safar toping yoki o‘zingizning
+                safaringizni qo‘shing.
+            </p>
+
+        </div>
+
+
+        <div class="section-title">
+            Nima qilmoqchisiz?
+        </div>
+
+
+        <div class="mode-grid">
+
+            <button
+                class="mode-card"
+                onclick="openSearch()"
+            >
+
+                <div class="mode-icon">
+                    🔎
+                </div>
+
+                <div>
+                    <strong>Safar qidirish</strong>
+
+                    <span>
+                        Kerakli yo‘nalishdagi taksini toping
+                    </span>
+                </div>
+
+            </button>
+
+
+            <button
+                class="mode-card"
+                onclick="openDriver()"
+            >
+
+                <div class="mode-icon">
+                    🚗
+                </div>
+
+                <div>
+                    <strong>Haydovchi bo‘lish</strong>
+
+                    <span>
+                        O‘z safaringizni qo‘shing
+                    </span>
+                </div>
+
+            </button>
+
+        </div>
+
+
+        <div class="section-title">
+            OPPER TAXI
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-title">
+                🚕 Qanday ishlaydi?
+            </div>
+
+            <div class="trip-info">
+
+                <b>1.</b> Haydovchi safarini qo‘shadi.<br>
+
+                <b>2.</b> Yo‘lovchi yo‘nalishni qidiradi.<br>
+
+                <b>3.</b> Mavjud mashinalar chiqadi.<br>
+
+                <b>4.</b> Yo‘lovchi joy buyurtma qiladi.<br>
+
+                <b>5.</b> Haydovchi bilan bog‘lanadi.
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =================================================
+         SEARCH
+    ================================================= -->
+
+    <section
+        id="screen-search"
+        class="screen"
+    >
+
+        <div class="search-head">
+
+            <h2>Safar qidirish</h2>
+
+            <p>
+                Kerakli yo‘nalishni tanlang.
+            </p>
+
+        </div>
+
+
+        <div class="search-route">
+
+            <div class="route-box">
+
+                <div class="route-line"></div>
+
+
+                <div class="route-point">
+
+                    <div class="route-dot"></div>
+
+                    <div class="field">
+
+                        <label>Qayerdan?</label>
+
+                        <select
+                            id="search-from"
+                            class="select"
+                        >
+                            <option value="">
+                                Shaharni tanlang
+                            </option>
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <div class="route-point">
+
+                    <div class="route-dot"></div>
+
+                    <div class="field">
+
+                        <label>Qayerga?</label>
+
+                        <select
+                            id="search-to"
+                            class="select"
+                        >
+                            <option value="">
+                                Shaharni tanlang
+                            </option>
+                        </select>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="two-cols">
+
+                <div class="field">
+
+                    <label>Sana</label>
+
+                    <input
+                        id="search-date"
+                        class="input"
+                        type="date"
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label>Vaqt</label>
+
+                    <input
+                        id="search-time"
+                        class="input"
+                        type="time"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <button
+                class="btn btn-primary"
+                onclick="searchRides()"
+            >
+                🔎 Safarlarni topish
+            </button>
+
+        </div>
+
+
+        <div id="search-results"></div>
+
+    </section>
+
+
+    <!-- =================================================
+         DRIVER
+    ================================================= -->
+
+    <section
+        id="screen-driver"
+        class="screen"
+    >
+
+        <div class="search-head">
+
+            <h2>Haydovchi</h2>
+
+            <p>
+                Ma’lumotlaringizni kiriting va safaringizni qo‘shing.
+            </p>
+
+        </div>
+
+
+        <!-- DRIVER PROFILE -->
+
+        <div class="card">
+
+            <div class="card-title">
+                👤 Haydovchi ma’lumotlari
+            </div>
+
+
+            <div class="field">
+
+                <label>F.I.Sh.</label>
+
+                <input
+                    id="driver-name"
+                    class="input"
+                    type="text"
+                    placeholder="Masalan: Abbosxon Boltaboyev"
+                >
+
+            </div>
+
+
+            <div class="field">
+
+                <label>Telefon raqam</label>
+
+                <input
+                    id="driver-phone"
+                    class="input"
+                    type="tel"
+                    placeholder="+998 90 123 45 67"
+                >
+
+            </div>
+
+
+            <div class="two-cols">
+
+                <div class="field">
+
+                    <label>Mashina</label>
+
+                    <input
+                        id="driver-car"
+                        class="input"
+                        type="text"
+                        placeholder="Cobalt"
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label>Davlat raqami</label>
+
+                    <input
+                        id="driver-number"
+                        class="input"
+                        type="text"
+                        placeholder="01 A 123 AA"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <div class="field">
+
+                <label>Bo‘sh joylar</label>
+
+                <input
+                    id="driver-seats"
+                    class="input"
+                    type="number"
+                    min="1"
+                    max="8"
+                    value="3"
+                >
+
+            </div>
+
+
+            <button
+                class="btn btn-dark"
+                onclick="registerDriver()"
+            >
+                💾 Haydovchi ma’lumotlarini saqlash
+            </button>
+
+        </div>
+
+
+        <!-- ADD RIDE -->
+
+        <div class="card">
+
+            <div class="card-title">
+                ➕ Safar qo‘shish
+            </div>
+
+
+            <div class="route-box">
+
+                <div class="route-line"></div>
+
+
+                <div class="route-point">
+
+                    <div class="route-dot"></div>
+
+                    <div class="field">
+
+                        <label>Qayerdan?</label>
+
+                        <select
+                            id="driver-from"
+                            class="select"
+                        >
+                            <option value="">
+                                Shaharni tanlang
+                            </option>
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <div class="route-point">
+
+                    <div class="route-dot"></div>
+
+                    <div class="field">
+
+                        <label>Qayerga?</label>
+
+                        <select
+                            id="driver-to"
+                            class="select"
+                        >
+                            <option value="">
+                                Shaharni tanlang
+                            </option>
+                        </select>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="two-cols">
+
+                <div class="field">
+
+                    <label>Sana</label>
+
+                    <input
+                        id="driver-date"
+                        class="input"
+                        type="date"
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label>Vaqt</label>
+
+                    <input
+                        id="driver-time"
+                        class="input"
+                        type="time"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <div class="two-cols">
+
+                <div class="field">
+
+                    <label>Bo‘sh joy</label>
+
+                    <input
+                        id="ride-seats"
+                        class="input"
+                        type="number"
+                        min="1"
+                        max="8"
+                        value="3"
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label>Narx, so‘m</label>
+
+                    <input
+                        id="ride-price"
+                        class="input"
+                        type="number"
+                        min="0"
+                        step="1000"
+                        placeholder="130000"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <button
+                class="btn btn-primary"
+                onclick="addRide()"
+            >
+                🚕 Safarni e’lon qilish
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- =================================================
+         MY TRIPS
+    ================================================= -->
+
+    <section
+        id="screen-trips"
+        class="screen"
+    >
+
+        <div class="search-head">
+
+            <h2>Mening safarlarim</h2>
+
+            <p>
+                Siz qo‘shgan safarlar va buyurtmalar.
+            </p>
+
+        </div>
+
+
+        <div id="trips-container">
+
+            <div class="loading">
+
+                <div class="spinner"></div>
+
+                Yuklanmoqda...
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =================================================
+         PROFILE
+    ================================================= -->
+
+    <section
+        id="screen-profile"
+        class="screen"
+    >
+
+        <div class="profile-header">
+
+            <div class="profile-avatar">
+                👤
+            </div>
+
+            <h2 id="profile-title">
+                Profil
+            </h2>
+
+            <p id="profile-subtitle">
+                OPPER TAXI foydalanuvchisi
+            </p>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-title">
+                Shaxsiy ma’lumotlar
+            </div>
+
+
+            <div class="field">
+
+                <label>F.I.Sh.</label>
+
+                <input
+                    id="profile-name"
+                    class="input"
+                    type="text"
+                    placeholder="F.I.Sh."
+                >
+
+            </div>
+
+
+            <div class="field">
+
+                <label>Telefon</label>
+
+                <input
+                    id="profile-phone"
+                    class="input"
+                    type="tel"
+                    placeholder="+998"
+                >
+
+            </div>
+
+
+            <button
+                class="btn btn-dark"
+                onclick="updateProfile()"
+            >
+                💾 Saqlash
+            </button>
+
+        </div>
+
+
+        <div
+            id="driver-profile-card"
+            class="card"
+            style="display:none;"
+        >
+
+            <div class="card-title">
+                🚗 Haydovchi ma’lumotlari
+            </div>
+
+            <div id="driver-profile-info"></div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-title">
+                ℹ️ OPPER TAXI
+            </div>
+
+            <div class="trip-info">
+                Haydovchilar o‘z safarlarini e’lon qiladi,
+                yo‘lovchilar esa kerakli yo‘nalish bo‘yicha
+                mavjud safarlarni topadi.
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =================================================
+         BOTTOM NAV
+    ================================================= -->
+
+    <nav class="bottom-nav">
+
+        <button
+            id="nav-home"
+            class="nav-btn active"
+            onclick="showScreen('home')"
+        >
+            <span class="nav-icon">🏠</span>
+            Bosh sahifa
+        </button>
+
+
+        <button
+            id="nav-search"
+            class="nav-btn"
+            onclick="openSearch()"
+        >
+            <span class="nav-icon">🔎</span>
+            Qidirish
+        </button>
+
+
+        <button
+            id="nav-trips"
+            class="nav-btn"
+            onclick="openTrips()"
+        >
+            <span class="nav-icon">📋</span>
+            Safarlar
+        </button>
+
+
+        <button
+            id="nav-profile"
+            class="nav-btn"
+            onclick="showScreen('profile')"
+        >
+            <span class="nav-icon">👤</span>
+            Profil
+        </button>
+
+    </nav>
+
+</div>
+
+
+<!-- =====================================================
+     MODAL
+===================================================== -->
+
+<div
+    id="modal"
+    class="modal"
+    onclick="closeModal(event)"
+>
+
+    <div
+        class="modal-content"
+        onclick="event.stopPropagation()"
+    >
+
+        <div class="modal-handle"></div>
+
+        <div
+            id="modal-body"
+        ></div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     TOAST
+===================================================== -->
+
+<div
+    id="toast"
+    class="toast"
+></div>
+
+
+<script>
 
     /* =====================================================
-       RESET
+       TELEGRAM
     ===================================================== */
 
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
+    const tg = window.Telegram?.WebApp || null;
+
+    if (tg) {
+
+        tg.ready();
+
+        tg.expand();
+
+        try {
+            tg.setHeaderColor("#ffffff");
+            tg.setBackgroundColor("#f6f6f6");
+        } catch (e) {}
+
     }
 
-    html,
-    body {
-      width: 100%;
-      min-height: 100%;
-      margin: 0;
-      padding: 0;
-      font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        Roboto,
-        Arial,
-        sans-serif;
-      background: #f4f5f7;
-      color: #111;
-      overscroll-behavior: none;
-    }
-
-    body {
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-
-    button,
-    input,
-    select {
-      font: inherit;
-    }
-
-    button {
-      border: 0;
-      outline: none;
-      cursor: pointer;
-    }
-
-    input,
-    select {
-      outline: none;
-    }
 
     /* =====================================================
-       VARIABLES
+       CONFIG
     ===================================================== */
 
-    :root {
-      --yellow: #ffd21f;
-      --yellow-dark: #e8b900;
-      --black: #111111;
-      --text: #111111;
-      --muted: #777777;
-      --bg: #f4f5f7;
-      --card: #ffffff;
-      --border: #e8e8e8;
-      --green: #18a957;
-      --red: #e53935;
-      --blue: #2878ff;
-      --shadow:
-        0 8px 28px rgba(0, 0, 0, .10);
-    }
+    const API_BASE = "";
+
+
+    const CITIES = [
+        "Toshkent",
+        "Namangan",
+        "Andijon",
+        "Farg‘ona",
+        "Qo‘qon",
+        "Marg‘ilon"
+    ];
+
 
     /* =====================================================
-       APP
+       GLOBAL
     ===================================================== */
 
-    #app {
-      min-height: 100vh;
-      position: relative;
-    }
+    let currentScreen = "home";
 
-    .screen {
-      display: none;
-      min-height: 100vh;
-    }
+    let currentRides = [];
 
-    .screen.active {
-      display: block;
-    }
+    let profileLoaded = false;
+
 
     /* =====================================================
-       TOP BAR
+       TELEGRAM INIT DATA
     ===================================================== */
 
-    .topbar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 1000;
+    function getInitData() {
 
-      height: 64px;
+        if (
+            tg &&
+            tg.initData
+        ) {
+            return tg.initData;
+        }
 
-      padding:
-        max(10px, env(safe-area-inset-top))
-        14px
-        10px;
-
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-
-      background: rgba(255,255,255,.94);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-
-      border-bottom: 1px solid rgba(0,0,0,.06);
+        return "";
     }
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      font-weight: 900;
-      letter-spacing: -.4px;
-      font-size: 18px;
-    }
-
-    .brand-logo {
-      width: 34px;
-      height: 34px;
-      border-radius: 11px;
-      background: var(--yellow);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 19px;
-      box-shadow: 0 4px 12px rgba(255,210,31,.35);
-    }
-
-    .top-profile {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: #f0f1f3;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-    }
 
     /* =====================================================
-       HOME MAP
+       API
     ===================================================== */
 
-    #homeScreen {
-      position: relative;
-      overflow: hidden;
-      background: #e8eaed;
-    }
-
-    #homeMap {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
-    }
-
-    .map-overlay {
-      position: absolute;
-      top: 75px;
-      left: 14px;
-      right: 14px;
-      z-index: 500;
-      pointer-events: none;
-    }
-
-    .location-pill {
-      pointer-events: auto;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(255,255,255,.96);
-      padding: 10px 14px;
-      border-radius: 999px;
-      box-shadow: var(--shadow);
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .location-dot {
-      width: 9px;
-      height: 9px;
-      background: var(--green);
-      border-radius: 50%;
-      box-shadow: 0 0 0 5px rgba(24,169,87,.13);
-    }
-
-    .map-location-btn {
-      position: absolute;
-      right: 15px;
-      bottom: 335px;
-      z-index: 600;
-
-      width: 48px;
-      height: 48px;
-
-      border-radius: 50%;
-      background: white;
-      box-shadow: var(--shadow);
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      font-size: 21px;
-    }
-
-    /* =====================================================
-       HOME BOTTOM SHEET
-    ===================================================== */
-
-    .bottom-sheet {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 700;
-
-      background: rgba(255,255,255,.98);
-      border-radius: 26px 26px 0 0;
-
-      padding:
-        12px
-        15px
-        calc(18px + env(safe-area-inset-bottom));
-
-      box-shadow:
-        0 -10px 35px rgba(0,0,0,.12);
-    }
-
-    .sheet-handle {
-      width: 42px;
-      height: 4px;
-      border-radius: 10px;
-      background: #d8d8d8;
-      margin: 0 auto 13px;
-    }
-
-    .sheet-title {
-      font-size: 21px;
-      font-weight: 900;
-      letter-spacing: -.6px;
-      margin-bottom: 13px;
-    }
-
-    .route-box {
-      background: #f5f6f8;
-      border-radius: 17px;
-      padding: 3px;
-      margin-bottom: 10px;
-    }
-
-    .route-row {
-      min-height: 53px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 0 11px;
-    }
-
-    .route-row + .route-row {
-      border-top: 1px solid #e5e5e5;
-    }
-
-    .route-icon {
-      width: 12px;
-      height: 12px;
-      flex: 0 0 12px;
-      border-radius: 50%;
-      background: #111;
-    }
-
-    .route-icon.destination {
-      border-radius: 3px;
-      background: var(--yellow-dark);
-    }
-
-    .route-content {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .route-label {
-      color: #999;
-      font-size: 11px;
-      margin-bottom: 2px;
-    }
-
-    .route-value {
-      font-size: 15px;
-      font-weight: 700;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .route-arrow {
-      font-size: 18px;
-      color: #999;
-    }
-
-    .quick-options {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 9px;
-      margin-bottom: 10px;
-    }
-
-    .option-button {
-      min-height: 48px;
-      border-radius: 14px;
-      background: #f5f6f8;
-      color: #111;
-      padding: 9px 11px;
-
-      display: flex;
-      align-items: center;
-      gap: 8px;
-
-      font-size: 13px;
-      font-weight: 700;
-
-      text-align: left;
-    }
-
-    .option-button span {
-      font-size: 18px;
-    }
-
-    .main-button {
-      width: 100%;
-      min-height: 55px;
-      border-radius: 16px;
-
-      background: var(--yellow);
-      color: #111;
-
-      font-size: 16px;
-      font-weight: 900;
-
-      box-shadow:
-        0 8px 18px rgba(255,210,31,.30);
-    }
-
-    .main-button:active {
-      transform: scale(.985);
-    }
-
-    /* =====================================================
-       FULL PAGE
-    ===================================================== */
-
-    .page {
-      min-height: 100vh;
-      padding:
-        82px
-        15px
-        calc(90px + env(safe-area-inset-bottom));
-    }
-
-    .page-title {
-      font-size: 27px;
-      line-height: 1.05;
-      font-weight: 900;
-      letter-spacing: -.8px;
-      margin: 0 0 7px;
-    }
-
-    .page-subtitle {
-      color: var(--muted);
-      font-size: 14px;
-      margin-bottom: 20px;
-    }
-
-    /* =====================================================
-       CARDS
-    ===================================================== */
-
-    .card {
-      background: white;
-      border-radius: 20px;
-      padding: 16px;
-      margin-bottom: 12px;
-      box-shadow: 0 4px 18px rgba(0,0,0,.06);
-    }
-
-    .card-title {
-      font-size: 18px;
-      font-weight: 900;
-      margin-bottom: 13px;
-    }
-
-    /* =====================================================
-       CITY SELECTOR
-    ===================================================== */
-
-    .city-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 9px;
-    }
-
-    .city-btn {
-      min-height: 52px;
-      background: #f5f6f8;
-      border: 1px solid #ececec;
-      border-radius: 14px;
-      padding: 10px;
-
-      text-align: left;
-
-      font-size: 14px;
-      font-weight: 800;
-      color: #111;
-    }
-
-    .city-btn.selected {
-      background: #fff7c9;
-      border-color: var(--yellow-dark);
-    }
-
-    .city-btn:active {
-      transform: scale(.98);
-    }
-
-    /* =====================================================
-       FORM
-    ===================================================== */
-
-    .field {
-      margin-bottom: 13px;
-    }
-
-    .field-label {
-      display: block;
-      font-size: 12px;
-      font-weight: 800;
-      color: #777;
-      margin-bottom: 6px;
-    }
-
-    .input {
-      width: 100%;
-      min-height: 50px;
-
-      border: 1px solid #e3e3e3;
-      background: #f8f9fa;
-
-      border-radius: 14px;
-
-      padding: 0 14px;
-
-      font-size: 15px;
-      color: #111;
-    }
-
-    .input:focus {
-      border-color: var(--yellow-dark);
-      background: white;
-    }
+    async function api(
+        url,
+        options = {}
+    ) {
 
-    /* =====================================================
-       TIME GRID
-    ===================================================== */
-
-    .time-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-
-    .time-btn {
-      min-height: 45px;
-      border-radius: 13px;
-      background: #f5f6f8;
-      color: #111;
-      font-weight: 800;
-      font-size: 14px;
-    }
-
-    .time-btn.selected {
-      background: var(--yellow);
-    }
-
-    /* =====================================================
-       SEAT
-    ===================================================== */
-
-    .seat-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-    }
-
-    .seat-btn {
-      min-height: 47px;
-      background: #f5f6f8;
-      border-radius: 13px;
-      font-weight: 900;
-    }
-
-    .seat-btn.selected {
-      background: var(--yellow);
-    }
-
-    /* =====================================================
-       RIDE CARD
-    ===================================================== */
-
-    .ride-card {
-      background: white;
-      border-radius: 20px;
-      padding: 15px;
-      margin-bottom: 11px;
-      box-shadow: 0 5px 20px rgba(0,0,0,.07);
-    }
-
-    .ride-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .ride-route {
-      font-size: 17px;
-      font-weight: 900;
-    }
-
-    .ride-time {
-      background: #fff7c9;
-      padding: 7px 9px;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 900;
-      white-space: nowrap;
-    }
-
-    .driver-row {
-      display: flex;
-      align-items: center;
-      gap: 11px;
-      margin-bottom: 12px;
-    }
-
-    .driver-avatar {
-      width: 46px;
-      height: 46px;
-      flex: 0 0 46px;
-      border-radius: 50%;
-      background: #eef0f3;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-    }
-
-    .driver-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .driver-name {
-      font-weight: 900;
-      font-size: 15px;
-    }
-
-    .driver-meta {
-      margin-top: 3px;
-      color: #777;
-      font-size: 12px;
-    }
-
-    .rating {
-      font-size: 13px;
-      font-weight: 900;
-    }
-
-    .ride-details {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 7px;
-      margin-bottom: 12px;
-    }
-
-    .detail {
-      background: #f6f7f8;
-      border-radius: 12px;
-      padding: 10px;
-      font-size: 12px;
-    }
-
-    .detail b {
-      display: block;
-      font-size: 14px;
-      margin-top: 2px;
-    }
-
-    .ride-action {
-      width: 100%;
-      min-height: 48px;
-      background: var(--yellow);
-      border-radius: 14px;
-      font-weight: 900;
-    }
-
-    /* =====================================================
-       EMPTY
-    ===================================================== */
-
-    .empty {
-      background: white;
-      border-radius: 20px;
-      padding: 35px 20px;
-      text-align: center;
-      box-shadow: 0 4px 18px rgba(0,0,0,.05);
-    }
-
-    .empty-icon {
-      font-size: 43px;
-      margin-bottom: 10px;
-    }
+        const method =
+            options.method || "POST";
 
-    .empty-title {
-      font-size: 17px;
-      font-weight: 900;
-    }
-
-    .empty-text {
-      color: #777;
-      font-size: 13px;
-      margin-top: 6px;
-      line-height: 1.45;
-    }
-
-    /* =====================================================
-       PROFILE
-    ===================================================== */
-
-    .profile-head {
-      text-align: center;
-      padding: 12px 0 18px;
-    }
-
-    .big-avatar {
-      width: 82px;
-      height: 82px;
-      margin: 0 auto 12px;
-
-      border-radius: 50%;
-      background: var(--yellow);
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      font-size: 35px;
-      font-weight: 900;
-    }
-
-    .profile-name {
-      font-size: 20px;
-      font-weight: 900;
-    }
-
-    .profile-username {
-      color: #888;
-      font-size: 13px;
-      margin-top: 3px;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-
-    .stat {
-      background: #f5f6f8;
-      border-radius: 14px;
-      padding: 13px 5px;
-      text-align: center;
-    }
-
-    .stat-value {
-      font-size: 18px;
-      font-weight: 900;
-    }
-
-    .stat-label {
-      font-size: 10px;
-      color: #777;
-      margin-top: 3px;
-    }
-
-    /* =====================================================
-       DRIVER STATUS
-    ===================================================== */
-
-    .status {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 7px 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 900;
-    }
-
-    .status.pending {
-      background: #fff4cf;
-      color: #8a6500;
-    }
 
-    .status.approved {
-      background: #dcf8e7;
-      color: #087a38;
-    }
-
-    .status.rejected {
-      background: #ffe1e1;
-      color: #a00000;
-    }
+        let body = {};
 
-    /* =====================================================
-       ORDERS
-    ===================================================== */
-
-    .order-card {
-      background: white;
-      border-radius: 18px;
-      padding: 15px;
-      margin-bottom: 10px;
-      box-shadow: 0 4px 17px rgba(0,0,0,.06);
-    }
+        if (options.body) {
 
-    .order-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
+            if (
+                typeof options.body === "string"
+            ) {
 
-    .order-route {
-      font-size: 16px;
-      font-weight: 900;
-    }
+                try {
+                    body = JSON.parse(
+                        options.body
+                    );
+                } catch (e) {
+                    body = {};
+                }
 
-    .order-status {
-      font-size: 11px;
-      font-weight: 900;
-      padding: 6px 9px;
-      border-radius: 999px;
-      background: #f0f1f3;
-    }
+            } else {
 
-    .order-line {
-      display: flex;
-      justify-content: space-between;
-      padding: 6px 0;
-      font-size: 13px;
-    }
+                body = options.body;
 
-    .order-line span:first-child {
-      color: #777;
-    }
+            }
 
-    /* =====================================================
-       BOTTOM NAV
-    ===================================================== */
+        }
 
-    .bottom-nav {
-      position: fixed;
-      left: 10px;
-      right: 10px;
-      bottom: calc(10px + env(safe-area-inset-bottom));
 
-      z-index: 1500;
+        body.init_data =
+            getInitData();
 
-      height: 66px;
 
-      border-radius: 22px;
+        let response;
 
-      background: rgba(255,255,255,.96);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
 
-      box-shadow:
-        0 8px 30px rgba(0,0,0,.14);
+        try {
 
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
+            response = await fetch(
+                API_BASE + url,
+                {
+                    method,
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+                    body:
+                        method === "GET"
+                            ? undefined
+                            : JSON.stringify(body)
+                }
+            );
 
-      padding: 5px;
-    }
+        } catch (error) {
 
-    .nav-item {
-      border-radius: 17px;
-      background: transparent;
-      color: #777;
+            throw new Error(
+                "Internet yoki server bilan aloqa yo‘q."
+            );
 
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+        }
 
-      gap: 3px;
 
-      font-size: 10px;
-      font-weight: 800;
-    }
+        let result;
 
-    .nav-item .nav-icon {
-      font-size: 20px;
-      line-height: 1;
-    }
 
-    .nav-item.active {
-      background: var(--yellow);
-      color: #111;
-    }
+        try {
 
-    /* =====================================================
-       MODAL
-    ===================================================== */
+            result =
+                await response.json();
 
-    .modal {
-      position: fixed;
-      inset: 0;
-      z-index: 3000;
+        } catch (error) {
 
-      background: rgba(0,0,0,.45);
+            throw new Error(
+                "Serverdan noto‘g‘ri javob keldi."
+            );
 
-      display: none;
-      align-items: flex-end;
-    }
+        }
 
-    .modal.active {
-      display: flex;
-    }
 
-    .modal-sheet {
-      width: 100%;
-      max-height: 88vh;
-      overflow-y: auto;
+        if (
+            !response.ok ||
+            result.error
+        ) {
 
-      background: white;
+            throw new Error(
+                result.error ||
+                "Xatolik yuz berdi."
+            );
 
-      border-radius: 26px 26px 0 0;
+        }
 
-      padding:
-        15px
-        15px
-        calc(25px + env(safe-area-inset-bottom));
-    }
 
-    .modal-handle {
-      width: 40px;
-      height: 4px;
-      background: #d5d5d5;
-      border-radius: 10px;
-      margin: 0 auto 17px;
+        return result;
     }
 
-    .modal-title {
-      font-size: 21px;
-      font-weight: 900;
-      margin-bottom: 17px;
-    }
 
     /* =====================================================
        TOAST
     ===================================================== */
 
-    #toast {
-      position: fixed;
-      left: 15px;
-      right: 15px;
-      bottom: 90px;
-      z-index: 5000;
+    let toastTimer = null;
 
-      background: #111;
-      color: white;
 
-      padding: 13px 15px;
-      border-radius: 14px;
+    function showToast(
+        message,
+        type = ""
+    ) {
 
-      font-size: 13px;
-      font-weight: 700;
+        const toast =
+            document.getElementById(
+                "toast"
+            );
 
-      transform: translateY(20px);
-      opacity: 0;
-      pointer-events: none;
 
-      transition: .25s;
+        toast.textContent =
+            message;
+
+
+        toast.className =
+            "toast show " + type;
+
+
+        clearTimeout(
+            toastTimer
+        );
+
+
+        toastTimer =
+            setTimeout(
+                () => {
+
+                    toast.className =
+                        "toast";
+
+                },
+                3000
+            );
+
     }
 
-    #toast.show {
-      transform: translateY(0);
-      opacity: 1;
-    }
-
-    #toast.success {
-      background: #16864b;
-    }
-
-    #toast.error {
-      background: #c62828;
-    }
 
     /* =====================================================
-       LOADING
+       SCREEN
     ===================================================== */
 
-    .loading {
-      text-align: center;
-      padding: 30px 15px;
-      color: #777;
-    }
-
-    .spinner {
-      width: 30px;
-      height: 30px;
-      border: 3px solid #ddd;
-      border-top-color: #111;
-      border-radius: 50%;
-      animation: spin .8s linear infinite;
-      margin: 0 auto 10px;
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    /* =====================================================
-       MAP MARKER
-    ===================================================== */
-
-    .user-marker {
-      width: 18px;
-      height: 18px;
-      background: #2878ff;
-      border: 4px solid white;
-      border-radius: 50%;
-      box-shadow: 0 2px 8px rgba(0,0,0,.35);
-    }
-
-    /* =====================================================
-       DESKTOP
-    ===================================================== */
-
-    @media (min-width: 700px) {
-
-      .page {
-        max-width: 650px;
-        margin: auto;
-      }
-
-      .bottom-sheet {
-        max-width: 650px;
-        left: 50%;
-        right: auto;
-        width: 650px;
-        transform: translateX(-50%);
-      }
-
-      .topbar {
-        padding-left: calc((100% - 650px) / 2 + 15px);
-        padding-right: calc((100% - 650px) / 2 + 15px);
-      }
-
-    }
-
-  </style>
-</head>
-
-
-<body>
-
-<div id="app">
-
-
-  <!-- ===================================================
-       HOME
-  ==================================================== -->
-
-  <section
-    id="homeScreen"
-    class="screen active"
-  >
-
-    <div class="topbar">
-
-      <div class="brand">
-
-        <div class="brand-logo">
-          🚕
-        </div>
-
-        <span>
-          OPPER TAXI
-        </span>
-
-      </div>
-
-
-      <button
-        class="top-profile"
-        onclick="goTo('profileScreen')"
-      >
-        👤
-      </button>
-
-    </div>
-
-
-    <div id="homeMap"></div>
-
-
-    <div class="map-overlay">
-
-      <div class="location-pill">
-
-        <span class="location-dot"></span>
-
-        <span id="locationText">
-          Joylashuv aniqlanmagan
-        </span>
-
-      </div>
-
-    </div>
-
-
-    <button
-      class="map-location-btn"
-      onclick="getLocation(true)"
-    >
-      📍
-    </button>
-
-
-    <div class="bottom-sheet">
-
-      <div class="sheet-handle"></div>
-
-      <div class="sheet-title">
-        Qayerga boramiz?
-      </div>
-
-
-      <div class="route-box">
-
-        <div
-          class="route-row"
-          onclick="openCityModal('from')"
-        >
-
-          <div class="route-icon"></div>
-
-          <div class="route-content">
-
-            <div class="route-label">
-              Qayerdan?
-            </div>
-
-            <div
-              class="route-value"
-              id="homeFromText"
-            >
-              Shaharni tanlang
-            </div>
-
-          </div>
-
-          <div class="route-arrow">
-            ›
-          </div>
-
-        </div>
-
-
-        <div
-          class="route-row"
-          onclick="openCityModal('to')"
-        >
-
-          <div class="route-icon destination"></div>
-
-          <div class="route-content">
-
-            <div class="route-label">
-              Qayerga?
-            </div>
-
-            <div
-              class="route-value"
-              id="homeToText"
-            >
-              Shaharni tanlang
-            </div>
-
-          </div>
-
-          <div class="route-arrow">
-            ›
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <div class="quick-options">
-
-        <button
-          class="option-button"
-          onclick="openTimeModal()"
-        >
-
-          <span>🕐</span>
-
-          <div>
-
-            <div style="color:#888;font-size:10px;">
-              Vaqt
-            </div>
-
-            <div id="homeTimeText">
-              Tanlang
-            </div>
-
-          </div>
-
-        </button>
-
-
-        <button
-          class="option-button"
-          onclick="openSeatsModal()"
-        >
-
-          <span>👥</span>
-
-          <div>
-
-            <div style="color:#888;font-size:10px;">
-              Yo‘lovchi
-            </div>
-
-            <div id="homeSeatsText">
-              1 kishi
-            </div>
-
-          </div>
-
-        </button>
-
-      </div>
-
-
-      <button
-        class="main-button"
-        onclick="searchFromHome()"
-      >
-        🔎 TAKSI QIDIRISH
-      </button>
-
-    </div>
-
-  </section>
-
-
-  <!-- ===================================================
-       SEARCH
-  ==================================================== -->
-
-  <section
-    id="searchScreen"
-    class="screen"
-  >
-
-    <div class="topbar">
-
-      <div class="brand">
-
-        <div class="brand-logo">
-          🔎
-        </div>
-
-        <span>
-          Taksi qidirish
-        </span>
-
-      </div>
-
-
-      <button
-        class="top-profile"
-        onclick="goTo('profileScreen')"
-      >
-        👤
-      </button>
-
-    </div>
-
-
-    <div class="page">
-
-      <h1 class="page-title">
-        Safar toping
-      </h1>
-
-      <div class="page-subtitle">
-        O‘zingizga qulay yo‘nalish va vaqtni tanlang.
-      </div>
-
-
-      <div class="card">
-
-        <div class="card-title">
-          📍 Yo‘nalish
-        </div>
-
-
-        <div class="field">
-
-          <label class="field-label">
-            Qayerdan?
-          </label>
-
-          <select
-            id="searchFrom"
-            class="input"
-          >
-
-            <option value="">
-              Barcha shaharlar
-            </option>
-
-            <option value="Toshkent">
-              Toshkent
-            </option>
-
-            <option value="Namangan">
-              Namangan
-            </option>
-
-            <option value="Andijon">
-              Andijon
-            </option>
-
-            <option value="Farg‘ona">
-              Farg‘ona
-            </option>
-
-            <option value="Qo‘qon">
-              Qo‘qon
-            </option>
-
-            <option value="Marg‘ilon">
-              Marg‘ilon
-            </option>
-
-          </select>
-
-        </div>
-
-
-        <div class="field">
-
-          <label class="field-label">
-            Qayerga?
-          </label>
-
-          <select
-            id="searchTo"
-            class="input"
-          >
-
-            <option value="">
-              Barcha shaharlar
-            </option>
-
-            <option value="Toshkent">
-              Toshkent
-            </option>
-
-            <option value="Namangan">
-              Namangan
-            </option>
-
-            <option value="Andijon">
-              Andijon
-            </option>
-
-            <option value="Farg‘ona">
-              Farg‘ona
-            </option>
-
-            <option value="Qo‘qon">
-              Qo‘qon
-            </option>
-
-            <option value="Marg‘ilon">
-              Marg‘ilon
-            </option>
-
-          </select>
-
-        </div>
-
-
-        <button
-          class="main-button"
-          onclick="searchRides()"
-        >
-          🔎 SAFARLARNI QIDIRISH
-        </button>
-
-      </div>
-
-
-      <div id="ridesList"></div>
-
-    </div>
-
-  </section>
-
-
-  <!-- ===================================================
-       DRIVER
-  ==================================================== -->
-
-  <section
-    id="driverScreen"
-    class="screen"
-  >
-
-    <div class="topbar">
-
-      <div class="brand">
-
-        <div class="brand-logo">
-          🚗
-        </div>
-
-        <span>
-          Haydovchi
-        </span>
-
-      </div>
-
-
-      <button
-        class="top-profile"
-        onclick="goTo('profileScreen')"
-      >
-        👤
-      </button>
-
-    </div>
-
-
-    <div class="page">
-
-      <h1 class="page-title">
-        Haydovchi bo‘lish
-      </h1>
-
-      <div class="page-subtitle">
-        Safaringizni joylashtiring va yo‘lovchilarni toping.
-      </div>
-
-
-      <div id="driverRegistrationCard">
-
-        <div class="card">
-
-          <div class="card-title">
-            👤 Shaxsiy ma’lumot
-          </div>
-
-
-          <div class="field">
-
-            <label class="field-label">
-              F.I.Sh.
-            </label>
-
-            <input
-              id="driverFullName"
-              class="input"
-              type="text"
-              placeholder="Ism Familiya"
-            >
-
-          </div>
-
-
-          <div class="field">
-
-            <label class="field-label">
-              Telefon
-            </label>
-
-            <input
-              id="driverPhone"
-              class="input"
-              type="tel"
-              placeholder="+998901234567"
-            >
-
-          </div>
-
-        </div>
-
-
-        <div class="card">
-
-          <div class="card-title">
-            🚘 Avtomobil
-          </div>
-
-
-          <div class="field">
-
-            <label class="field-label">
-              Avtomobil modeli
-            </label>
-
-            <input
-              id="driverCarModel"
-              class="input"
-              type="text"
-              placeholder="Cobalt"
-            >
-
-          </div>
-
-
-          <div class="field">
-
-            <label class="field-label">
-              Avtomobil raqami
-            </label>
-
-            <input
-              id="driverCarNumber"
-              class="input"
-              type="text"
-              placeholder="01 A 123 BC"
-            >
-
-          </div>
-
-
-          <div class="field">
-
-            <label class="field-label">
-              Avtomobildagi bo‘sh o‘rin
-            </label>
-
-
-            <div class="seat-grid">
-
-              <button
-                class="seat-btn selected"
-                data-driver-seat="1"
-                onclick="selectDriverSeats(1)"
-              >
-                1
-              </button>
-
-              <button
-                class="seat-btn"
-                data-driver-seat="2"
-                onclick="selectDriverSeats(2)"
-              >
-                2
-              </button>
-
-              <button
-                class="seat-btn"
-                data-driver-seat="3"
-                onclick="selectDriverSeats(3)"
-              >
-                3
-              </button>
-
-              <button
-                class="seat-btn"
-                data-driver-seat="4"
-                onclick="selectDriverSeats(4)"
-              >
-                4
-              </button>
-
-            </div>
-
-          </div>
-
-
-          <button
-            class="main-button"
-            onclick="registerDriver()"
-          >
-            🚗 HAYDOVCHI SIFATIDA RO‘YXATDAN O‘TISH
-          </button>
-
-        </div>
-
-      </div>
-
-
-      <div id="driverRideCard" style="display:none;">
-
-        <div class="card">
-
-          <div class="card-title">
-            🚕 Yangi safar
-          </div>
-
-
-          <div class="field">
-
-            <label class="field-label">
-              Qayerdan?
-            </label>
-
-            <select
-              id="driverFrom"
-              class="input"
-            >
-
-              <option value="Toshkent">
-                Toshkent
-              </option>
-
-              <option value="Namangan">
-                Namangan
-              </option>
-
-              <option value="Andijon">
-                Andijon
-              </option>
-
-              <option value="Farg‘ona">
-                Farg‘ona
-              </option>
-
-              <option value="Qo‘qon">
-                Qo‘qon
-              </option>
-
-              <option value="Marg‘ilon">
-                Marg‘ilon
-              </option>
-
-            </select>
-
-          </div>
-
-
-          <div class="field">
-
-            <label class="field-label">
-              Qayerga?
-            </label>
-
-            <select
-              id="driverTo"
-              class="input"
-            >
-
-              <option value="Farg‘ona">
-                Farg‘ona
-              </option>
-
-              <option value="Toshkent">
-                Toshkent
-              </option>
-
-              <option value="Namangan">
-                Namangan
-              </option>
-
-              <option value="Andijon">
-                Andijon
-              </option>
-
-              <option value="Qo‘qon">
-                Qo‘qon
-              </option>
-
-              <option value="Marg‘ilon">
-                Marg‘ilon
-              </option>
-
-            </select>
-
-          </div>
-
-
-          <div class="field">
-
-            <label class="field-label">
-              Jo‘nash vaqti
-            </label>
-
-            <div
-              id="driverTimeGrid"
-              class="time-grid"
-            ></div>
-
-          </div>
-
-
-          <div class="field">
-
-            <label class="field-label">
-              Bo‘sh o‘rin
-            </label>
-
-            <div class="seat-grid">
-
-              <button
-                class="seat-btn selected"
-                data-ride-seat="1"
-                onclick="selectRideSeats(1)"
-              >
-                1
-              </button>
-
-              <button
-                class="seat-btn"
-                data-ride-seat="2"
-                onclick="selectRideSeats(2)"
-              >
-                2
-              </button>
-
-              <button
-                class="seat-btn"
-                data-ride-seat="3"
-                onclick="selectRideSeats(3)"
-              >
-                3
-              </button>
-
-              <button
-                class="seat-btn"
-                data-ride-seat="4"
-                onclick="selectRideSeats(4)"
-              >
-                4
-              </button>
-
-            </div>
-
-          </div>
-
-
-          <button
-            class="main-button"
-            onclick="createDriverRide()"
-          >
-            🚕 SAFARNI JOYLASH
-          </button>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- ===================================================
-       ORDERS
-  ==================================================== -->
-
-  <section
-    id="ordersScreen"
-    class="screen"
-  >
-
-    <div class="topbar">
-
-      <div class="brand">
-
-        <div class="brand-logo">
-          📋
-        </div>
-
-        <span>
-          Buyurtmalarim
-        </span>
-
-      </div>
-
-    </div>
-
-
-    <div class="page">
-
-      <h1 class="page-title">
-        Buyurtmalar
-      </h1>
-
-      <div class="page-subtitle">
-        Safarlaringiz va buyurtmalaringiz.
-      </div>
-
-
-      <div id="ordersList">
-
-        <div class="loading">
-
-          <div class="spinner"></div>
-
-          Yuklanmoqda...
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- ===================================================
-       PROFILE
-  ==================================================== -->
-
-  <section
-    id="profileScreen"
-    class="screen"
-  >
-
-    <div class="topbar">
-
-      <div class="brand">
-
-        <div class="brand-logo">
-          👤
-        </div>
-
-        <span>
-          Profil
-        </span>
-
-      </div>
-
-    </div>
-
-
-    <div class="page">
-
-      <div class="card profile-head">
-
-        <div
-          id="profileAvatar"
-          class="big-avatar"
-        >
-          👤
-        </div>
-
-
-        <div
-          id="profileNameTitle"
-          class="profile-name"
-        >
-          Foydalanuvchi
-        </div>
-
-
-        <div
-          id="profileUsername"
-          class="profile-username"
-        >
-          Telegram
-        </div>
-
-      </div>
-
-
-      <div class="card">
-
-        <div class="stats">
-
-          <div class="stat">
-
-            <div
-              id="profileRating"
-              class="stat-value"
-            >
-              —
-            </div>
-
-            <div class="stat-label">
-              Reyting
-            </div>
-
-          </div>
-
-
-          <div class="stat">
-
-            <div
-              id="profileTrips"
-              class="stat-value"
-            >
-              0
-            </div>
-
-            <div class="stat-label">
-              Safarlar
-            </div>
-
-          </div>
-
-
-          <div class="stat">
-
-            <div
-              id="profileStatus"
-              class="stat-value"
-            >
-              👤
-            </div>
-
-            <div class="stat-label">
-              Holat
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <div class="card">
-
-        <div class="card-title">
-          📝 Ma’lumotlarim
-        </div>
-
-
-        <div class="field">
-
-          <label class="field-label">
-            F.I.Sh.
-          </label>
-
-          <input
-            id="profileName"
-            class="input"
-            type="text"
-          >
-
-        </div>
-
-
-        <div class="field">
-
-          <label class="field-label">
-            Telefon
-          </label>
-
-          <input
-            id="profilePhone"
-            class="input"
-            type="tel"
-          >
-
-        </div>
-
-
-        <button
-          class="main-button"
-          onclick="updateProfile()"
-        >
-          💾 SAQLASH
-        </button>
-
-      </div>
-
-
-      <div
-        id="driverProfileCard"
-        class="card"
-        style="display:none;"
-      >
-
-        <div class="card-title">
-          🚗 Haydovchi profili
-        </div>
-
-
-        <div
-          id="driverStatus"
-          style="margin-bottom:12px;"
-        ></div>
-
-
-        <div class="order-line">
-
-          <span>
-            Avtomobil
-          </span>
-
-          <b id="driverProfileCar">
-            —
-          </b>
-
-        </div>
-
-
-        <div class="order-line">
-
-          <span>
-            Raqam
-          </span>
-
-          <b id="driverProfileNumber">
-            —
-          </b>
-
-        </div>
-
-
-        <div class="order-line">
-
-          <span>
-            O‘rinlar
-          </span>
-
-          <b id="driverProfileSeats">
-            —
-          </b>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- ===================================================
-       BOTTOM NAV
-  ==================================================== -->
-
-  <nav class="bottom-nav">
-
-    <button
-      class="nav-item active"
-      data-nav="homeScreen"
-      onclick="goTo('homeScreen')"
-    >
-
-      <span class="nav-icon">
-        🏠
-      </span>
-
-      Bosh sahifa
-
-    </button>
-
-
-    <button
-      class="nav-item"
-      data-nav="searchScreen"
-      onclick="goTo('searchScreen')"
-    >
-
-      <span class="nav-icon">
-        🔎
-      </span>
-
-      Qidirish
-
-    </button>
-
-
-    <button
-      class="nav-item"
-      data-nav="ordersScreen"
-      onclick="goTo('ordersScreen')"
-    >
-
-      <span class="nav-icon">
-        📋
-      </span>
-
-      Buyurtmalar
-
-    </button>
-
-
-    <button
-      class="nav-item"
-      data-nav="profileScreen"
-      onclick="goTo('profileScreen')"
-    >
-
-      <span class="nav-icon">
-        👤
-      </span>
-
-      Profil
-
-    </button>
-
-  </nav>
-
-
-  <!-- ===================================================
-       CITY MODAL
-  ==================================================== -->
-
-  <div
-    id="cityModal"
-    class="modal"
-    onclick="closeModalOutside(event, 'cityModal')"
-  >
-
-    <div class="modal-sheet">
-
-      <div class="modal-handle"></div>
-
-      <div
-        id="cityModalTitle"
-        class="modal-title"
-      >
-        Shaharni tanlang
-      </div>
-
-
-      <div class="city-grid">
-
-        <button
-          class="city-btn"
-          onclick="selectCity('Toshkent')"
-        >
-          📍 Toshkent
-        </button>
-
-        <button
-          class="city-btn"
-          onclick="selectCity('Namangan')"
-        >
-          📍 Namangan
-        </button>
-
-        <button
-          class="city-btn"
-          onclick="selectCity('Andijon')"
-        >
-          📍 Andijon
-        </button>
-
-        <button
-          class="city-btn"
-          onclick="selectCity('Farg‘ona')"
-        >
-          📍 Farg‘ona
-        </button>
-
-        <button
-          class="city-btn"
-          onclick="selectCity('Qo‘qon')"
-        >
-          📍 Qo‘qon
-        </button>
-
-        <button
-          class="city-btn"
-          onclick="selectCity('Marg‘ilon')"
-        >
-          📍 Marg‘ilon
-        </button>
-
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- ===================================================
-       TIME MODAL
-  ==================================================== -->
-
-  <div
-    id="timeModal"
-    class="modal"
-    onclick="closeModalOutside(event, 'timeModal')"
-  >
-
-    <div class="modal-sheet">
-
-      <div class="modal-handle"></div>
-
-      <div class="modal-title">
-        🕐 Jo‘nash vaqtini tanlang
-      </div>
-
-
-      <div
-        id="homeTimeGrid"
-        class="time-grid"
-      ></div>
-
-    </div>
-
-  </div>
-
-
-  <!-- ===================================================
-       SEAT MODAL
-  ==================================================== -->
-
-  <div
-    id="seatModal"
-    class="modal"
-    onclick="closeModalOutside(event, 'seatModal')"
-  >
-
-    <div class="modal-sheet">
-
-      <div class="modal-handle"></div>
-
-      <div class="modal-title">
-        👥 Necha kishi?
-      </div>
-
-
-      <div class="seat-grid">
-
-        <button
-          class="seat-btn"
-          onclick="selectHomeSeats(1)"
-        >
-          1 kishi
-        </button>
-
-        <button
-          class="seat-btn"
-          onclick="selectHomeSeats(2)"
-        >
-          2 kishi
-        </button>
-
-        <button
-          class="seat-btn"
-          onclick="selectHomeSeats(3)"
-        >
-          3 kishi
-        </button>
-
-        <button
-          class="seat-btn"
-          onclick="selectHomeSeats(4)"
-        >
-          4 kishi
-        </button>
-
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- ===================================================
-       ORDER MODAL
-  ==================================================== -->
-
-  <div
-    id="orderModal"
-    class="modal"
-    onclick="closeModalOutside(event, 'orderModal')"
-  >
-
-    <div class="modal-sheet">
-
-      <div class="modal-handle"></div>
-
-      <div class="modal-title">
-        🚕 Taksi buyurtmasi
-      </div>
-
-
-      <div
-        id="orderModalContent"
-      ></div>
-
-
-      <div class="field">
-
-        <label class="field-label">
-          Ismingiz
-        </label>
-
-        <input
-          id="passengerName"
-          class="input"
-          type="text"
-          placeholder="Ismingiz"
-        >
-
-      </div>
-
-
-      <div class="field">
-
-        <label class="field-label">
-          Telefon raqamingiz
-        </label>
-
-        <input
-          id="passengerPhone"
-          class="input"
-          type="tel"
-          placeholder="+998901234567"
-        >
-
-      </div>
-
-
-      <button
-        class="main-button"
-        onclick="sendPassengerOrder()"
-      >
-        🚕 BUYURTMA BERISH
-      </button>
-
-
-      <button
-        style="
-          width:100%;
-          min-height:48px;
-          margin-top:8px;
-          border-radius:14px;
-          background:#f0f1f3;
-          font-weight:800;
-        "
-        onclick="closeModal('orderModal')"
-      >
-        Bekor qilish
-      </button>
-
-    </div>
-
-  </div>
-
-
-  <!-- TOAST -->
-
-  <div id="toast"></div>
-
-</div>
-
-
-<script>
-
-  /* =====================================================
-     TELEGRAM
-  ===================================================== */
-
-  const tg =
-    window.Telegram &&
-    window.Telegram.WebApp
-      ? window.Telegram.WebApp
-      : null;
-
-
-  if (tg) {
-
-    tg.ready();
-
-    tg.expand();
-
-    try {
-
-      tg.setHeaderColor("#ffffff");
-
-      tg.setBackgroundColor("#f4f5f7");
-
-    } catch (e) {}
-
-  }
-
-
-  /* =====================================================
-     CONSTANTS
-  ===================================================== */
-
-  const CITIES = [
-    "Toshkent",
-    "Namangan",
-    "Andijon",
-    "Farg‘ona",
-    "Qo‘qon",
-    "Marg‘ilon"
-  ];
-
-
-  const TIMES = [
-    "06:00",
-    "07:00",
-    "08:00",
-    "09:00",
-    "10:00",
-    "11:00",
-    "12:00",
-    "13:00",
-    "14:00",
-    "15:00",
-    "16:00",
-    "17:00",
-    "18:00",
-    "19:00",
-    "20:00",
-    "21:00",
-    "22:00",
-    "23:00"
-  ];
-
-
-  /* =====================================================
-     STATE
-  ===================================================== */
-
-  const state = {
-
-    from: "",
-
-    to: "",
-
-    time: "",
-
-    seats: 1,
-
-    driverSeats: 1,
-
-    rideSeats: 1,
-
-    cityMode: "from",
-
-    latitude: null,
-
-    longitude: null,
-
-    map: null,
-
-    marker: null,
-
-    profile: null,
-
-    rides: []
-
-  };
-
-
-  /* =====================================================
-     INIT
-  ===================================================== */
-
-  document.addEventListener(
-    "DOMContentLoaded",
-    () => {
-
-      buildTimeButtons();
-
-      initHomeMap();
-
-      loadProfile();
-
-      loadOrders();
-
-      setTimeout(
-        () => getLocation(false),
-        600
-      );
-
-    }
-  );
-
-
-  /* =====================================================
-     NAVIGATION
-  ===================================================== */
-
-  function goTo(id) {
-
-    document
-      .querySelectorAll(".screen")
-      .forEach(
-        screen =>
-          screen.classList.remove("active")
-      );
-
-
-    const screen =
-      document.getElementById(id);
-
-
-    if (!screen) return;
-
-
-    screen.classList.add("active");
-
-
-    document
-      .querySelectorAll(".nav-item")
-      .forEach(item => {
-
-        item.classList.toggle(
-          "active",
-          item.dataset.nav === id
-        );
-
-      });
-
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
-
-
-    if (id === "profileScreen") {
-
-      loadProfile();
-
-    }
-
-
-    if (id === "ordersScreen") {
-
-      loadOrders();
-
-    }
-
-
-    if (id === "searchScreen") {
-
-      setTimeout(
-        () => searchRides(false),
-        200
-      );
-
-    }
-
-  }
-
-
-  /* =====================================================
-     API
-  ===================================================== */
-
-  function getInitData() {
-
-    if (
-      tg &&
-      tg.initData
+    function showScreen(
+        screen
     ) {
 
-      return tg.initData;
+        currentScreen =
+            screen;
 
-    }
 
-    return "";
+        document
+            .querySelectorAll(".screen")
+            .forEach(
+                element => {
 
-  }
+                    element.classList.remove(
+                        "active"
+                    );
 
+                }
+            );
 
-  async function api(
-    url,
-    payload = {}
-  ) {
 
-    const body = {
-      ...payload,
-      init_data: getInitData()
-    };
+        const target =
+            document.getElementById(
+                "screen-" + screen
+            );
 
 
-    const response =
-      await fetch(
-        url,
-        {
-          method: "POST",
+        if (target) {
 
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify(body)
-        }
-      );
-
-
-    let result;
-
-
-    try {
-
-      result =
-        await response.json();
-
-    } catch (e) {
-
-      throw new Error(
-        "Serverdan noto‘g‘ri javob keldi."
-      );
-
-    }
-
-
-    if (
-      !response.ok ||
-      result.error
-    ) {
-
-      throw new Error(
-        result.error ||
-        "Xatolik yuz berdi."
-      );
-
-    }
-
-
-    return result;
-
-  }
-
-
-  /* =====================================================
-     TIME BUTTONS
-  ===================================================== */
-
-  function buildTimeButtons() {
-
-    const homeGrid =
-      document.getElementById(
-        "homeTimeGrid"
-      );
-
-
-    const driverGrid =
-      document.getElementById(
-        "driverTimeGrid"
-      );
-
-
-    const html =
-      TIMES.map(time => `
-
-        <button
-          class="time-btn"
-          data-time="${time}"
-          onclick="selectHomeTime('${time}')"
-        >
-          ${time}
-        </button>
-
-      `).join("");
-
-
-    if (homeGrid) {
-
-      homeGrid.innerHTML =
-        html;
-
-    }
-
-
-    if (driverGrid) {
-
-      driverGrid.innerHTML =
-        TIMES.map(time => `
-
-          <button
-            class="time-btn"
-            data-driver-time="${time}"
-            onclick="selectDriverTime('${time}')"
-          >
-            ${time}
-          </button>
-
-        `).join("");
-
-    }
-
-  }
-
-
-  /* =====================================================
-     CITY MODAL
-  ===================================================== */
-
-  function openCityModal(mode) {
-
-    state.cityMode = mode;
-
-
-    document.getElementById(
-      "cityModalTitle"
-    ).textContent =
-      mode === "from"
-        ? "📍 Qayerdan?"
-        : "📍 Qayerga?";
-
-
-    openModal("cityModal");
-
-  }
-
-
-  function selectCity(city) {
-
-    if (
-      state.cityMode === "from"
-    ) {
-
-      if (
-        state.to &&
-        city === state.to
-      ) {
-
-        toast(
-          "Qayerdan va qayerga bir xil bo‘lishi mumkin emas.",
-          "error"
-        );
-
-        return;
-
-      }
-
-
-      state.from = city;
-
-
-      document.getElementById(
-        "homeFromText"
-      ).textContent =
-        city;
-
-    }
-
-
-    if (
-      state.cityMode === "to"
-    ) {
-
-      if (
-        state.from &&
-        city === state.from
-      ) {
-
-        toast(
-          "Qayerdan va qayerga bir xil bo‘lishi mumkin emas.",
-          "error"
-        );
-
-        return;
-
-      }
-
-
-      state.to = city;
-
-
-      document.getElementById(
-        "homeToText"
-      ).textContent =
-        city;
-
-    }
-
-
-    closeModal("cityModal");
-
-  }
-
-
-  /* =====================================================
-     TIME
-  ===================================================== */
-
-  function openTimeModal() {
-
-    openModal("timeModal");
-
-  }
-
-
-  function selectHomeTime(time) {
-
-    state.time = time;
-
-
-    document.getElementById(
-      "homeTimeText"
-    ).textContent =
-      time;
-
-
-    document
-      .querySelectorAll(
-        "#homeTimeGrid .time-btn"
-      )
-      .forEach(btn => {
-
-        btn.classList.toggle(
-          "selected",
-          btn.dataset.time === time
-        );
-
-      });
-
-
-    closeModal("timeModal");
-
-  }
-
-
-  function selectDriverTime(time) {
-
-    state.driverTime = time;
-
-
-    document
-      .querySelectorAll(
-        "[data-driver-time]"
-      )
-      .forEach(btn => {
-
-        btn.classList.toggle(
-          "selected",
-          btn.dataset.driverTime === time
-        );
-
-      });
-
-  }
-
-
-  /* =====================================================
-     SEATS
-  ===================================================== */
-
-  function openSeatsModal() {
-
-    openModal("seatModal");
-
-  }
-
-
-  function selectHomeSeats(number) {
-
-    state.seats = number;
-
-
-    document.getElementById(
-      "homeSeatsText"
-    ).textContent =
-      number === 1
-        ? "1 kishi"
-        : `${number} kishi`;
-
-
-    closeModal("seatModal");
-
-  }
-
-
-  function selectDriverSeats(number) {
-
-    state.driverSeats =
-      number;
-
-
-    document
-      .querySelectorAll(
-        "[data-driver-seat]"
-      )
-      .forEach(btn => {
-
-        btn.classList.toggle(
-          "selected",
-          Number(
-            btn.dataset.driverSeat
-          ) === number
-        );
-
-      });
-
-  }
-
-
-  function selectRideSeats(number) {
-
-    state.rideSeats =
-      number;
-
-
-    document
-      .querySelectorAll(
-        "[data-ride-seat]"
-      )
-      .forEach(btn => {
-
-        btn.classList.toggle(
-          "selected",
-          Number(
-            btn.dataset.rideSeat
-          ) === number
-        );
-
-      });
-
-  }
-
-
-  /* =====================================================
-     HOME SEARCH
-  ===================================================== */
-
-  function searchFromHome() {
-
-    if (!state.from) {
-
-      openCityModal("from");
-
-      toast(
-        "Avval qayerdan yo‘lga chiqishingizni tanlang.",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    if (!state.to) {
-
-      openCityModal("to");
-
-      toast(
-        "Qayerga borishingizni tanlang.",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    if (!state.time) {
-
-      openTimeModal();
-
-      toast(
-        "Jo‘nash vaqtini tanlang.",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    document.getElementById(
-      "searchFrom"
-    ).value =
-      state.from;
-
-
-    document.getElementById(
-      "searchTo"
-    ).value =
-      state.to;
-
-
-    goTo("searchScreen");
-
-
-    searchRides(
-      true
-    );
-
-  }
-
-
-  /* =====================================================
-     SEARCH RIDES
-  ===================================================== */
-
-  async function searchRides(
-    showLoading = true
-  ) {
-
-    const list =
-      document.getElementById(
-        "ridesList"
-      );
-
-
-    const from =
-      document.getElementById(
-        "searchFrom"
-      ).value;
-
-
-    const to =
-      document.getElementById(
-        "searchTo"
-      ).value;
-
-
-    if (
-      from &&
-      to &&
-      from === to
-    ) {
-
-      list.innerHTML = `
-        <div class="empty">
-
-          <div class="empty-icon">
-            ⚠️
-          </div>
-
-          <div class="empty-title">
-            Yo‘nalish noto‘g‘ri
-          </div>
-
-          <div class="empty-text">
-            Qayerdan va qayerga
-            shaharlari bir xil bo‘lishi mumkin emas.
-          </div>
-
-        </div>
-      `;
-
-      return;
-
-    }
-
-
-    if (showLoading) {
-
-      list.innerHTML = `
-        <div class="loading">
-
-          <div class="spinner"></div>
-
-          Safarlar qidirilmoqda...
-
-        </div>
-      `;
-
-    }
-
-
-    try {
-
-      const result =
-        await api(
-          "/api/rides",
-          {
-            from_city: from,
-            to_city: to
-          }
-        );
-
-
-      let rides =
-        result.rides || [];
-
-
-      if (from) {
-
-        rides =
-          rides.filter(
-            ride =>
-              ride.from_city === from
-          );
-
-      }
-
-
-      if (to) {
-
-        rides =
-          rides.filter(
-            ride =>
-              ride.to_city === to
-          );
-
-      }
-
-
-      if (
-        state.time
-      ) {
-
-        const sameTime =
-          rides.filter(
-            ride =>
-              ride.ride_time ===
-              state.time
-          );
-
-
-        if (sameTime.length) {
-
-          rides =
-            sameTime;
+            target.classList.add(
+                "active"
+            );
 
         }
 
-      }
+
+        document
+            .querySelectorAll(".nav-btn")
+            .forEach(
+                element => {
+
+                    element.classList.remove(
+                        "active"
+                    );
+
+                }
+            );
 
 
-      state.rides =
-        rides;
+        const nav =
+            document.getElementById(
+                "nav-" + screen
+            );
 
 
-      renderRides(
+        if (nav) {
+
+            nav.classList.add(
+                "active"
+            );
+
+        }
+
+
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+
+
+        if (
+            screen === "trips"
+        ) {
+
+            loadTrips();
+
+        }
+
+
+        if (
+            screen === "profile"
+        ) {
+
+            loadProfile();
+
+        }
+
+    }
+
+
+    /* =====================================================
+       NAV HELPERS
+    ===================================================== */
+
+    function openSearch() {
+
+        showScreen(
+            "search"
+        );
+
+        setTimeout(
+            () => {
+
+                document
+                    .getElementById(
+                        "search-from"
+                    )
+                    ?.focus();
+
+            },
+            150
+        );
+
+    }
+
+
+    function openDriver() {
+
+        showScreen(
+            "driver"
+        );
+
+        loadProfile();
+
+    }
+
+
+    function openTrips() {
+
+        showScreen(
+            "trips"
+        );
+
+    }
+
+
+    /* =====================================================
+       CITY OPTIONS
+    ===================================================== */
+
+    function fillCities() {
+
+        const ids = [
+            "search-from",
+            "search-to",
+            "driver-from",
+            "driver-to"
+        ];
+
+
+        ids.forEach(
+            id => {
+
+                const select =
+                    document.getElementById(
+                        id
+                    );
+
+
+                if (!select) {
+                    return;
+                }
+
+
+                const current =
+                    select.value;
+
+
+                select.innerHTML =
+                    `
+                    <option value="">
+                        Shaharni tanlang
+                    </option>
+                    `;
+
+
+                CITIES.forEach(
+                    city => {
+
+                        const option =
+                            document.createElement(
+                                "option"
+                            );
+
+
+                        option.value =
+                            city;
+
+                        option.textContent =
+                            city;
+
+
+                        select.appendChild(
+                            option
+                        );
+
+                    }
+                );
+
+
+                if (current) {
+                    select.value =
+                        current;
+                }
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       DATE
+    ===================================================== */
+
+    function setMinDates() {
+
+        const now =
+            new Date();
+
+
+        const year =
+            now.getFullYear();
+
+
+        const month =
+            String(
+                now.getMonth() + 1
+            ).padStart(
+                2,
+                "0"
+            );
+
+
+        const day =
+            String(
+                now.getDate()
+            ).padStart(
+                2,
+                "0"
+            );
+
+
+        const today =
+            `${year}-${month}-${day}`;
+
+
+        [
+            "search-date",
+            "driver-date"
+        ].forEach(
+            id => {
+
+                const input =
+                    document.getElementById(
+                        id
+                    );
+
+
+                if (input) {
+
+                    input.min =
+                        today;
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       FORMAT PRICE
+    ===================================================== */
+
+    function formatPrice(
+        value
+    ) {
+
+        const number =
+            Number(value || 0);
+
+
+        if (!number) {
+            return "Kelishiladi";
+        }
+
+
+        return (
+            new Intl.NumberFormat(
+                "uz-UZ"
+            ).format(number)
+            + " so‘m"
+        );
+
+    }
+
+
+    /* =====================================================
+       FORMAT DATE
+       UTC siljishi bo‘lmasligi uchun
+       new Date() ishlatilmaydi.
+    ===================================================== */
+
+    function formatDate(
+        value
+    ) {
+
+        if (!value) {
+            return "";
+        }
+
+
+        const text =
+            String(value)
+                .trim();
+
+
+        const match =
+            text.match(
+                /^(\d{4})-(\d{2})-(\d{2})/
+            );
+
+
+        if (!match) {
+
+            return text;
+
+        }
+
+
+        return (
+            match[3]
+            + "."
+            + match[2]
+            + "."
+            + match[1]
+        );
+
+    }
+
+
+    /* =====================================================
+       FORMAT TIME
+    ===================================================== */
+
+    function formatTime(
+        value
+    ) {
+
+        if (!value) {
+            return "";
+        }
+
+
+        const text =
+            String(value)
+                .trim();
+
+
+        const match =
+            text.match(
+                /(?:T|\s)?(\d{2}):(\d{2})/
+            );
+
+
+        if (!match) {
+
+            return text;
+
+        }
+
+
+        return (
+            match[1]
+            + ":"
+            + match[2]
+        );
+
+    }
+
+
+    /* =====================================================
+       ESCAPE HTML
+    ===================================================== */
+
+    function escapeHtml(
+        value
+    ) {
+
+        return String(
+            value ?? ""
+        )
+            .replace(
+                /&/g,
+                "&amp;"
+            )
+            .replace(
+                /</g,
+                "&lt;"
+            )
+            .replace(
+                />/g,
+                "&gt;"
+            )
+            .replace(
+                /"/g,
+                "&quot;"
+            )
+            .replace(
+                /'/g,
+                "&#039;"
+            );
+
+    }
+
+
+    /* =====================================================
+       REGISTER DRIVER
+    ===================================================== */
+
+    async function registerDriver() {
+
+        const fullName =
+            document
+                .getElementById(
+                    "driver-name"
+                )
+                .value
+                .trim();
+
+
+        const phone =
+            document
+                .getElementById(
+                    "driver-phone"
+                )
+                .value
+                .trim();
+
+
+        const carModel =
+            document
+                .getElementById(
+                    "driver-car"
+                )
+                .value
+                .trim();
+
+
+        const carNumber =
+            document
+                .getElementById(
+                    "driver-number"
+                )
+                .value
+                .trim();
+
+
+        const seats =
+            Number(
+                document
+                    .getElementById(
+                        "driver-seats"
+                    )
+                    .value
+            );
+
+
+        if (!fullName) {
+
+            showToast(
+                "F.I.Sh. kiriting.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        if (!phone) {
+
+            showToast(
+                "Telefon raqamini kiriting.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        if (!carModel) {
+
+            showToast(
+                "Mashina modelini kiriting.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        if (!carNumber) {
+
+            showToast(
+                "Mashina raqamini kiriting.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        if (
+            !seats ||
+            seats < 1 ||
+            seats > 8
+        ) {
+
+            showToast(
+                "Bo‘sh joy 1–8 oralig‘ida bo‘lsin.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        try {
+
+            const result =
+                await api(
+                    "/api/driver/register",
+                    {
+                        method: "POST",
+
+                        body: JSON.stringify({
+                            full_name:
+                                fullName,
+
+                            phone:
+                                phone,
+
+                            car_model:
+                                carModel,
+
+                            car_number:
+                                carNumber,
+
+                            seats:
+                                seats
+                        })
+                    }
+                );
+
+
+            showToast(
+                result.message ||
+                "Haydovchi ma’lumotlari saqlandi.",
+                "success"
+            );
+
+
+            loadProfile();
+
+        } catch (error) {
+
+            showToast(
+                error.message,
+                "error"
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       ADD RIDE
+    ===================================================== */
+
+    async function addRide() {
+
+        const fromCity =
+            document
+                .getElementById(
+                    "driver-from"
+                )
+                .value;
+
+
+        const toCity =
+            document
+                .getElementById(
+                    "driver-to"
+                )
+                .value;
+
+
+        const rideDate =
+            document
+                .getElementById(
+                    "driver-date"
+                )
+                .value;
+
+
+        const rideTime =
+            document
+                .getElementById(
+                    "driver-time"
+                )
+                .value;
+
+
+        const seats =
+            Number(
+                document
+                    .getElementById(
+                        "ride-seats"
+                    )
+                    .value
+            );
+
+
+        const price =
+            Number(
+                document
+                    .getElementById(
+                        "ride-price"
+                    )
+                    .value
+            );
+
+
+        if (!fromCity) {
+
+            showToast(
+                "Qayerdan shahrini tanlang.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        if (!toCity) {
+
+            showToast(
+                "Qayerga shahrini tanlang.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        if (
+            fromCity ===
+            toCity
+        ) {
+
+            showToast(
+                "Qayerdan va Qayerga bir xil bo‘lishi mumkin emas.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        if (!rideDate) {
+
+            showToast(
+                "Safar sanasini tanlang.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        if (!rideTime) {
+
+            showToast(
+                "Safar vaqtini tanlang.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        if (
+            !seats ||
+            seats < 1 ||
+            seats > 8
+        ) {
+
+            showToast(
+                "Bo‘sh joy 1–8 oralig‘ida bo‘lsin.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        if (
+            price < 0 ||
+            Number.isNaN(price)
+        ) {
+
+            showToast(
+                "Narxni to‘g‘ri kiriting.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        try {
+
+            const result =
+                await api(
+                    "/api/driver/ride",
+                    {
+                        method: "POST",
+
+                        body: JSON.stringify({
+
+                            from_city:
+                                fromCity,
+
+                            to_city:
+                                toCity,
+
+                            ride_date:
+                                rideDate,
+
+                            ride_time:
+                                rideTime,
+
+                            seats:
+                                seats,
+
+                            price:
+                                price
+
+                        })
+                    }
+                );
+
+
+            showToast(
+                result.message ||
+                "Safar e’lon qilindi.",
+                "success"
+            );
+
+
+            // Formani tozalash
+
+            document
+                .getElementById(
+                    "driver-price"
+                );
+
+
+            document
+                .getElementById(
+                    "ride-price"
+                )
+                .value = "";
+
+
+            document
+                .getElementById(
+                    "driver-from"
+                )
+                .value = "";
+
+
+            document
+                .getElementById(
+                    "driver-to"
+                )
+                .value = "";
+
+
+            openTrips();
+
+
+        } catch (error) {
+
+            showToast(
+                error.message,
+                "error"
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       SEARCH RIDES
+    ===================================================== */
+
+    async function searchRides() {
+
+        const fromCity =
+            document
+                .getElementById(
+                    "search-from"
+                )
+                .value;
+
+
+        const toCity =
+            document
+                .getElementById(
+                    "search-to"
+                )
+                .value;
+
+
+        const rideDate =
+            document
+                .getElementById(
+                    "search-date"
+                )
+                .value;
+
+
+        const rideTime =
+            document
+                .getElementById(
+                    "search-time"
+                )
+                .value;
+
+
+        if (!fromCity) {
+
+            showToast(
+                "Qayerdan shahrini tanlang.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        if (!toCity) {
+
+            showToast(
+                "Qayerga shahrini tanlang.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        if (
+            fromCity ===
+            toCity
+        ) {
+
+            showToast(
+                "Qayerdan va Qayerga bir xil bo‘lishi mumkin emas.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        const container =
+            document
+                .getElementById(
+                    "search-results"
+                );
+
+
+        container.innerHTML =
+            `
+            <div class="loading">
+                <div class="spinner"></div>
+                Safarlar qidirilmoqda...
+            </div>
+            `;
+
+
+        try {
+
+            const result =
+                await api(
+                    "/api/rides",
+                    {
+                        method: "POST",
+
+                        body: JSON.stringify({
+
+                            from_city:
+                                fromCity,
+
+                            to_city:
+                                toCity,
+
+                            ride_date:
+                                rideDate,
+
+                            ride_time:
+                                rideTime
+
+                        })
+                    }
+                );
+
+
+            currentRides =
+                result.rides ||
+                [];
+
+
+            renderRides(
+                currentRides
+            );
+
+
+        } catch (error) {
+
+            container.innerHTML =
+                `
+                <div class="card">
+                    <div class="empty">
+                        <div class="empty-icon">⚠️</div>
+                        <strong>Xatolik yuz berdi</strong>
+                        <span>
+                            ${escapeHtml(error.message)}
+                        </span>
+                    </div>
+                </div>
+                `;
+
+        }
+
+    }
+
+
+    /* =====================================================
+       RENDER RIDES
+    ===================================================== */
+
+    function renderRides(
         rides
-      );
+    ) {
+
+        const container =
+            document
+                .getElementById(
+                    "search-results"
+                );
 
 
-    } catch (error) {
+        if (
+            !rides ||
+            rides.length === 0
+        ) {
 
-      list.innerHTML = `
-        <div class="empty">
+            container.innerHTML =
+                `
+                <div class="card">
+                    <div class="empty">
+                        <div class="empty-icon">🚕</div>
 
-          <div class="empty-icon">
-            ⚠️
-          </div>
+                        <strong>
+                            Safar topilmadi
+                        </strong>
 
-          <div class="empty-title">
-            Xatolik yuz berdi
-          </div>
+                        <span>
+                            Hozircha ushbu yo‘nalishda
+                            mavjud safar yo‘q.
+                            Boshqa sana yoki vaqtni
+                            tekshirib ko‘ring.
+                        </span>
+                    </div>
+                </div>
+                `;
 
-          <div class="empty-text">
-            ${escapeHtml(
-              error.message
-            )}
-          </div>
+            return;
 
-        </div>
-      `;
-
-    }
-
-  }
-
-
-  /* =====================================================
-     RENDER RIDES
-  ===================================================== */
-
-  function renderRides(
-    rides
-  ) {
-
-    const list =
-      document.getElementById(
-        "ridesList"
-      );
+        }
 
 
-    if (!rides.length) {
+        let html =
+            `
+            <div class="result-count">
+                ${rides.length} ta safar topildi
+            </div>
+            `;
 
-      list.innerHTML = `
-        <div class="empty">
 
-          <div class="empty-icon">
-            🚕
-          </div>
+        rides.forEach(
+            ride => {
 
-          <div class="empty-title">
-            Hozircha safar topilmadi
-          </div>
+                html +=
+                    createRideCard(
+                        ride
+                    );
 
-          <div class="empty-text">
-            Boshqa yo‘nalish yoki
-            boshqa vaqtni tanlab ko‘ring.
-          </div>
+            }
+        );
 
-        </div>
-      `;
 
-      return;
+        container.innerHTML =
+            html;
 
     }
 
 
-    list.innerHTML =
-      rides.map(
-        (ride, index) => {
+    /* =====================================================
+       RIDE CARD
+    ===================================================== */
 
-          const rating =
-            Number(
-              ride.rating || 5
-            ).toFixed(1);
+    function createRideCard(
+        ride
+    ) {
+
+        const name =
+            ride.driver_name ||
+            "Haydovchi";
 
 
-          const trips =
-            Number(
-              ride.trips || 0
+        const car =
+            ride.car_model ||
+            "Mashina";
+
+
+        const number =
+            ride.car_number ||
+            "";
+
+
+        const phone =
+            ride.driver_phone ||
+            "";
+
+
+        const date =
+            formatDate(
+                ride.ride_date
             );
 
 
-          const seats =
-            Number(
-              ride.available_seats ??
-              ride.seats ??
-              0
+        const time =
+            formatTime(
+                ride.ride_time
             );
 
 
-          return `
+        const available =
+            Number(
+                ride.available_seats ??
+                ride.seats ??
+                0
+            );
 
-            <div class="ride-card">
 
-              <div class="ride-top">
+        return `
+        <div class="ride-card">
+
+            <div class="ride-top">
 
                 <div class="ride-route">
 
-                  ${escapeHtml(
-                    ride.from_city || ""
-                  )}
+                    ${escapeHtml(
+                        ride.from_city
+                    )}
 
-                  →
+                    →
 
-                  ${escapeHtml(
-                    ride.to_city || ""
-                  )}
+                    ${escapeHtml(
+                        ride.to_city
+                    )}
+
+                    <small>
+                        <br>
+                        ${escapeHtml(date)}
+                        ${time
+                            ? " • " +
+                              escapeHtml(time)
+                            : ""
+                        }
+                    </small>
 
                 </div>
 
 
-                <div class="ride-time">
+                <div class="price">
 
-                  🕐
-
-                  ${escapeHtml(
-                    ride.ride_time || ""
-                  )}
+                    ${escapeHtml(
+                        formatPrice(
+                            ride.price
+                        )
+                    )}
 
                 </div>
 
-              </div>
+            </div>
 
 
-              <div class="driver-row">
+            <div class="ride-meta">
+
+                <div class="meta-item">
+
+                    <span>🚗 Mashina</span>
+
+                    <strong>
+                        ${escapeHtml(car)}
+                    </strong>
+
+                </div>
+
+
+                <div class="meta-item">
+
+                    <span>🔢 Raqam</span>
+
+                    <strong>
+                        ${escapeHtml(number)}
+                    </strong>
+
+                </div>
+
+
+                <div class="meta-item">
+
+                    <span>💺 Bo‘sh joy</span>
+
+                    <strong>
+                        ${available} ta
+                    </strong>
+
+                </div>
+
+
+                <div class="meta-item">
+
+                    <span>🕐 Vaqt</span>
+
+                    <strong>
+                        ${escapeHtml(time)}
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="driver-row">
 
                 <div class="driver-avatar">
-                  🚕
+                    👤
                 </div>
 
 
                 <div class="driver-info">
 
-                  <div class="driver-name">
+                    <strong>
+                        ${escapeHtml(name)}
+                    </strong>
 
-                    ${escapeHtml(
-                      ride.full_name ||
-                      "Haydovchi"
-                    )}
-
-                  </div>
-
-
-                  <div class="driver-meta">
-
-                    ${escapeHtml(
-                      ride.car_model ||
-                      "Avtomobil"
-                    )}
-
-                    ·
-
-                    ${escapeHtml(
-                      ride.car_number ||
-                      ""
-                    )}
-
-                  </div>
+                    <span>
+                        Haydovchi
+                    </span>
 
                 </div>
 
 
-                <div class="rating">
-
-                  ⭐ ${rating}
-
-                </div>
-
-              </div>
-
-
-              <div class="ride-details">
-
-                <div class="detail">
-
-                  💺 Bo‘sh joy
-
-                  <b>
-                    ${seats} ta
-                  </b>
-
-                </div>
-
-
-                <div class="detail">
-
-                  🏁 Safarlar
-
-                  <b>
-                    ${trips} ta
-                  </b>
-
-                </div>
-
-              </div>
-
-
-              <button
-                class="ride-action"
-                onclick="openRideOrder(${index})"
-              >
-
-                🚕 SHU SAFARNI TANLASH
-
-              </button>
+                ${
+                    phone
+                        ? `
+                        <a
+                            class="contact-btn"
+                            href="tel:${escapeHtml(phone)}"
+                        >
+                            📞
+                        </a>
+                        `
+                        : ""
+                }
 
             </div>
 
-          `;
+
+            <button
+                class="btn btn-primary"
+                style="margin-top:12px;"
+                onclick="openOrderModal(${ride.id})"
+            >
+                💺 Joy buyurtma qilish
+            </button>
+
+        </div>
+        `;
+
+    }
+
+
+    /* =====================================================
+       ORDER MODAL
+    ===================================================== */
+
+    function openOrderModal(
+        rideId
+    ) {
+
+        const ride =
+            currentRides.find(
+                item =>
+                    Number(item.id) ===
+                    Number(rideId)
+            );
+
+
+        if (!ride) {
+
+            showToast(
+                "Safar topilmadi.",
+                "error"
+            );
+
+            return;
 
         }
-      ).join("");
 
-  }
 
+        const modal =
+            document.getElementById(
+                "modal"
+            );
 
-  /* =====================================================
-     OPEN RIDE ORDER
-  ===================================================== */
 
-  function openRideOrder(
-    index
-  ) {
+        const body =
+            document.getElementById(
+                "modal-body"
+            );
 
-    const ride =
-      state.rides[index];
 
-
-    if (!ride) {
-
-      return;
-
-    }
-
-
-    state.selectedRide =
-      ride;
-
-
-    const content =
-      document.getElementById(
-        "orderModalContent"
-      );
-
-
-    content.innerHTML = `
-
-      <div
-        style="
-          background:#f5f6f8;
-          border-radius:16px;
-          padding:14px;
-          margin-bottom:15px;
-        "
-      >
-
-        <div
-          style="
-            font-size:17px;
-            font-weight:900;
-            margin-bottom:8px;
-          "
-        >
-
-          ${escapeHtml(
-            ride.from_city || ""
-          )}
-
-          →
-
-          ${escapeHtml(
-            ride.to_city || ""
-          )}
-
-        </div>
-
-
-        <div
-          style="
-            display:grid;
-            grid-template-columns:1fr 1fr;
-            gap:7px;
-          "
-        >
-
-          <div>
-            🕐
-            ${escapeHtml(
-              ride.ride_time || ""
-            )}
-          </div>
-
-          <div>
-            🚕
-            ${escapeHtml(
-              ride.car_model || ""
-            )}
-          </div>
-
-          <div>
-            ⭐
-            ${Number(
-              ride.rating || 5
-            ).toFixed(1)}
-          </div>
-
-          <div>
-            💺
-            ${Number(
-              ride.available_seats ??
-              ride.seats ??
-              0
-            )}
-            joy
-          </div>
-
-        </div>
-
-      </div>
-
-    `;
-
-
-    const profile =
-      state.profile;
-
-
-    if (profile) {
-
-      document.getElementById(
-        "passengerName"
-      ).value =
-        profile.full_name || "";
-
-
-      document.getElementById(
-        "passengerPhone"
-      ).value =
-        profile.phone || "";
-
-    }
-
-
-    openModal(
-      "orderModal"
-    );
-
-  }
-
-
-  /* =====================================================
-     PASSENGER ORDER
-  ===================================================== */
-
-  async function sendPassengerOrder() {
-
-    if (
-      !state.selectedRide
-    ) {
-
-      toast(
-        "Safar tanlanmagan.",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    const ride =
-      state.selectedRide;
-
-
-    const name =
-      document.getElementById(
-        "passengerName"
-      ).value.trim();
-
-
-    const phone =
-      document.getElementById(
-        "passengerPhone"
-      ).value.trim();
-
-
-    if (!phone) {
-
-      toast(
-        "Telefon raqamingizni kiriting.",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    try {
-
-      const result =
-        await api(
-          "/api/passenger/order",
-          {
-
-            from_city:
-              ride.from_city,
-
-            to_city:
-              ride.to_city,
-
-            ride_time:
-              ride.ride_time,
-
-            seats:
-              state.seats,
-
-            name:
-              name,
-
-            phone:
-              phone,
-
-            latitude:
-              state.latitude,
-
-            longitude:
-              state.longitude
-
-          }
-        );
-
-
-      closeModal(
-        "orderModal"
-      );
-
-
-      toast(
-        result.message ||
-        "Buyurtma yuborildi.",
-        "success"
-      );
-
-
-      setTimeout(
-        () => {
-          goTo(
-            "ordersScreen"
-          );
-        },
-        700
-      );
-
-
-    } catch (error) {
-
-      toast(
-        error.message,
-        "error"
-      );
-
-    }
-
-  }
-
-
-  /* =====================================================
-     DRIVER REGISTER
-  ===================================================== */
-
-  async function registerDriver() {
-
-    const full_name =
-      document.getElementById(
-        "driverFullName"
-      ).value.trim();
-
-
-    const phone =
-      document.getElementById(
-        "driverPhone"
-      ).value.trim();
-
-
-    const car_model =
-      document.getElementById(
-        "driverCarModel"
-      ).value.trim();
-
-
-    const car_number =
-      document.getElementById(
-        "driverCarNumber"
-      ).value.trim();
-
-
-    if (!full_name) {
-
-      toast(
-        "F.I.Sh. kiriting.",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    if (!phone) {
-
-      toast(
-        "Telefon raqamini kiriting.",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    if (!car_model) {
-
-      toast(
-        "Avtomobil modelini kiriting.",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    if (!car_number) {
-
-      toast(
-        "Avtomobil raqamini kiriting.",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    try {
-
-      const result =
-        await api(
-          "/api/driver/register",
-          {
-
-            full_name:
-              full_name,
-
-            phone:
-              phone,
-
-            car_model:
-              car_model,
-
-            car_number:
-              car_number,
-
-            seats:
-              state.driverSeats
-
-          }
-        );
-
-
-      toast(
-        result.message ||
-        "Ariza yuborildi.",
-        "success"
-      );
-
-
-      document.getElementById(
-        "driverRegistrationCard"
-      ).style.display =
-        "none";
-
-
-      document.getElementById(
-        "driverRideCard"
-      ).style.display =
-        "block";
-
-
-    } catch (error) {
-
-      toast(
-        error.message,
-        "error"
-      );
-
-    }
-
-  }
-
-
-  /* =====================================================
-     DRIVER RIDE
-  ===================================================== */
-
-  async function createDriverRide() {
-
-    const from_city =
-      document.getElementById(
-        "driverFrom"
-      ).value;
-
-
-    const to_city =
-      document.getElementById(
-        "driverTo"
-      ).value;
-
-
-    const ride_time =
-      state.driverTime || "";
-
-
-    if (
-      from_city ===
-      to_city
-    ) {
-
-      toast(
-        "Qayerdan va qayerga bir xil bo‘lishi mumkin emas.",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    if (!ride_time) {
-
-      toast(
-        "Jo‘nash vaqtini tanlang.",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    try {
-
-      const result =
-        await api(
-          "/api/driver/ride",
-          {
-
-            from_city:
-              from_city,
-
-            to_city:
-              to_city,
-
-            ride_time:
-              ride_time,
-
-            seats:
-              state.rideSeats
-
-          }
-        );
-
-
-      toast(
-        result.message ||
-        "Safar e’lon qilindi.",
-        "success"
-      );
-
-
-      setTimeout(
-        () => {
-
-          goTo(
-            "ordersScreen"
-          );
-
-        },
-        700
-      );
-
-
-    } catch (error) {
-
-      toast(
-        error.message,
-        "error"
-      );
-
-    }
-
-  }
-
-
-  /* =====================================================
-     ORDERS
-  ===================================================== */
-
-  async function loadOrders() {
-
-    const list =
-      document.getElementById(
-        "ordersList"
-      );
-
-
-    if (!list) return;
-
-
-    try {
-
-      const result =
-        await api(
-          "/api/orders",
-          {}
-        );
-
-
-      const passengerOrders =
-        result.passenger_orders ||
-        [];
-
-
-      const driverOrders =
-        result.driver_orders ||
-        [];
-
-
-      let html = "";
-
-
-      if (
-        passengerOrders.length
-      ) {
-
-        html += `
-
-          <div
-            style="
-              font-size:16px;
-              font-weight:900;
-              margin-bottom:10px;
-            "
-          >
-            👤 Yo‘lovchi buyurtmalarim
-          </div>
-
-        `;
-
-
-        html +=
-          passengerOrders
-            .map(
-              order =>
-                renderPassengerOrder(
-                  order
-                )
-            )
-            .join("");
-
-      }
-
-
-      if (
-        driverOrders.length
-      ) {
-
-        html += `
-
-          <div
-            style="
-              font-size:16px;
-              font-weight:900;
-              margin:
-                20px 0 10px;
-            "
-          >
-            🚗 Haydovchi buyurtmalarim
-          </div>
-
-        `;
-
-
-        html +=
-          driverOrders
-            .map(
-              order =>
-                renderDriverOrder(
-                  order
-                )
-            )
-            .join("");
-
-      }
-
-
-      if (!html) {
-
-        html = `
-
-          <div class="empty">
-
-            <div class="empty-icon">
-              📋
-            </div>
-
-            <div class="empty-title">
-              Hali buyurtmalar yo‘q
-            </div>
-
-            <div class="empty-text">
-              Safar buyurtma qilganingizda
-              bu yerda ko‘rinadi.
-            </div>
-
-          </div>
-
-        `;
-
-      }
-
-
-      list.innerHTML =
-        html;
-
-
-    } catch (error) {
-
-      list.innerHTML = `
-
-        <div class="empty">
-
-          <div class="empty-icon">
-            ⚠️
-          </div>
-
-          <div class="empty-title">
-            Ma’lumotlarni yuklab bo‘lmadi
-          </div>
-
-          <div class="empty-text">
-            ${escapeHtml(
-              error.message
-            )}
-          </div>
-
-        </div>
-
-      `;
-
-    }
-
-  }
-
-
-  function renderPassengerOrder(
-    order
-  ) {
-
-    return `
-
-      <div class="order-card">
-
-        <div class="order-header">
-
-          <div class="order-route">
-
-            ${escapeHtml(
-              order.from_city || ""
-            )}
-
-            →
-
-            ${escapeHtml(
-              order.to_city || ""
-            )}
-
-          </div>
-
-          <div class="order-status">
-
-            ${formatStatus(
-              order.status
-            )}
-
-          </div>
-
-        </div>
-
-
-        <div class="order-line">
-
-          <span>
-            🕐 Vaqt
-          </span>
-
-          <b>
-            ${escapeHtml(
-              order.ride_time || ""
-            )}
-          </b>
-
-        </div>
-
-
-        <div class="order-line">
-
-          <span>
-            👥 O‘rin
-          </span>
-
-          <b>
-            ${escapeHtml(
-              String(
-                order.seats || ""
-              )
-            )}
-          </b>
-
-        </div>
-
-
-        ${
-          order.driver_name
-            ? `
-
-              <div class="order-line">
-
-                <span>
-                  🚕 Haydovchi
-                </span>
-
-                <b>
-                  ${escapeHtml(
-                    order.driver_name
-                  )}
-                </b>
-
-              </div>
-
-              <div class="order-line">
-
-                <span>
-                  🚘 Mashina
-                </span>
-
-                <b>
-                  ${escapeHtml(
-                    order.car_model || ""
-                  )}
-                </b>
-
-              </div>
-
+        body.innerHTML =
             `
-            : ""
-        }
-
-      </div>
-
-    `;
-
-  }
+            <div class="modal-title">
+                💺 Safarga joy buyurtma qilish
+            </div>
 
 
-  function renderDriverOrder(
-    order
-  ) {
+            <div class="card">
 
-    return `
+                <div class="ride-route">
 
-      <div class="order-card">
+                    ${escapeHtml(
+                        ride.from_city
+                    )}
 
-        <div class="order-header">
+                    →
 
-          <div class="order-route">
+                    ${escapeHtml(
+                        ride.to_city
+                    )}
 
-            ${escapeHtml(
-              order.from_city || ""
-            )}
-
-            →
-
-            ${escapeHtml(
-              order.to_city || ""
-            )}
-
-          </div>
-
-          <div class="order-status">
-
-            ${formatStatus(
-              order.status
-            )}
-
-          </div>
-
-        </div>
+                </div>
 
 
-        <div class="order-line">
+                <div class="trip-info">
 
-          <span>
-            🕐 Vaqt
-          </span>
+                    📅 ${escapeHtml(
+                        formatDate(
+                            ride.ride_date
+                        )
+                    )}
 
-          <b>
-            ${escapeHtml(
-              order.ride_time || ""
-            )}
-          </b>
+                    <br>
 
-        </div>
+                    🕐 ${escapeHtml(
+                        formatTime(
+                            ride.ride_time
+                        )
+                    )}
 
+                    <br>
 
-        <div class="order-line">
+                    🚗 ${escapeHtml(
+                        ride.car_model
+                    )}
 
-          <span>
-            👤 Yo‘lovchi
-          </span>
+                    <br>
 
-          <b>
-            ${escapeHtml(
-              order.passenger_name ||
-              ""
-            )}
-          </b>
+                    💰 ${escapeHtml(
+                        formatPrice(
+                            ride.price
+                        )
+                    )}
 
-        </div>
+                </div>
 
-
-        <div class="order-line">
-
-          <span>
-            📞 Telefon
-          </span>
-
-          <b>
-            ${escapeHtml(
-              order.passenger_phone ||
-              ""
-            )}
-          </b>
-
-        </div>
+            </div>
 
 
-        <div class="order-line">
+            <div class="field">
 
-          <span>
-            👥 O‘rin
-          </span>
+                <label>
+                    Telefon raqamingiz
+                </label>
 
-          <b>
-            ${escapeHtml(
-              String(
-                order.seats || ""
-              )
-            )}
-          </b>
+                <input
+                    id="order-phone"
+                    class="input"
+                    type="tel"
+                    placeholder="+998 90 123 45 67"
+                >
 
-        </div>
-
-      </div>
-
-    `;
-
-  }
+            </div>
 
 
-  function formatStatus(
-    status
-  ) {
+            <div class="field">
 
-    const map = {
+                <label>
+                    Nechta joy?
+                </label>
 
-      pending_driver:
-        "⏳ Kutilmoqda",
+                <input
+                    id="order-seats"
+                    class="input"
+                    type="number"
+                    min="1"
+                    max="${Math.max(
+                        1,
+                        Number(
+                            ride.available_seats ||
+                            ride.seats ||
+                            1
+                        )
+                    )}"
+                    value="1"
+                >
 
-      accepted:
-        "✅ Qabul qilindi",
-
-      arrived:
-        "📍 Yetib keldi",
-
-      onboard:
-        "👤 Yo‘lovchi olindi",
-
-      completed:
-        "🏁 Tugadi",
-
-      cancelled:
-        "❌ Bekor qilindi",
-
-      searching:
-        "🔎 Qidirilmoqda"
-
-    };
+            </div>
 
 
-    return (
-      map[status] ||
-      status ||
-      "Kutilmoqda"
-    );
+            <button
+                class="btn btn-primary"
+                onclick="submitOrder(${ride.id})"
+            >
+                ✅ Buyurtmani tasdiqlash
+            </button>
 
-  }
+
+            <button
+                class="btn btn-light"
+                onclick="closeModal()"
+            >
+                Bekor qilish
+            </button>
+            `;
 
 
-  /* =====================================================
-     PROFILE
-  ===================================================== */
-
-  async function loadProfile() {
-
-    try {
-
-      const result =
-        await api(
-          "/api/profile",
-          {}
+        modal.classList.add(
+            "show"
         );
 
 
-      state.profile =
-        result.user ||
-        null;
-
-
-      const user =
-        result.user ||
-        {};
-
-
-      const driver =
-        result.driver ||
-        null;
-
-
-      const name =
-        user.full_name ||
-        "Foydalanuvchi";
-
-
-      document.getElementById(
-        "profileNameTitle"
-      ).textContent =
-        name;
-
-
-      document.getElementById(
-        "profileUsername"
-      ).textContent =
-        user.username
-          ? "@" + user.username
-          : "Telegram foydalanuvchisi";
-
-
-      document.getElementById(
-        "profileName"
-      ).value =
-        user.full_name ||
-        "";
-
-
-      document.getElementById(
-        "profilePhone"
-      ).value =
-        user.phone ||
-        "";
-
-
-      const avatar =
-        name
-          .trim()
-          .charAt(0)
-          .toUpperCase();
-
-
-      document.getElementById(
-        "profileAvatar"
-      ).textContent =
-        avatar ||
-        "👤";
-
-
-      if (driver) {
-
-        document.getElementById(
-          "profileRating"
-        ).textContent =
-          "⭐ " +
-          Number(
-            driver.rating || 5
-          ).toFixed(1);
-
-
-        document.getElementById(
-          "profileTrips"
-        ).textContent =
-          driver.trips ||
-          0;
-
-
-        document.getElementById(
-          "profileStatus"
-        ).textContent =
-          "🚗";
-
-
-        document.getElementById(
-          "driverProfileCard"
-        ).style.display =
-          "block";
-
-
-        document.getElementById(
-          "driverProfileCar"
-        ).textContent =
-          driver.car_model ||
-          "—";
-
-
-        document.getElementById(
-          "driverProfileNumber"
-        ).textContent =
-          driver.car_number ||
-          "—";
-
-
-        document.getElementById(
-          "driverProfileSeats"
-        ).textContent =
-          driver.seats ||
-          "—";
-
-
-        document.getElementById(
-          "driverStatus"
-        ).innerHTML =
-          driverStatusHtml(
-            driver.status
-          );
-
-      } else {
-
-        document.getElementById(
-          "profileRating"
-        ).textContent =
-          "—";
-
-
-        document.getElementById(
-          "profileTrips"
-        ).textContent =
-          "0";
-
-
-        document.getElementById(
-          "profileStatus"
-        ).textContent =
-          "👤";
-
-
-        document.getElementById(
-          "driverProfileCard"
-        ).style.display =
-          "none";
-
-      }
-
-
-    } catch (error) {
-
-      console.log(
-        "Profile error:",
-        error
-      );
-
-    }
-
-  }
-
-
-  function driverStatusHtml(
-    status
-  ) {
-
-    if (
-      status ===
-      "approved"
-    ) {
-
-      return `
-        <span class="status approved">
-          🟢 Haydovchi tasdiqlangan
-        </span>
-      `;
+        loadProfileForOrder();
 
     }
 
 
-    if (
-      status ===
-      "rejected"
-    ) {
+    /* =====================================================
+       LOAD PROFILE FOR ORDER
+    ===================================================== */
 
-      return `
-        <span class="status rejected">
-          🔴 Ariza rad etilgan
-        </span>
-      `;
+    async function loadProfileForOrder() {
 
-    }
+        try {
 
+            const result =
+                await api(
+                    "/api/profile",
+                    {
+                        method: "POST",
+                        body: JSON.stringify({})
+                    }
+                );
 
-    return `
-      <span class="status pending">
-        🟡 Tasdiqlanish kutilmoqda
-      </span>
-    `;
 
-  }
+            const user =
+                result.profile ||
+                result.user ||
+                {};
 
 
-  /* =====================================================
-     PROFILE UPDATE
-  ===================================================== */
+            const phoneInput =
+                document.getElementById(
+                    "order-phone"
+                );
 
-  async function updateProfile() {
 
-    const full_name =
-      document.getElementById(
-        "profileName"
-      ).value.trim();
+            if (
+                phoneInput &&
+                user.phone
+            ) {
 
+                phoneInput.value =
+                    user.phone;
 
-    const phone =
-      document.getElementById(
-        "profilePhone"
-      ).value.trim();
+            }
 
+        } catch (error) {
 
-    if (!full_name) {
-
-      toast(
-        "Ismni kiriting.",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    try {
-
-      const result =
-        await api(
-          "/api/profile/update",
-          {
-
-            full_name:
-              full_name,
-
-            phone:
-              phone
-
-          }
-        );
-
-
-      toast(
-        result.message ||
-        "Profil yangilandi.",
-        "success"
-      );
-
-
-      loadProfile();
-
-
-    } catch (error) {
-
-      toast(
-        error.message,
-        "error"
-      );
-
-    }
-
-  }
-
-
-  /* =====================================================
-     MAP
-  ===================================================== */
-
-  function initHomeMap() {
-
-    try {
-
-      state.map =
-        L.map(
-          "homeMap",
-          {
-            zoomControl: false
-          }
-        ).setView(
-          [41.3111, 69.2797],
-          11
-        );
-
-
-      L.tileLayer(
-        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        {
-          maxZoom: 19,
-          attribution:
-            "&copy; OpenStreetMap"
-        }
-      ).addTo(
-        state.map
-      );
-
-
-    } catch (error) {
-
-      console.log(
-        "Map error:",
-        error
-      );
-
-    }
-
-  }
-
-
-  /* =====================================================
-     GEOLOCATION
-  ===================================================== */
-
-  function getLocation(
-    moveMap = false
-  ) {
-
-    if (
-      !navigator.geolocation
-    ) {
-
-      toast(
-        "Joylashuv aniqlash qo‘llab-quvvatlanmaydi.",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    navigator.geolocation.getCurrentPosition(
-
-      position => {
-
-        state.latitude =
-          position.coords.latitude;
-
-
-        state.longitude =
-          position.coords.longitude;
-
-
-        updateMapLocation(
-          state.latitude,
-          state.longitude,
-          moveMap
-        );
-
-
-        document.getElementById(
-          "locationText"
-        ).textContent =
-          "Joylashuv aniqlandi";
-
-
-      },
-
-      error => {
-
-        if (moveMap) {
-
-          toast(
-            "Joylashuvga ruxsat bering.",
-            "error"
-          );
+            // Profil bo‘lmasa ham buyurtma oynasi ishlaydi.
 
         }
 
-      },
-
-      {
-        enableHighAccuracy:
-          true,
-
-        timeout:
-          10000,
-
-        maximumAge:
-          30000
-
-      }
-
-    );
-
-  }
+    }
 
 
-  function updateMapLocation(
-    lat,
-    lng,
-    moveMap
-  ) {
+    /* =====================================================
+       SUBMIT ORDER
+    ===================================================== */
 
-    if (!state.map)
-      return;
-
-
-    const icon =
-      L.divIcon({
-
-        className:
-          "",
-
-        html:
-          '<div class="user-marker"></div>',
-
-        iconSize:
-          [18,18],
-
-        iconAnchor:
-          [9,9]
-
-      });
-
-
-    if (
-      state.marker
+    async function submitOrder(
+        rideId
     ) {
 
-      state.marker
-        .setLatLng(
-          [lat,lng]
-        )
-        .setIcon(
-          icon
-        );
+        const phoneInput =
+            document.getElementById(
+                "order-phone"
+            );
 
-    } else {
 
-      state.marker =
-        L.marker(
-          [lat,lng],
-          {
-            icon
-          }
-        ).addTo(
-          state.map
-        );
+        const seatsInput =
+            document.getElementById(
+                "order-seats"
+            );
+
+
+        const phone =
+            phoneInput
+                ? phoneInput.value.trim()
+                : "";
+
+
+        const seats =
+            seatsInput
+                ? Number(
+                    seatsInput.value
+                )
+                : 1;
+
+
+        if (!phone) {
+
+            showToast(
+                "Telefon raqamingizni kiriting.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        if (
+            !seats ||
+            seats < 1
+        ) {
+
+            showToast(
+                "Joy sonini kiriting.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        const ride =
+            currentRides.find(
+                item =>
+                    Number(item.id) ===
+                    Number(rideId)
+            );
+
+
+        if (!ride) {
+
+            showToast(
+                "Safar topilmadi.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        try {
+
+            const result =
+                await api(
+                    "/api/passenger/order",
+                    {
+                        method: "POST",
+
+                        body: JSON.stringify({
+
+                            ride_id:
+                                rideId,
+
+                            from_city:
+                                ride.from_city,
+
+                            to_city:
+                                ride.to_city,
+
+                            ride_date:
+                                ride.ride_date,
+
+                            ride_time:
+                                ride.ride_time,
+
+                            phone:
+                                phone,
+
+                            seats:
+                                seats
+
+                        })
+                    }
+                );
+
+
+            closeModal();
+
+
+            showToast(
+                result.message ||
+                "Buyurtma qabul qilindi.",
+                "success"
+            );
+
+
+            setTimeout(
+                () => {
+
+                    openTrips();
+
+                },
+                700
+            );
+
+
+        } catch (error) {
+
+            showToast(
+                error.message,
+                "error"
+            );
+
+        }
 
     }
 
 
-    if (moveMap) {
+    /* =====================================================
+       LOAD TRIPS
+    ===================================================== */
 
-      state.map.setView(
-        [lat,lng],
-        15
-      );
+    async function loadTrips() {
+
+        const container =
+            document
+                .getElementById(
+                    "trips-container"
+                );
+
+
+        container.innerHTML =
+            `
+            <div class="loading">
+                <div class="spinner"></div>
+                Safarlar yuklanmoqda...
+            </div>
+            `;
+
+
+        try {
+
+            const result =
+                await api(
+                    "/api/orders",
+                    {
+                        method: "POST",
+                        body: JSON.stringify({})
+                    }
+                );
+
+
+            const driverRides =
+                result.driver_rides ||
+                result.rides ||
+                [];
+
+
+            const passengerOrders =
+                result.passenger_orders ||
+                result.orders ||
+                [];
+
+
+            renderTrips(
+                driverRides,
+                passengerOrders
+            );
+
+
+        } catch (error) {
+
+            container.innerHTML =
+                `
+                <div class="card">
+
+                    <div class="empty">
+
+                        <div class="empty-icon">
+                            ⚠️
+                        </div>
+
+                        <strong>
+                            Ma’lumotlarni yuklab bo‘lmadi
+                        </strong>
+
+                        <span>
+                            ${escapeHtml(
+                                error.message
+                            )}
+                        </span>
+
+                    </div>
+
+                </div>
+                `;
+
+        }
 
     }
 
-  }
 
+    /* =====================================================
+       RENDER TRIPS
+    ===================================================== */
 
-  /* =====================================================
-     MODALS
-  ===================================================== */
-
-  function openModal(
-    id
-  ) {
-
-    const modal =
-      document.getElementById(
-        id
-      );
-
-
-    if (modal) {
-
-      modal.classList.add(
-        "active"
-      );
-
-    }
-
-  }
-
-
-  function closeModal(
-    id
-  ) {
-
-    const modal =
-      document.getElementById(
-        id
-      );
-
-
-    if (modal) {
-
-      modal.classList.remove(
-        "active"
-      );
-
-    }
-
-  }
-
-
-  function closeModalOutside(
-    event,
-    id
-  ) {
-
-    if (
-      event.target.id ===
-      id
+    function renderTrips(
+        driverRides,
+        passengerOrders
     ) {
 
-      closeModal(id);
+        const container =
+            document
+                .getElementById(
+                    "trips-container"
+                );
+
+
+        if (
+            (!driverRides ||
+                driverRides.length === 0)
+            &&
+            (!passengerOrders ||
+                passengerOrders.length === 0)
+        ) {
+
+            container.innerHTML =
+                `
+                <div class="card">
+
+                    <div class="empty">
+
+                        <div class="empty-icon">
+                            📋
+                        </div>
+
+                        <strong>
+                            Hali safarlar yo‘q
+                        </strong>
+
+                        <span>
+                            Haydovchi bo‘lsangiz
+                            safar qo‘shing.
+                            Yo‘lovchi bo‘lsangiz
+                            safar qidiring.
+                        </span>
+
+                    </div>
+
+                </div>
+                `;
+
+            return;
+
+        }
+
+
+        let html = "";
+
+
+        if (
+            driverRides &&
+            driverRides.length
+        ) {
+
+            html +=
+                `
+                <div class="section-title">
+                    🚗 Men qo‘shgan safarlar
+                </div>
+                `;
+
+
+            driverRides.forEach(
+                ride => {
+
+                    html +=
+                        createDriverTrip(
+                            ride
+                        );
+
+                }
+            );
+
+        }
+
+
+        if (
+            passengerOrders &&
+            passengerOrders.length
+        ) {
+
+            html +=
+                `
+                <div class="section-title">
+                    👤 Mening buyurtmalarim
+                </div>
+                `;
+
+
+            passengerOrders.forEach(
+                order => {
+
+                    html +=
+                        createPassengerTrip(
+                            order
+                        );
+
+                }
+            );
+
+        }
+
+
+        container.innerHTML =
+            html;
 
     }
 
-  }
+
+    /* =====================================================
+       DRIVER TRIP
+    ===================================================== */
+
+    function createDriverTrip(
+        ride
+    ) {
+
+        const active =
+            ride.status ===
+            "active";
 
 
-  /* =====================================================
-     TOAST
-  ===================================================== */
+        return `
+        <div class="trip-card">
 
-  let toastTimer = null;
-
-
-  function toast(
-    message,
-    type = ""
-  ) {
-
-    const box =
-      document.getElementById(
-        "toast"
-      );
+            <div class="trip-type">
+                🚗 HAYDOVCHI
+            </div>
 
 
-    box.textContent =
-      message;
+            <div class="trip-route">
+
+                ${escapeHtml(
+                    ride.from_city
+                )}
+
+                →
+
+                ${escapeHtml(
+                    ride.to_city
+                )}
+
+            </div>
 
 
-    box.className =
-      "";
+            <div class="trip-info">
+
+                📅 ${escapeHtml(
+                    formatDate(
+                        ride.ride_date
+                    )
+                )}
+
+                •
+                🕐 ${escapeHtml(
+                    formatTime(
+                        ride.ride_time
+                    )
+                )}
+
+                <br>
+
+                💺 Bo‘sh joy:
+                ${ride.available_seats}
+
+                /
+                ${ride.seats}
+
+                <br>
+
+                💰 ${escapeHtml(
+                    formatPrice(
+                        ride.price
+                    )
+                )}
+
+                <br>
+
+                🚗 ${escapeHtml(
+                    ride.car_model
+                )}
+
+                ${
+                    ride.car_number
+                        ? `
+                        <br>
+                        🔢 ${escapeHtml(
+                            ride.car_number
+                        )}
+                        `
+                        : ""
+                }
+
+            </div>
 
 
-    box.id =
-      "toast";
+            <div
+                style="
+                    margin-top:12px;
+                "
+            >
 
+                ${
+                    active
+                        ? `
+                        <span class="badge">
+                            ● Faol
+                        </span>
 
-    if (type) {
+                        <button
+                            class="btn btn-danger"
+                            style="margin-top:9px;"
+                            onclick="cancelRide(${ride.id})"
+                        >
+                            ❌ Safarni bekor qilish
+                        </button>
+                        `
+                        :
+                        `
+                        <span class="badge red">
+                            Bekor qilingan
+                        </span>
+                        `
+                }
 
-      box.classList.add(
-        type
-      );
+            </div>
+
+        </div>
+        `;
 
     }
 
 
-    requestAnimationFrame(
-      () => {
+    /* =====================================================
+       PASSENGER TRIP
+    ===================================================== */
 
-        box.classList.add(
-          "show"
-        );
+    function createPassengerTrip(
+        order
+    ) {
 
-      }
-    );
-
-
-    clearTimeout(
-      toastTimer
-    );
+        const active =
+            order.status ===
+            "active";
 
 
-    toastTimer =
-      setTimeout(
+        return `
+        <div class="trip-card">
+
+            <div class="trip-type">
+                👤 YO‘LOVCHI
+            </div>
+
+
+            <div class="trip-route">
+
+                ${escapeHtml(
+                    order.from_city
+                )}
+
+                →
+
+                ${escapeHtml(
+                    order.to_city
+                )}
+
+            </div>
+
+
+            <div class="trip-info">
+
+                📅 ${escapeHtml(
+                    formatDate(
+                        order.ride_date
+                    )
+                )}
+
+                •
+                🕐 ${escapeHtml(
+                    formatTime(
+                        order.ride_time
+                    )
+                )}
+
+                <br>
+
+                💺 Buyurtma:
+                ${order.seats} ta joy
+
+                <br>
+
+                💰 ${escapeHtml(
+                    formatPrice(
+                        order.price
+                    )
+                )}
+
+                <br>
+
+                🚗 ${escapeHtml(
+                    order.car_model ||
+                    "Mashina"
+                )}
+
+                ${
+                    order.driver_name
+                        ? `
+                        <br>
+                        👤 ${escapeHtml(
+                            order.driver_name
+                        )}
+                        `
+                        : ""
+                }
+
+            </div>
+
+
+            ${
+                order.driver_phone
+                    ? `
+                    <a
+                        class="btn btn-green"
+                        style="
+                            margin-top:10px;
+                            text-decoration:none;
+                        "
+                        href="tel:${escapeHtml(
+                            order.driver_phone
+                        )}"
+                    >
+                        📞 Haydovchiga qo‘ng‘iroq
+                    </a>
+                    `
+                    : ""
+            }
+
+
+            ${
+                active
+                    ? `
+                    <button
+                        class="btn btn-danger"
+                        style="margin-top:9px;"
+                        onclick="cancelOrder(${order.order_id})"
+                    >
+                        ❌ Buyurtmani bekor qilish
+                    </button>
+                    `
+                    :
+                    `
+                    <div
+                        style="
+                            margin-top:10px;
+                        "
+                    >
+                        <span class="badge red">
+                            Bekor qilingan
+                        </span>
+                    </div>
+                    `
+            }
+
+        </div>
+        `;
+
+    }
+
+
+    /* =====================================================
+       CANCEL RIDE
+    ===================================================== */
+
+    async function cancelRide(
+        rideId
+    ) {
+
+        const confirmed =
+            window.confirm(
+                "Bu safarni bekor qilmoqchimisiz?"
+            );
+
+
+        if (!confirmed) {
+            return;
+        }
+
+
+        try {
+
+            const result =
+                await api(
+                    "/api/order/cancel",
+                    {
+                        method: "POST",
+
+                        body: JSON.stringify({
+
+                            ride_id:
+                                rideId
+
+                        })
+                    }
+                );
+
+
+            showToast(
+                result.message ||
+                "Safar bekor qilindi.",
+                "success"
+            );
+
+
+            loadTrips();
+
+
+        } catch (error) {
+
+            showToast(
+                error.message,
+                "error"
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       CANCEL ORDER
+    ===================================================== */
+
+    async function cancelOrder(
+        orderId
+    ) {
+
+        const confirmed =
+            window.confirm(
+                "Buyurtmani bekor qilmoqchimisiz?"
+            );
+
+
+        if (!confirmed) {
+            return;
+        }
+
+
+        try {
+
+            const result =
+                await api(
+                    "/api/order/cancel",
+                    {
+                        method: "POST",
+
+                        body: JSON.stringify({
+
+                            order_id:
+                                orderId
+
+                        })
+                    }
+                );
+
+
+            showToast(
+                result.message ||
+                "Buyurtma bekor qilindi.",
+                "success"
+            );
+
+
+            loadTrips();
+
+
+        } catch (error) {
+
+            showToast(
+                error.message,
+                "error"
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       LOAD PROFILE
+    ===================================================== */
+
+    async function loadProfile() {
+
+        if (profileLoaded) {
+            return;
+        }
+
+
+        try {
+
+            const result =
+                await api(
+                    "/api/profile",
+                    {
+                        method: "POST",
+
+                        body: JSON.stringify({})
+                    }
+                );
+
+
+            const user =
+                result.profile ||
+                result.user ||
+                {};
+
+
+            const driver =
+                result.driver;
+
+
+            const nameInput =
+                document.getElementById(
+                    "profile-name"
+                );
+
+
+            const phoneInput =
+                document.getElementById(
+                    "profile-phone"
+                );
+
+
+            if (nameInput) {
+
+                nameInput.value =
+                    user.full_name ||
+                    "";
+
+            }
+
+
+            if (phoneInput) {
+
+                phoneInput.value =
+                    user.phone ||
+                    "";
+
+            }
+
+
+            const title =
+                document.getElementById(
+                    "profile-title"
+                );
+
+
+            const subtitle =
+                document.getElementById(
+                    "profile-subtitle"
+                );
+
+
+            if (
+                user.full_name
+            ) {
+
+                title.textContent =
+                    user.full_name;
+
+            }
+
+
+            if (
+                user.phone
+            ) {
+
+                subtitle.textContent =
+                    user.phone;
+
+            }
+
+
+            if (driver) {
+
+                const card =
+                    document.getElementById(
+                        "driver-profile-card"
+                    );
+
+
+                const info =
+                    document.getElementById(
+                        "driver-profile-info"
+                    );
+
+
+                card.style.display =
+                    "block";
+
+
+                info.innerHTML =
+                    `
+                    <div class="trip-info">
+
+                        👤 ${escapeHtml(
+                            driver.full_name ||
+                            ""
+                        )}
+
+                        <br>
+
+                        📞 ${escapeHtml(
+                            driver.phone ||
+                            ""
+                        )}
+
+                        <br>
+
+                        🚗 ${escapeHtml(
+                            driver.car_model ||
+                            ""
+                        )}
+
+                        <br>
+
+                        🔢 ${escapeHtml(
+                            driver.car_number ||
+                            ""
+                        )}
+
+                        <br>
+
+                        💺 ${escapeHtml(
+                            String(
+                                driver.seats ||
+                                ""
+                            )
+                        )} ta joy
+
+                    </div>
+                    `;
+
+
+                // Driver formalarini ham to‘ldiramiz
+
+                const driverName =
+                    document.getElementById(
+                        "driver-name"
+                    );
+
+
+                const driverPhone =
+                    document.getElementById(
+                        "driver-phone"
+                    );
+
+
+                const driverCar =
+                    document.getElementById(
+                        "driver-car"
+                    );
+
+
+                const driverNumber =
+                    document.getElementById(
+                        "driver-number"
+                    );
+
+
+                const driverSeats =
+                    document.getElementById(
+                        "driver-seats"
+                    );
+
+
+                if (driverName) {
+
+                    driverName.value =
+                        driver.full_name ||
+                        "";
+
+                }
+
+
+                if (driverPhone) {
+
+                    driverPhone.value =
+                        driver.phone ||
+                        "";
+
+                }
+
+
+                if (driverCar) {
+
+                    driverCar.value =
+                        driver.car_model ||
+                        "";
+
+                }
+
+
+                if (driverNumber) {
+
+                    driverNumber.value =
+                        driver.car_number ||
+                        "";
+
+                }
+
+
+                if (driverSeats) {
+
+                    driverSeats.value =
+                        driver.seats ||
+                        3;
+
+                }
+
+            }
+
+
+            profileLoaded =
+                true;
+
+
+        } catch (error) {
+
+            console.log(
+                "Profile:",
+                error.message
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       UPDATE PROFILE
+    ===================================================== */
+
+    async function updateProfile() {
+
+        const fullName =
+            document
+                .getElementById(
+                    "profile-name"
+                )
+                .value
+                .trim();
+
+
+        const phone =
+            document
+                .getElementById(
+                    "profile-phone"
+                )
+                .value
+                .trim();
+
+
+        if (!fullName) {
+
+            showToast(
+                "F.I.Sh. kiriting.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        if (!phone) {
+
+            showToast(
+                "Telefon raqamini kiriting.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        try {
+
+            const result =
+                await api(
+                    "/api/profile/update",
+                    {
+                        method: "POST",
+
+                        body: JSON.stringify({
+
+                            full_name:
+                                fullName,
+
+                            phone:
+                                phone
+
+                        })
+                    }
+                );
+
+
+            showToast(
+                result.message ||
+                "Profil saqlandi.",
+                "success"
+            );
+
+
+            profileLoaded =
+                false;
+
+
+            loadProfile();
+
+
+        } catch (error) {
+
+            showToast(
+                error.message,
+                "error"
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       MODAL
+    ===================================================== */
+
+    function closeModal(
+        event
+    ) {
+
+        if (
+            event &&
+            event.target !==
+            document.getElementById(
+                "modal"
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        document
+            .getElementById(
+                "modal"
+            )
+            .classList.remove(
+                "show"
+            );
+
+    }
+
+
+    /* =====================================================
+       STARTUP
+    ===================================================== */
+
+    document.addEventListener(
+        "DOMContentLoaded",
         () => {
 
-          box.classList.remove(
-            "show"
-          );
+            fillCities();
 
-        },
-        3200
-      );
+            setMinDates();
 
-  }
+            // Profilni oldindan yuklamaymiz.
+            // Kerak bo‘lganda yuklanadi.
+
+        }
+    );
 
 
-  /* =====================================================
-     ESCAPE
-  ===================================================== */
+    /* =====================================================
+       BACK BUTTON TELEGRAM
+    ===================================================== */
 
-  function escapeHtml(
-    value
-  ) {
+    if (tg) {
 
-    return String(
-      value ?? ""
-    )
+        try {
 
-      .replaceAll(
-        "&",
-        "&amp;"
-      )
+            tg.BackButton.onClick(
+                () => {
 
-      .replaceAll(
-        "<",
-        "&lt;"
-      )
+                    if (
+                        currentScreen !==
+                        "home"
+                    ) {
 
-      .replaceAll(
-        ">",
-        "&gt;"
-      )
+                        showScreen(
+                            "home"
+                        );
 
-      .replaceAll(
-        '"',
-        "&quot;"
-      )
+                        tg.BackButton.hide();
 
-      .replaceAll(
-        "'",
-        "&#039;"
-      );
+                    } else {
 
-  }
+                        tg.close();
+
+                    }
+
+                }
+            );
+
+        } catch (e) {}
+
+    }
+
+
+    /* =====================================================
+       SCREEN CHANGE + TELEGRAM BACK BUTTON
+    ===================================================== */
+
+    const originalShowScreen =
+        showScreen;
+
+
+    showScreen =
+        function(screen) {
+
+            originalShowScreen(
+                screen
+            );
+
+
+            if (tg) {
+
+                try {
+
+                    if (
+                        screen ===
+                        "home"
+                    ) {
+
+                        tg.BackButton.hide();
+
+                    } else {
+
+                        tg.BackButton.show();
+
+                    }
+
+                } catch (e) {}
+
+            }
+
+        };
 
 
 </script>
