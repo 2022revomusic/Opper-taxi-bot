@@ -2,13 +2,16 @@
 <html lang="uz">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
   <title>OPPER TAXI</title>
-
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
+  <!-- Leaflet xarita -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+  </script>
   <style>
     * {
       box-sizing: border-box;
@@ -18,15 +21,25 @@
     body {
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Arial,
+        sans-serif;
       background: #f5f5f5;
       color: #171717;
     }
 
     button,
     input,
-    select {
+    select,
+    textarea {
       font-family: inherit;
+    }
+
+    button {
+      cursor: pointer;
     }
 
     .app {
@@ -34,7 +47,9 @@
       padding-bottom: 85px;
     }
 
-    /* HEADER */
+    /* =========================
+       HEADER
+    ========================= */
 
     .header {
       background: #ffd400;
@@ -73,7 +88,9 @@
       opacity: .7;
     }
 
-    /* CONTENT */
+    /* =========================
+       CONTENT
+    ========================= */
 
     .content {
       padding: 16px;
@@ -94,7 +111,9 @@
       font-size: 14px;
     }
 
-    /* CARDS */
+    /* =========================
+       GRID
+    ========================= */
 
     .grid {
       display: grid;
@@ -109,7 +128,6 @@
       padding: 20px 15px;
       text-align: left;
       box-shadow: 0 3px 15px rgba(0,0,0,.06);
-      cursor: pointer;
       min-height: 135px;
     }
 
@@ -140,7 +158,9 @@
       font-size: 12px;
     }
 
-    /* SECTION */
+    /* =========================
+       SECTION
+    ========================= */
 
     .section-title {
       display: flex;
@@ -154,13 +174,16 @@
       font-size: 18px;
     }
 
-    /* FORM */
+    /* =========================
+       FORM
+    ========================= */
 
     .form-card {
       background: white;
       border-radius: 20px;
       padding: 18px;
       box-shadow: 0 3px 15px rgba(0,0,0,.05);
+      margin-bottom: 14px;
     }
 
     .field {
@@ -175,7 +198,8 @@
     }
 
     .field input,
-    .field select {
+    .field select,
+    .field textarea {
       width: 100%;
       border: 1px solid #e1e1e1;
       border-radius: 13px;
@@ -185,8 +209,14 @@
       background: #fafafa;
     }
 
+    .field textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
     .field input:focus,
-    .field select:focus {
+    .field select:focus,
+    .field textarea:focus {
       border-color: #ffd400;
       background: white;
     }
@@ -200,12 +230,7 @@
       color: #111;
       font-size: 16px;
       font-weight: 800;
-      cursor: pointer;
       margin-top: 5px;
-    }
-
-    .primary-btn:active {
-      transform: scale(.98);
     }
 
     .black-btn {
@@ -217,11 +242,87 @@
       color: white;
       font-size: 16px;
       font-weight: 800;
-      cursor: pointer;
       margin-top: 8px;
     }
 
-    /* LOCATION */
+    .secondary-btn {
+      width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 14px;
+      padding: 13px;
+      background: white;
+      color: #111;
+      font-size: 14px;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+
+    /* =========================
+       DOCUMENT UPLOAD
+    ========================= */
+
+    .upload-box {
+      border: 2px dashed #ddd;
+      border-radius: 16px;
+      padding: 18px;
+      text-align: center;
+      background: #fafafa;
+      margin-bottom: 14px;
+    }
+
+    .upload-box.has-file {
+      border-color: #ffd400;
+      background: #fffbea;
+    }
+
+    .upload-icon {
+      font-size: 34px;
+      margin-bottom: 8px;
+    }
+
+    .upload-title {
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .upload-text {
+      font-size: 11px;
+      color: #888;
+      margin-top: 4px;
+    }
+
+    .upload-box input {
+      margin-top: 12px;
+      width: 100%;
+      font-size: 12px;
+    }
+
+    .preview {
+      width: 100%;
+      max-height: 180px;
+      object-fit: contain;
+      border-radius: 12px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .verify-box {
+      background: #fff7c7;
+      border-radius: 15px;
+      padding: 14px;
+      font-size: 12px;
+      line-height: 1.5;
+      margin-top: 12px;
+    }
+
+    .verify-box strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    /* =========================
+       LOCATION
+    ========================= */
 
     .location-box {
       background: #fff;
@@ -259,7 +360,118 @@
       font-size: 12px;
     }
 
-    /* LIST */
+    /* =========================
+       MAP
+    ========================= */
+
+    .map-card {
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 3px 15px rgba(0,0,0,.05);
+      margin-bottom: 14px;
+    }
+
+    #map {
+      width: 100%;
+      height: 320px;
+    }
+
+    .map-info {
+      padding: 14px;
+    }
+
+    .distance-box {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .distance-item {
+      flex: 1;
+      background: #f5f5f5;
+      border-radius: 13px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .distance-item strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .distance-item span {
+      font-size: 10px;
+      color: #888;
+    }
+
+    /* =========================
+       DRIVER CARD
+    ========================= */
+
+    .driver-card {
+      background: white;
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 3px 14px rgba(0,0,0,.05);
+    }
+
+    .driver-top {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .driver-avatar {
+      width: 55px;
+      height: 55px;
+      border-radius: 16px;
+      background: #ffd400;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 25px;
+    }
+
+    .driver-main {
+      flex: 1;
+    }
+
+    .driver-main strong {
+      display: block;
+      font-size: 16px;
+    }
+
+    .driver-main span {
+      display: block;
+      color: #777;
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    .driver-photo {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 14px;
+      margin-top: 12px;
+      display: none;
+    }
+
+    .choose-driver {
+      width: 100%;
+      border: 0;
+      border-radius: 13px;
+      padding: 13px;
+      background: #ffd400;
+      font-weight: 800;
+      margin-top: 12px;
+    }
+
+    /* =========================
+       LIST
+    ========================= */
 
     .ride-card,
     .order-card {
@@ -297,7 +509,32 @@
       color: #666;
     }
 
-    /* PROFILE */
+    /* =========================
+       STATUS
+    ========================= */
+
+    .status-box {
+      background: #111;
+      color: white;
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .status-box .status-title {
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .status-box .status-text {
+      color: #ccc;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+
+    /* =========================
+       PROFILE
+    ========================= */
 
     .profile-card {
       background: white;
@@ -329,7 +566,9 @@
       color: #888;
     }
 
-    /* NAV */
+    /* =========================
+       NAV
+    ========================= */
 
     .bottom-nav {
       position: fixed;
@@ -350,7 +589,6 @@
       background: transparent;
       color: #888;
       font-size: 11px;
-      cursor: pointer;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -373,7 +611,9 @@
       padding: 3px 10px;
     }
 
-    /* PAGE */
+    /* =========================
+       PAGE
+    ========================= */
 
     .page {
       display: none;
@@ -389,10 +629,11 @@
       font-size: 15px;
       font-weight: 700;
       padding: 0 0 15px;
-      cursor: pointer;
     }
 
-    /* EMPTY */
+    /* =========================
+       EMPTY
+    ========================= */
 
     .empty {
       background: white;
@@ -407,7 +648,9 @@
       margin-bottom: 10px;
     }
 
-    /* TOAST */
+    /* =========================
+       TOAST
+    ========================= */
 
     .toast {
       position: fixed;
@@ -428,7 +671,9 @@
       display: block;
     }
 
-    /* LOADING */
+    /* =========================
+       LOADING
+    ========================= */
 
     .loading {
       text-align: center;
@@ -436,9 +681,12 @@
       color: #777;
     }
 
-    /* DESKTOP */
+    /* =========================
+       DESKTOP
+    ========================= */
 
     @media (min-width: 700px) {
+
       body {
         background: #e9e9e9;
       }
@@ -455,449 +703,1230 @@
         left: 50%;
         transform: translateX(-50%);
       }
+
     }
   </style>
-</head>
-
-<body>
-
-<div class="app">
-
-  <!-- HEADER -->
-
-  <header class="header">
-    <div class="brand">
-      <div class="logo">🚕</div>
-
-      <div class="brand-text">
-        <h1>OPPER TAXI</h1>
-        <p>Tezkor va qulay safarlar</p>
-      </div>
-    </div>
   </header>
-
-
   <main class="content">
+<!-- =========================
+     HOME
+========================= -->
 
-    <!-- HOME -->
+<section id="homePage" class="page active">
 
-    <section id="homePage" class="page active">
+  <div class="welcome">
 
-      <div class="welcome">
-        <h2 id="welcomeName">Assalomu alaykum 👋</h2>
-        <p>Qayerga boramiz?</p>
+    <h2 id="welcomeName">
+      Assalomu alaykum 👋
+    </h2>
+
+    <p>
+      Qayerga boramiz?
+    </p>
+
+  </div>
+
+
+  <div class="grid">
+
+    <button
+      class="action-card"
+      onclick="openPage('passengerPage')"
+    >
+
+      <div class="action-icon">
+        🚕
       </div>
 
-      <div class="grid">
+      <h3>
+        Taksi chaqirish
+      </h3>
 
-        <button class="action-card" onclick="openPage('passengerPage')">
-          <div class="action-icon">🚕</div>
-          <h3>Taksi chaqirish</h3>
-          <p>Yo‘lovchi sifatida</p>
-        </button>
+      <p>
+        Haydovchini o‘zingiz tanlang
+      </p>
 
-        <button class="action-card" onclick="openPage('driverPage')">
-          <div class="action-icon">🚗</div>
-          <h3>Haydovchi</h3>
-          <p>Haydovchi bo‘lish</p>
-        </button>
+    </button>
 
-        <button class="action-card" onclick="openPage('ridesPage')">
-          <div class="action-icon">🛣</div>
-          <h3>Safarlar</h3>
-          <p>Mavjud safarlarni ko‘rish</p>
-        </button>
 
-        <button class="action-card" onclick="openPage('ordersPage')">
-          <div class="action-icon">📋</div>
-          <h3>Buyurtmalarim</h3>
-          <p>Buyurtmalar holati</p>
-        </button>
+    <button
+      class="action-card"
+      onclick="openPage('driverPage')"
+    >
 
+      <div class="action-icon">
+        🚗
       </div>
 
-      <div class="section-title">
-        <h3>📍 Lokatsiya</h3>
+      <h3>
+        Haydovchi
+      </h3>
+
+      <p>
+        Haydovchi bo‘lish
+      </p>
+
+    </button>
+
+
+    <button
+      class="action-card"
+      onclick="openPage('ridesPage')"
+    >
+
+      <div class="action-icon">
+        🛣
       </div>
 
-      <div class="location-box" onclick="getLocation()">
+      <h3>
+        Safarlar
+      </h3>
 
-        <div class="location-icon">📍</div>
+      <p>
+        Mavjud safarlar
+      </p>
 
-        <div class="location-text">
-          <strong id="locationStatus">Lokatsiyani aniqlash</strong>
-          <span id="locationCoords">Bosish orqali aniqlanadi</span>
-        </div>
+    </button>
 
-        <div>›</div>
 
+    <button
+      class="action-card"
+      onclick="openPage('ordersPage')"
+    >
+
+      <div class="action-icon">
+        📋
       </div>
 
-    </section>
+      <h3>
+        Buyurtmalarim
+      </h3>
+
+      <p>
+        Buyurtmalar holati
+      </p>
+
+    </button>
+
+  </div>
 
 
-    <!-- PASSENGER -->
+  <div class="section-title">
 
-    <section id="passengerPage" class="page">
+    <h3>
+      📍 Lokatsiya
+    </h3>
 
-      <button class="back" onclick="goHome()">‹ Orqaga</button>
+  </div>
 
-      <div class="section-title">
-        <h3>🚕 Taksi chaqirish</h3>
-      </div>
 
-      <div class="form-card">
+  <div
+    class="location-box"
+    onclick="getLocation()"
+  >
 
-        <div class="field">
-          <label>Qayerdan?</label>
-          <input
-            id="fromCity"
-            type="text"
-            placeholder="Masalan: Toshkent"
-          >
+    <div class="location-icon">
+      📍
+    </div>
+
+    <div class="location-text">
+
+      <strong id="locationStatus">
+        Lokatsiyani aniqlash
+      </strong>
+
+      <span id="locationCoords">
+        Bosish orqali aniqlanadi
+      </span>
+
+    </div>
+
+    <div>
+      ›
+    </div>
+
+  </div>
+
+
+  <div class="section-title">
+
+    <h3>
+      🗺 Xarita
+    </h3>
+
+  </div>
+
+
+  <div class="map-card">
+
+    <div id="map"></div>
+
+    <div class="map-info">
+
+      <div class="distance-box">
+
+        <div class="distance-item">
+
+          <strong id="homeDistance">
+            —
+          </strong>
+
+          <span>
+            Masofa
+          </span>
+
         </div>
 
-        <div class="field">
-          <label>Qayerga?</label>
-          <input
-            id="toCity"
-            type="text"
-            placeholder="Masalan: Samarqand"
-          >
+        <div class="distance-item">
+
+          <strong id="homeEta">
+            —
+          </strong>
+
+          <span>
+            Taxminiy vaqt
+          </span>
+
         </div>
-
-        <div class="field">
-          <label>Vaqt</label>
-          <input
-            id="rideTime"
-            type="datetime-local"
-          >
-        </div>
-
-        <div class="field">
-          <label>Yo‘lovchilar soni</label>
-
-          <select id="passengerSeats">
-            <option value="1">1 kishi</option>
-            <option value="2">2 kishi</option>
-            <option value="3">3 kishi</option>
-            <option value="4">4 kishi</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label>Telefon raqam</label>
-
-          <input
-            id="passengerPhone"
-            type="tel"
-            placeholder="+998 90 123 45 67"
-          >
-        </div>
-
-        <button class="primary-btn" onclick="createPassengerOrder()">
-          🚕 Taksi qidirish
-        </button>
-
-      </div>
-
-    </section>
-
-
-    <!-- DRIVER -->
-
-    <section id="driverPage" class="page">
-
-      <button class="back" onclick="goHome()">‹ Orqaga</button>
-
-      <div class="section-title">
-        <h3>🚗 Haydovchi bo‘limi</h3>
-      </div>
-
-      <div class="form-card">
-
-        <div class="field">
-          <label>Ism familiya</label>
-          <input
-            id="driverName"
-            type="text"
-            placeholder="Ism Familiya"
-          >
-        </div>
-
-        <div class="field">
-          <label>Telefon</label>
-          <input
-            id="driverPhone"
-            type="tel"
-            placeholder="+998..."
-          >
-        </div>
-
-        <div class="field">
-          <label>Avtomobil</label>
-          <input
-            id="carModel"
-            type="text"
-            placeholder="Chevrolet Cobalt"
-          >
-        </div>
-
-        <div class="field">
-          <label>Davlat raqami</label>
-          <input
-            id="carNumber"
-            type="text"
-            placeholder="01 A 123 BC"
-          >
-        </div>
-
-        <div class="field">
-          <label>O‘rindiqlar soni</label>
-
-          <select id="driverSeats">
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4" selected>4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-            <option value="7">7</option>
-          </select>
-        </div>
-
-        <button class="primary-btn" onclick="registerDriver()">
-          🚗 Haydovchi sifatida ro‘yxatdan o‘tish
-        </button>
 
       </div>
 
+    </div>
 
-      <div class="section-title">
-        <h3>🛣 Safar joylash</h3>
+  </div>
+
+</section>
+
+
+<!-- =========================
+     PASSENGER
+========================= -->
+
+<section
+  id="passengerPage"
+  class="page"
+>
+
+  <button
+    class="back"
+    onclick="goHome()"
+  >
+    ‹ Orqaga
+  </button>
+
+
+  <div class="section-title">
+
+    <h3>
+      🚕 Taksi chaqirish
+    </h3>
+
+  </div>
+
+
+  <div class="form-card">
+
+    <div class="field">
+
+      <label>
+        Qayerdan?
+      </label>
+
+      <input
+        id="fromCity"
+        type="text"
+        placeholder="Masalan: Toshkent"
+        oninput="saveDraftDebounced()"
+      >
+
+    </div>
+
+
+    <div class="field">
+
+      <label>
+        Qayerga?
+      </label>
+
+      <input
+        id="toCity"
+        type="text"
+        placeholder="Masalan: Samarqand"
+        oninput="saveDraftDebounced()"
+      >
+
+    </div>
+
+
+    <div class="field">
+
+      <label>
+        Vaqt
+      </label>
+
+      <input
+        id="rideTime"
+        type="datetime-local"
+        onchange="saveDraft()"
+      >
+
+    </div>
+
+
+    <div class="field">
+
+      <label>
+        Yo‘lovchilar soni
+      </label>
+
+      <select
+        id="passengerSeats"
+        onchange="saveDraft()"
+      >
+
+        <option value="1">
+          1 kishi
+        </option>
+
+        <option value="2">
+          2 kishi
+        </option>
+
+        <option value="3">
+          3 kishi
+        </option>
+
+        <option value="4">
+          4 kishi
+        </option>
+
+      </select>
+
+    </div>
+
+
+    <div class="field">
+
+      <label>
+        Telefon raqam
+      </label>
+
+      <input
+        id="passengerPhone"
+        type="tel"
+        placeholder="+998 90 123 45 67"
+        oninput="saveDraftDebounced()"
+      >
+
+    </div>
+
+
+    <button
+      class="primary-btn"
+      onclick="createPassengerOrder()"
+    >
+      🚕 Haydovchilarni qidirish
+    </button>
+
+  </div>
+
+
+  <!-- HAYDOVCHILAR -->
+
+  <div class="section-title">
+
+    <h3>
+      🚗 Haydovchini tanlang
+    </h3>
+
+  </div>
+
+
+  <div id="driversList">
+
+    <div class="empty">
+
+      <div class="empty-icon">
+        🚕
       </div>
 
-      <div class="form-card">
+      <strong>
+        Avval yo‘nalishni kiriting
+      </strong>
 
-        <div class="field">
-          <label>Qayerdan?</label>
-          <input
-            id="driverFrom"
-            type="text"
-            placeholder="Toshkent"
-          >
-        </div>
+      <p>
+        Keyin mavjud haydovchilar shu yerda chiqadi.
+      </p>
 
-        <div class="field">
-          <label>Qayerga?</label>
-          <input
-            id="driverTo"
-            type="text"
-            placeholder="Samarqand"
-          >
-        </div>
+    </div>
 
-        <div class="field">
-          <label>Safar vaqti</label>
-          <input
-            id="driverTime"
-            type="datetime-local"
-          >
-        </div>
-
-        <div class="field">
-          <label>Bo‘sh joylar</label>
-          <select id="driverAvailableSeats">
-            <option value="1">1 ta</option>
-            <option value="2">2 ta</option>
-            <option value="3">3 ta</option>
-            <option value="4" selected>4 ta</option>
-            <option value="5">5 ta</option>
-            <option value="6">6 ta</option>
-            <option value="7">7 ta</option>
-          </select>
-        </div>
-
-        <button class="primary-btn" onclick="createRide()">
-          🛣 Safarni joylash
-        </button>
-
-      </div>
-
-    </section>
+  </div>
 
 
-    <!-- RIDES -->
+  <!-- SELECTED DRIVER -->
 
-    <section id="ridesPage" class="page">
+  <div
+    id="selectedDriverBox"
+    style="display:none;"
+  >
 
-      <button class="back" onclick="goHome()">‹ Orqaga</button>
+    <div class="section-title">
 
-      <div class="section-title">
-        <h3>🛣 Mavjud safarlar</h3>
+      <h3>
+        ✅ Tanlangan haydovchi
+      </h3>
 
-        <button
-          onclick="loadRides()"
-          style="border:0;background:none;font-size:20px;"
+    </div>
+
+
+    <div class="driver-card">
+
+      <div class="driver-top">
+
+        <div
+          class="driver-avatar"
+          id="selectedDriverAvatar"
         >
-          🔄
-        </button>
+          🚗
+        </div>
+
+        <div class="driver-main">
+
+          <strong id="selectedDriverName">
+            —
+          </strong>
+
+          <span id="selectedDriverCar">
+            —
+          </span>
+
+          <span id="selectedDriverNumber">
+            —
+          </span>
+
+        </div>
+
       </div>
 
-      <div id="ridesList">
-        <div class="loading">Safarlar yuklanmoqda...</div>
+
+      <div class="verify-box">
+
+        <strong>
+          🚕 Sizni shu haydovchi olib ketadi
+        </strong>
+
+        Buyurtmani tasdiqlaganingizdan keyin
+        haydovchining lokatsiyasi xaritada ko‘rsatiladi.
+
       </div>
 
-    </section>
+
+      <button
+        class="primary-btn"
+        onclick="confirmSelectedDriver()"
+      >
+        ✅ Haydovchini tanlash
+      </button>
+
+    </div>
+
+  </div>
+
+</section>
 
 
-    <!-- ORDERS -->
+<!-- =========================
+     DRIVER
+========================= -->
 
-    <section id="ordersPage" class="page">
+<section
+  id="driverPage"
+  class="page"
+>
 
-      <button class="back" onclick="goHome()">‹ Orqaga</button>
+  <button
+    class="back"
+    onclick="goHome()"
+  >
+    ‹ Orqaga
+  </button>
 
-      <div class="section-title">
-        <h3>📋 Buyurtmalarim</h3>
 
-        <button
-          onclick="loadOrders()"
-          style="border:0;background:none;font-size:20px;"
+  <div class="section-title">
+
+    <h3>
+      🚗 Haydovchi bo‘lish
+    </h3>
+
+  </div>
+
+
+  <div class="form-card">
+
+    <div class="verify-box">
+
+      <strong>
+        🔐 Haydovchini tasdiqlash
+      </strong>
+
+      Haydovchi bo‘lish uchun ma'lumotlaringiz
+      hujjatlardagi ma'lumotlarga mos bo‘lishi kerak.
+
+    </div>
+
+
+    <div class="field">
+
+      <label>
+        F.I.Sh.
+      </label>
+
+      <input
+        id="driverName"
+        type="text"
+        placeholder="Ism Familiya Otasining ismi"
+        oninput="saveDraftDebounced()"
+      >
+
+    </div>
+
+
+    <div class="field">
+
+      <label>
+        Telefon
+      </label>
+
+      <input
+        id="driverPhone"
+        type="tel"
+        placeholder="+998..."
+        oninput="saveDraftDebounced()"
+      >
+
+    </div>
+
+
+    <div class="field">
+
+      <label>
+        Avtomobil markasi / modeli
+      </label>
+
+      <input
+        id="carModel"
+        type="text"
+        placeholder="Chevrolet Cobalt"
+        oninput="saveDraftDebounced()"
+      >
+
+    </div>
+
+
+    <div class="field">
+
+      <label>
+        Avtomobil davlat raqami
+      </label>
+
+      <input
+        id="carNumber"
+        type="text"
+        placeholder="01 A 123 BC"
+        oninput="saveDraftDebounced()"
+      >
+
+    </div>
+
+
+    <div class="field">
+
+      <label>
+        O‘rindiqlar soni
+      </label>
+
+      <select
+        id="driverSeats"
+        onchange="saveDraft()"
+      >
+
+        <option value="2">
+          2
+        </option>
+
+        <option value="3">
+          3
+        </option>
+
+        <option
+          value="4"
+          selected
         >
-          🔄
-        </button>
+          4
+        </option>
+
+        <option value="5">
+          5
+        </option>
+
+        <option value="6">
+          6
+        </option>
+
+        <option value="7">
+          7
+        </option>
+
+      </select>
+
+    </div>
+
+
+    <!-- TEX PASPORT -->
+
+    <div class="upload-box" id="techUploadBox">
+
+      <div class="upload-icon">
+        📄
       </div>
 
-      <div id="ordersList">
-        <div class="loading">Buyurtmalar yuklanmoqda...</div>
+      <div class="upload-title">
+        Avtomobil texpasporti
       </div>
 
-    </section>
-
-
-    <!-- PROFILE -->
-
-    <section id="profilePage" class="page">
-
-      <button class="back" onclick="goHome()">‹ Orqaga</button>
-
-      <div class="profile-card">
-
-        <div class="avatar" id="avatar">
-          👤
-        </div>
-
-        <h2 id="profileName">
-          Foydalanuvchi
-        </h2>
-
-        <p id="profileUsername">
-          Telegram foydalanuvchisi
-        </p>
-
+      <div class="upload-text">
+        Texpasportning aniq va to‘liq rasmini yuklang
       </div>
 
+      <input
+        id="techPassport"
+        type="file"
+        accept="image/*"
+        onchange="previewDocument(
+          'techPassport',
+          'techPreview',
+          'techUploadBox'
+        )"
+      >
 
-      <div class="section-title">
-        <h3>👤 Profil ma’lumotlari</h3>
+      <img
+        id="techPreview"
+        class="preview"
+        alt="Texpasport"
+      >
+
+    </div>
+
+
+    <!-- PRAVA -->
+
+    <div class="upload-box" id="licenseUploadBox">
+
+      <div class="upload-icon">
+        🪪
       </div>
 
-      <div class="form-card">
+      <div class="upload-title">
+        Haydovchilik guvohnomasi
+      </div>
 
-        <div class="field">
-          <label>Ism</label>
+      <div class="upload-text">
+        Guvohnomaning old tomonini aniq yuklang
+      </div>
 
-          <input
-            id="profileFullName"
-            type="text"
-          >
-        </div>
+      <input
+        id="driverLicense"
+        type="file"
+        accept="image/*"
+        onchange="previewDocument(
+          'driverLicense',
+          'licensePreview',
+          'licenseUploadBox'
+        )"
+      >
 
-        <div class="field">
-          <label>Telefon</label>
+      <img
+        id="licensePreview"
+        class="preview"
+        alt="Haydovchilik guvohnomasi"
+      >
 
-          <input
-            id="profilePhone"
-            type="tel"
-            placeholder="+998..."
-          >
-        </div>
+    </div>
 
-        <button
-          class="primary-btn"
-          onclick="saveProfile()"
+
+    <!-- AVTO RASMI -->
+
+    <div class="upload-box" id="carUploadBox">
+
+      <div class="upload-icon">
+        🚗
+      </div>
+
+      <div class="upload-title">
+        Avtomobil rasmi
+      </div>
+
+      <div class="upload-text">
+        O‘zingizga tegishli avtomobilni tashqaridan
+        aniq ko‘rinadigan qilib suratga oling
+      </div>
+
+      <input
+        id="carPhoto"
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onchange="previewDocument(
+          'carPhoto',
+          'carPreview',
+          'carUploadBox'
+        )"
+      >
+
+      <img
+        id="carPreview"
+        class="preview"
+        alt="Avtomobil rasmi"
+      >
+
+    </div>
+
+
+    <div class="verify-box">
+
+      <strong>
+        🔎 Avtomatik tekshiruv
+      </strong>
+
+      Tizim texpasportdagi avtomobil raqami
+      va F.I.Sh. ma'lumotlarini siz kiritgan
+      ma'lumotlar bilan solishtiradi.
+
+      <br><br>
+
+      ⚠️ Hujjatlar boshqa odamga tegishli bo‘lsa,
+      ariza tasdiqlanmaydi.
+
+    </div>
+
+
+    <button
+      class="primary-btn"
+      onclick="registerDriver()"
+    >
+      🚗 Haydovchi sifatida ro‘yxatdan o‘tish
+    </button>
+
+  </div>
+
+
+  <!-- SAFAR JOYLASH -->
+
+  <div class="section-title">
+
+    <h3>
+      🛣 Safar joylash
+    </h3>
+
+  </div>
+
+
+  <div class="form-card">
+
+    <div class="field">
+
+      <label>
+        Qayerdan?
+      </label>
+
+      <input
+        id="driverFrom"
+        type="text"
+        placeholder="Toshkent"
+        oninput="saveDraftDebounced()"
+      >
+
+    </div>
+
+
+    <div class="field">
+
+      <label>
+        Qayerga?
+      </label>
+
+      <input
+        id="driverTo"
+        type="text"
+        placeholder="Samarqand"
+        oninput="saveDraftDebounced()"
+      >
+
+    </div>
+
+
+    <div class="field">
+
+      <label>
+        Safar vaqti
+      </label>
+
+      <input
+        id="driverTime"
+        type="datetime-local"
+        onchange="saveDraft()"
+      >
+
+    </div>
+
+
+    <div class="field">
+
+      <label>
+        Bo‘sh joylar
+      </label>
+
+      <select
+        id="driverAvailableSeats"
+        onchange="saveDraft()"
+      >
+
+        <option value="1">
+          1 ta
+        </option>
+
+        <option value="2">
+          2 ta
+        </option>
+
+        <option value="3">
+          3 ta
+        </option>
+
+        <option
+          value="4"
+          selected
         >
-          💾 Saqlash
-        </button>
+          4 ta
+        </option>
+
+        <option value="5">
+          5 ta
+        </option>
+
+        <option value="6">
+          6 ta
+        </option>
+
+        <option value="7">
+          7 ta
+        </option>
+
+      </select>
+
+    </div>
+
+
+    <button
+      class="primary-btn"
+      onclick="createRide()"
+    >
+      🛣 Safarni joylash
+    </button>
+
+  </div>
+
+</section>
+
+
+<!-- =========================
+     ACTIVE TRIP
+========================= -->
+
+<section
+  id="activeTripPage"
+  class="page"
+>
+
+  <button
+    class="back"
+    onclick="goHome()"
+  >
+    ‹ Orqaga
+  </button>
+
+
+  <div class="status-box">
+
+    <div
+      class="status-title"
+      id="tripStatusTitle"
+    >
+      🚕 Safar
+    </div>
+
+    <div
+      class="status-text"
+      id="tripStatusText"
+    >
+      Ma'lumotlar yuklanmoqda...
+    </div>
+
+  </div>
+
+
+  <div class="map-card">
+
+    <div id="tripMap"></div>
+
+    <div class="map-info">
+
+      <div class="distance-box">
+
+        <div class="distance-item">
+
+          <strong id="tripDistance">
+            —
+          </strong>
+
+          <span>
+            Masofa
+          </span>
+
+        </div>
+
+        <div class="distance-item">
+
+          <strong id="tripEta">
+            —
+          </strong>
+
+          <span>
+            Taxminiy vaqt
+          </span>
+
+        </div>
 
       </div>
 
-    </section>
+    </div>
 
+  </div>
+
+
+  <div
+    id="tripDriverBox"
+    class="driver-card"
+  >
+
+    <div class="driver-top">
+
+      <div
+        class="driver-avatar"
+      >
+        🚗
+      </div>
+
+      <div class="driver-main">
+
+        <strong id="tripDriverName">
+          Haydovchi
+        </strong>
+
+        <span id="tripDriverCar">
+          —
+        </span>
+
+        <span id="tripDriverNumber">
+          —
+        </span>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================
+     RIDES
+========================= -->
+
+<section
+  id="ridesPage"
+  class="page"
+>
+
+  <button
+    class="back"
+    onclick="goHome()"
+  >
+    ‹ Orqaga
+  </button>
+
+
+  <div class="section-title">
+
+    <h3>
+      🛣 Mavjud safarlar
+    </h3>
+
+    <button
+      onclick="loadRides()"
+      style="
+        border:0;
+        background:none;
+        font-size:20px;
+      "
+    >
+      🔄
+    </button>
+
+  </div>
+
+
+  <div id="ridesList">
+
+    <div class="loading">
+      Safarlar yuklanmoqda...
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================
+     ORDERS
+========================= -->
+
+<section
+  id="ordersPage"
+  class="page"
+>
+
+  <button
+    class="back"
+    onclick="goHome()"
+  >
+    ‹ Orqaga
+  </button>
+
+
+  <div class="section-title">
+
+    <h3>
+      📋 Buyurtmalarim
+    </h3>
+
+    <button
+      onclick="loadOrders()"
+      style="
+        border:0;
+        background:none;
+        font-size:20px;
+      "
+    >
+      🔄
+    </button>
+
+  </div>
+
+
+  <div id="ordersList">
+
+    <div class="loading">
+      Buyurtmalar yuklanmoqda...
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================
+     PROFILE
+========================= -->
+
+<section
+  id="profilePage"
+  class="page"
+>
+
+  <button
+    class="back"
+    onclick="goHome()"
+  >
+    ‹ Orqaga
+  </button>
+
+
+  <div class="profile-card">
+
+    <div
+      class="avatar"
+      id="avatar"
+    >
+      👤
+    </div>
+
+    <h2 id="profileName">
+      Foydalanuvchi
+    </h2>
+
+    <p id="profileUsername">
+      Telegram foydalanuvchisi
+    </p>
+
+  </div>
+
+
+  <div class="section-title">
+
+    <h3>
+      👤 Profil ma'lumotlari
+    </h3>
+
+  </div>
+
+
+  <div class="form-card">
+
+    <div class="field">
+
+      <label>
+        Ism
+      </label>
+
+      <input
+        id="profileFullName"
+        type="text"
+        oninput="saveDraftDebounced()"
+      >
+
+    </div>
+
+
+    <div class="field">
+
+      <label>
+        Telefon
+      </label>
+
+      <input
+        id="profilePhone"
+        type="tel"
+        placeholder="+998..."
+        oninput="saveDraftDebounced()"
+      >
+
+    </div>
+
+
+    <button
+      class="primary-btn"
+      onclick="saveProfile()"
+    >
+      💾 Saqlash
+    </button>
+
+  </div>
+
+</section>
   </main>
-
-
-  <!-- BOTTOM NAV -->
-
+  <!-- =========================
+       BOTTOM NAV
+  ========================= -->
   <nav class="bottom-nav">
+<button
+  class="nav-btn active"
+  id="navHome"
+  onclick="navigate('homePage', this)"
+>
 
-    <button
-      class="nav-btn active"
-      id="navHome"
-      onclick="navigate('homePage', this)"
-    >
-      <span>🏠</span>
-      Bosh sahifa
-    </button>
+  <span>
+    🏠
+  </span>
 
-    <button
-      class="nav-btn"
-      id="navRides"
-      onclick="navigate('ridesPage', this)"
-    >
-      <span>🚕</span>
-      Safarlar
-    </button>
+  Bosh sahifa
 
-    <button
-      class="nav-btn"
-      id="navOrders"
-      onclick="navigate('ordersPage', this)"
-    >
-      <span>📋</span>
-      Buyurtmalar
-    </button>
+</button>
 
-    <button
-      class="nav-btn"
-      id="navProfile"
-      onclick="navigate('profilePage', this)"
-    >
-      <span>👤</span>
-      Profil
-    </button>
 
+<button
+  class="nav-btn"
+  id="navRides"
+  onclick="navigate('ridesPage', this)"
+>
+
+  <span>
+    🚕
+  </span>
+
+  Safarlar
+
+</button>
+
+
+<button
+  class="nav-btn"
+  id="navOrders"
+  onclick="navigate('ordersPage', this)"
+>
+
+  <span>
+    📋
+  </span>
+
+  Buyurtmalar
+
+</button>
+
+
+<button
+  class="nav-btn"
+  id="navProfile"
+  onclick="navigate('profilePage', this)"
+>
+
+  <span>
+    👤
+  </span>
+
+  Profil
+
+</button>
   </nav>
-
 </div>
-
-
-<div id="toast" class="toast"></div>
-
-
+<div
+  id="toast"
+  class="toast"
+></div>
 <script>
 
   /* =========================
      TELEGRAM
   ========================= */
 
-  const tg = window.Telegram.WebApp;
+  const tg =
+    window.Telegram.WebApp;
 
   tg.ready();
   tg.expand();
 
+
   try {
-    tg.setHeaderColor("#ffd400");
-    tg.setBackgroundColor("#f5f5f5");
+
+    tg.setHeaderColor(
+      "#ffd400"
+    );
+
+    tg.setBackgroundColor(
+      "#f5f5f5"
+    );
+
   } catch(e) {}
 
 
@@ -905,9 +1934,12 @@
      USER
   ========================= */
 
-  const telegramUser = tg.initDataUnsafe?.user || null;
+  const telegramUser =
+    tg.initDataUnsafe?.user || null;
 
-  const initData = tg.initData || "";
+  const initData =
+    tg.initData || "";
+
 
   let latitude = null;
   let longitude = null;
@@ -924,20 +1956,37 @@
     const fullName =
       `${firstName} ${lastName}`.trim();
 
-    document.getElementById("welcomeName").textContent =
+
+    document.getElementById(
+      "welcomeName"
+    ).textContent =
       `Salom, ${firstName || "do‘st"} 👋`;
 
-    document.getElementById("profileName").textContent =
-      fullName || "Foydalanuvchi";
 
-    document.getElementById("profileUsername").textContent =
+    document.getElementById(
+      "profileName"
+    ).textContent =
+      fullName ||
+      "Foydalanuvchi";
+
+
+    document.getElementById(
+      "profileUsername"
+    ).textContent =
       telegramUser.username
         ? `@${telegramUser.username}`
         : "Telegram foydalanuvchisi";
 
+
     if (firstName) {
-      document.getElementById("avatar").textContent =
-        firstName.charAt(0).toUpperCase();
+
+      document.getElementById(
+        "avatar"
+      ).textContent =
+        firstName
+          .charAt(0)
+          .toUpperCase();
+
     }
 
   }
@@ -947,25 +1996,37 @@
      API
   ========================= */
 
-  async function api(url, data = {}) {
+  async function api(
+    url,
+    data = {}
+  ) {
 
     try {
 
-      data.init_data = initData;
+      data.init_data =
+        initData;
 
-      const response = await fetch(url, {
 
-        method: "POST",
+      const response =
+        await fetch(
+          url,
+          {
+            method: "POST",
 
-        headers: {
-          "Content-Type": "application/json"
-        },
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
 
-        body: JSON.stringify(data)
+            body:
+              JSON.stringify(data)
+          }
+        );
 
-      });
 
-      const result = await response.json();
+      const result =
+        await response.json();
+
 
       if (!response.ok) {
 
@@ -977,17 +2038,21 @@
 
       }
 
+
       return result;
+
 
     } catch(error) {
 
       console.error(error);
 
       showToast(
-        error.message || "Xatolik yuz berdi"
+        error.message ||
+        "Xatolik yuz berdi"
       );
 
       throw error;
+
     }
 
   }
@@ -997,19 +2062,40 @@
      NAVIGATION
   ========================= */
 
-  function openPage(pageId) {
+  function openPage(
+    pageId
+  ) {
 
-    document.querySelectorAll(".page")
-      .forEach(page => {
-        page.classList.remove("active");
-      });
+    document
+      .querySelectorAll(".page")
+      .forEach(
+        page => {
+          page.classList.remove(
+            "active"
+          );
+        }
+      );
+
 
     const page =
-      document.getElementById(pageId);
+      document.getElementById(
+        pageId
+      );
+
 
     if (page) {
-      page.classList.add("active");
+
+      page.classList.add(
+        "active"
+      );
+
     }
+
+
+    setActivePageNav(
+      pageId
+    );
+
 
     window.scrollTo({
       top: 0,
@@ -1021,65 +2107,127 @@
 
   function goHome() {
 
-    openPage("homePage");
+    openPage(
+      "homePage"
+    );
 
     setActiveNav(
-      document.getElementById("navHome")
+      document.getElementById(
+        "navHome"
+      )
     );
 
   }
 
 
-  function navigate(pageId, button) {
+  function navigate(
+    pageId,
+    button
+  ) {
 
-    openPage(pageId);
+    openPage(
+      pageId
+    );
 
-    setActiveNav(button);
 
-    if (pageId === "ridesPage") {
+    setActiveNav(
+      button
+    );
+
+
+    if (
+      pageId ===
+      "ridesPage"
+    ) {
+
       loadRides();
+
     }
 
-    if (pageId === "ordersPage") {
+
+    if (
+      pageId ===
+      "ordersPage"
+    ) {
+
       loadOrders();
+
     }
 
-    if (pageId === "profilePage") {
+
+    if (
+      pageId ===
+      "profilePage"
+    ) {
+
       loadProfile();
+
     }
 
   }
 
 
-  function setActiveNav(button) {
+  function setActiveNav(
+    button
+  ) {
 
-    document.querySelectorAll(".nav-btn")
-      .forEach(btn => {
-        btn.classList.remove("active");
-      });
+    document
+      .querySelectorAll(
+        ".nav-btn"
+      )
+      .forEach(
+        btn => {
+          btn.classList.remove(
+            "active"
+          );
+        }
+      );
+
 
     if (button) {
-      button.classList.add("active");
+
+      button.classList.add(
+        "active"
+      );
+
     }
 
   }
 
 
-  function setActivePageNav(pageId) {
+  function setActivePageNav(
+    pageId
+  ) {
 
     const map = {
-      homePage: "navHome",
-      ridesPage: "navRides",
-      ordersPage: "navOrders",
-      profilePage: "navProfile"
+
+      homePage:
+        "navHome",
+
+      ridesPage:
+        "navRides",
+
+      ordersPage:
+        "navOrders",
+
+      profilePage:
+        "navProfile"
+
     };
 
-    const id = map[pageId];
+
+    const id =
+      map[pageId];
+
 
     if (id) {
+
       setActiveNav(
-        document.getElementById(id)
+        document.getElementById(
+          id
+        )
       );
+
     }
 
   }
@@ -1089,22 +2237,45 @@
      TOAST
   ========================= */
 
-  let toastTimer = null;
+  let toastTimer =
+    null;
 
-  function showToast(message) {
+
+  function showToast(
+    message
+  ) {
 
     const toast =
-      document.getElementById("toast");
+      document.getElementById(
+        "toast"
+      );
 
-    toast.textContent = message;
-    toast.classList.add("show");
 
-    clearTimeout(toastTimer);
+    toast.textContent =
+      message;
+
+
+    toast.classList.add(
+      "show"
+    );
+
+
+    clearTimeout(
+      toastTimer
+    );
+
 
     toastTimer =
-      setTimeout(() => {
-        toast.classList.remove("show");
-      }, 3000);
+      setTimeout(
+        () => {
+
+          toast.classList.remove(
+            "show"
+          );
+
+        },
+        3000
+      );
 
   }
 
@@ -1115,18 +2286,24 @@
 
   function getLocation() {
 
-    if (!navigator.geolocation) {
+    if (
+      !navigator.geolocation
+    ) {
 
       showToast(
         "Telefon lokatsiyasini qo‘llab-quvvatlamaydi"
       );
 
       return;
+
     }
+
 
     document.getElementById(
       "locationStatus"
-    ).textContent = "Aniqlanmoqda...";
+    ).textContent =
+      "Aniqlanmoqda...";
+
 
     navigator.geolocation.getCurrentPosition(
 
@@ -1138,15 +2315,21 @@
         longitude =
           position.coords.longitude;
 
+
         document.getElementById(
           "locationStatus"
         ).textContent =
           "Lokatsiya aniqlandi ✅";
 
+
         document.getElementById(
           "locationCoords"
         ).textContent =
           `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+
+
+        updateHomeMap();
+
 
         showToast(
           "Lokatsiyangiz aniqlandi"
@@ -1154,19 +2337,25 @@
 
       },
 
+
       error => {
 
-        console.error(error);
+        console.error(
+          error
+        );
+
 
         document.getElementById(
           "locationStatus"
         ).textContent =
           "Lokatsiyani aniqlab bo‘lmadi";
 
+
         document.getElementById(
           "locationCoords"
         ).textContent =
-          "Telegram uchun lokatsiyaga ruxsat bering";
+          "Lokatsiyaga ruxsat bering";
+
 
         showToast(
           "Lokatsiyaga ruxsat bering"
@@ -1174,12 +2363,637 @@
 
       },
 
+
       {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
+        enableHighAccuracy:
+          true,
+
+        timeout:
+          10000,
+
+        maximumAge:
+          0
+
       }
 
+    );
+
+  }
+
+
+  /* =========================
+     MAP
+  ========================= */
+
+  let map = null;
+  let mapMarker = null;
+
+
+  function initMap() {
+
+    if (
+      typeof L ===
+      "undefined"
+    ) {
+
+      return;
+
+    }
+
+
+    if (map) {
+
+      return;
+
+    }
+
+
+    map =
+      L.map(
+        "map"
+      ).setView(
+        [
+          41.2995,
+          69.2401
+        ],
+        11
+      );
+
+
+    L.tileLayer(
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      {
+        maxZoom: 19,
+        attribution:
+          "&copy; OpenStreetMap"
+      }
+    ).addTo(
+      map
+    );
+
+  }
+
+
+  function updateHomeMap() {
+
+    initMap();
+
+
+    if (
+      !map ||
+      latitude === null ||
+      longitude === null
+    ) {
+
+      return;
+
+    }
+
+
+    if (mapMarker) {
+
+      map.removeLayer(
+        mapMarker
+      );
+
+    }
+
+
+    mapMarker =
+      L.marker(
+        [
+          latitude,
+          longitude
+        ]
+      )
+      .addTo(
+        map
+      )
+      .bindPopup(
+        "📍 Sizning joylashuvingiz"
+      )
+      .openPopup();
+
+
+    map.setView(
+      [
+        latitude,
+        longitude
+      ],
+      15
+    );
+
+  }
+
+
+  let tripMap = null;
+
+
+  function initTripMap() {
+
+    if (
+      typeof L ===
+      "undefined"
+    ) {
+
+      return;
+
+    }
+
+
+    if (tripMap) {
+
+      return;
+
+    }
+
+
+    tripMap =
+      L.map(
+        "tripMap"
+      ).setView(
+        [
+          41.2995,
+          69.2401
+        ],
+        11
+      );
+
+
+    L.tileLayer(
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      {
+        maxZoom: 19,
+        attribution:
+          "&copy; OpenStreetMap"
+      }
+    ).addTo(
+      tripMap
+    );
+
+  }
+
+
+  /* =========================
+     DRAFT AUTOSAVE
+  ========================= */
+
+  let draftTimer =
+    null;
+
+
+  function draftData() {
+
+    return {
+
+      passenger_from:
+        getValue(
+          "fromCity"
+        ),
+
+      passenger_to:
+        getValue(
+          "toCity"
+        ),
+
+      passenger_time:
+        getValue(
+          "rideTime"
+        ),
+
+      passenger_seats:
+        Number(
+          getValue(
+            "passengerSeats"
+          ) || 1
+        ),
+
+      passenger_phone:
+        getValue(
+          "passengerPhone"
+        ),
+
+
+      driver_name:
+        getValue(
+          "driverName"
+        ),
+
+      driver_phone:
+        getValue(
+          "driverPhone"
+        ),
+
+      driver_car_model:
+        getValue(
+          "carModel"
+        ),
+
+      driver_car_number:
+        getValue(
+          "carNumber"
+        ),
+
+      driver_seats:
+        Number(
+          getValue(
+            "driverSeats"
+          ) || 4
+        ),
+
+
+      driver_from:
+        getValue(
+          "driverFrom"
+        ),
+
+      driver_to:
+        getValue(
+          "driverTo"
+        ),
+
+      driver_time:
+        getValue(
+          "driverTime"
+        ),
+
+      driver_available_seats:
+        Number(
+          getValue(
+            "driverAvailableSeats"
+          ) || 4
+        ),
+
+
+      profile_full_name:
+        getValue(
+          "profileFullName"
+        ),
+
+      profile_phone:
+        getValue(
+          "profilePhone"
+        )
+
+    };
+
+  }
+
+
+  function getValue(
+    id
+  ) {
+
+    const element =
+      document.getElementById(
+        id
+      );
+
+
+    return element
+      ? element.value
+      : "";
+
+  }
+
+
+  function setValue(
+    id,
+    value
+  ) {
+
+    const element =
+      document.getElementById(
+        id
+      );
+
+
+    if (
+      element &&
+      value !== null &&
+      value !== undefined
+    ) {
+
+      element.value =
+        value;
+
+    }
+
+  }
+
+
+  function saveDraftDebounced() {
+
+    clearTimeout(
+      draftTimer
+    );
+
+
+    draftTimer =
+      setTimeout(
+        saveDraft,
+        700
+      );
+
+  }
+
+
+  async function saveDraft() {
+
+    const data =
+      draftData();
+
+
+    /* LOCAL BACKUP */
+
+    try {
+
+      localStorage.setItem(
+        "opper_taxi_draft",
+        JSON.stringify(
+          data
+        )
+      );
+
+    } catch(e) {}
+
+
+    /* SERVER */
+
+    if (!initData) {
+
+      return;
+
+    }
+
+
+    try {
+
+      await api(
+        "/api/draft",
+        data
+      );
+
+    } catch(error) {
+
+      console.warn(
+        "Draft serverga saqlanmadi",
+        error
+      );
+
+    }
+
+  }
+
+
+  async function loadDraft() {
+
+    let localDraft =
+      null;
+
+
+    try {
+
+      const raw =
+        localStorage.getItem(
+          "opper_taxi_draft"
+        );
+
+
+      if (raw) {
+
+        localDraft =
+          JSON.parse(
+            raw
+          );
+
+      }
+
+    } catch(e) {}
+
+
+    if (localDraft) {
+
+      applyDraft(
+        localDraft
+      );
+
+    }
+
+
+    if (!initData) {
+
+      return;
+
+    }
+
+
+    try {
+
+      const result =
+        await api(
+          "/api/draft/get",
+          {}
+        );
+
+
+      if (
+        result &&
+        result.draft
+      ) {
+
+        applyDraft(
+          result.draft
+        );
+
+      }
+
+    } catch(error) {
+
+      console.warn(
+        "Server draft yuklanmadi",
+        error
+      );
+
+    }
+
+  }
+
+
+  function applyDraft(
+    draft
+  ) {
+
+    setValue(
+      "fromCity",
+      draft.passenger_from || ""
+    );
+
+    setValue(
+      "toCity",
+      draft.passenger_to || ""
+    );
+
+    setValue(
+      "rideTime",
+      draft.passenger_time || ""
+    );
+
+    setValue(
+      "passengerSeats",
+      draft.passenger_seats || 1
+    );
+
+    setValue(
+      "passengerPhone",
+      draft.passenger_phone || ""
+    );
+
+
+    setValue(
+      "driverName",
+      draft.driver_name || ""
+    );
+
+    setValue(
+      "driverPhone",
+      draft.driver_phone || ""
+    );
+
+    setValue(
+      "carModel",
+      draft.driver_car_model || ""
+    );
+
+    setValue(
+      "carNumber",
+      draft.driver_car_number || ""
+    );
+
+    setValue(
+      "driverSeats",
+      draft.driver_seats || 4
+    );
+
+
+    setValue(
+      "driverFrom",
+      draft.driver_from || ""
+    );
+
+    setValue(
+      "driverTo",
+      draft.driver_to || ""
+    );
+
+    setValue(
+      "driverTime",
+      draft.driver_time || ""
+    );
+
+    setValue(
+      "driverAvailableSeats",
+      draft.driver_available_seats || 4
+    );
+
+
+    setValue(
+      "profileFullName",
+      draft.profile_full_name || ""
+    );
+
+    setValue(
+      "profilePhone",
+      draft.profile_phone || ""
+    );
+
+  }
+
+
+  /* =========================
+     DOCUMENT PREVIEW
+  ========================= */
+
+  function previewDocument(
+    inputId,
+    previewId,
+    boxId
+  ) {
+
+    const input =
+      document.getElementById(
+        inputId
+      );
+
+
+    const preview =
+      document.getElementById(
+        previewId
+      );
+
+
+    const box =
+      document.getElementById(
+        boxId
+      );
+
+
+    if (
+      !input ||
+      !input.files ||
+      !input.files[0]
+    ) {
+
+      return;
+
+    }
+
+
+    const file =
+      input.files[0];
+
+
+    if (
+      !file.type.startsWith(
+        "image/"
+      )
+    ) {
+
+      showToast(
+        "Faqat rasm yuklang"
+      );
+
+      input.value =
+        "";
+
+      return;
+
+    }
+
+
+    const reader =
+      new FileReader();
+
+
+    reader.onload =
+      function(event) {
+
+        preview.src =
+          event.target.result;
+
+        preview.style.display =
+          "block";
+
+
+        box.classList.add(
+          "has-file"
+        );
+
+      };
+
+
+    reader.readAsDataURL(
+      file
     );
 
   }
@@ -1192,52 +3006,78 @@
   async function createPassengerOrder() {
 
     const fromCity =
-      document.getElementById(
+      getValue(
         "fromCity"
-      ).value.trim();
+      ).trim();
 
     const toCity =
-      document.getElementById(
+      getValue(
         "toCity"
-      ).value.trim();
+      ).trim();
 
     const rideTime =
-      document.getElementById(
+      getValue(
         "rideTime"
-      ).value;
+      );
 
     const seats =
       Number(
-        document.getElementById(
+        getValue(
           "passengerSeats"
-        ).value
+        ) || 1
       );
 
     const phone =
-      document.getElementById(
+      getValue(
         "passengerPhone"
-      ).value.trim();
+      ).trim();
 
 
     if (!fromCity) {
-      showToast("Qayerdan borishingizni kiriting");
+
+      showToast(
+        "Qayerdan borishingizni kiriting"
+      );
+
       return;
+
     }
+
 
     if (!toCity) {
-      showToast("Qayerga borishingizni kiriting");
+
+      showToast(
+        "Qayerga borishingizni kiriting"
+      );
+
       return;
+
     }
+
 
     if (!rideTime) {
-      showToast("Safar vaqtini tanlang");
+
+      showToast(
+        "Safar vaqtini tanlang"
+      );
+
       return;
+
     }
 
+
     if (!phone) {
-      showToast("Telefon raqamingizni kiriting");
+
+      showToast(
+        "Telefon raqamingizni kiriting"
+      );
+
       return;
+
     }
+
+
+    await saveDraft();
 
 
     try {
@@ -1246,40 +3086,57 @@
         await api(
           "/api/passenger/order",
           {
-            from_city: fromCity,
-            to_city: toCity,
-            ride_time: rideTime,
-            seats: seats,
-            phone: phone,
-            latitude: latitude,
-            longitude: longitude
+
+            from_city:
+              fromCity,
+
+            to_city:
+              toCity,
+
+            ride_time:
+              rideTime,
+
+            seats:
+              seats,
+
+            phone:
+              phone,
+
+            latitude:
+              latitude,
+
+            longitude:
+              longitude
+
           }
         );
 
 
       showToast(
         result.message ||
-        "Buyurtma qabul qilindi ✅"
+        "Buyurtma yaratildi ✅"
       );
 
 
-      setTimeout(() => {
+      setTimeout(
+        () => {
 
-        navigate(
-          "ordersPage",
-          document.getElementById(
-            "navOrders"
-          )
-        );
+          openPage(
+            "ordersPage"
+          );
 
-        loadOrders();
+          loadOrders();
 
-      }, 800);
+        },
+        800
+      );
 
 
     } catch(error) {
 
-      console.error(error);
+      console.error(
+        error
+      );
 
     }
 
@@ -1293,52 +3150,151 @@
   async function registerDriver() {
 
     const name =
-      document.getElementById(
+      getValue(
         "driverName"
-      ).value.trim();
+      ).trim();
 
     const phone =
-      document.getElementById(
+      getValue(
         "driverPhone"
-      ).value.trim();
+      ).trim();
 
     const carModel =
-      document.getElementById(
+      getValue(
         "carModel"
-      ).value.trim();
+      ).trim();
 
     const carNumber =
-      document.getElementById(
+      getValue(
         "carNumber"
-      ).value.trim();
+      ).trim();
 
     const seats =
       Number(
-        document.getElementById(
+        getValue(
           "driverSeats"
-        ).value
+        ) || 4
       );
 
 
     if (!name) {
-      showToast("Ism familiyangizni kiriting");
+
+      showToast(
+        "F.I.Sh. ni kiriting"
+      );
+
       return;
+
     }
+
 
     if (!phone) {
-      showToast("Telefon raqamingizni kiriting");
+
+      showToast(
+        "Telefon raqamingizni kiriting"
+      );
+
       return;
+
     }
+
 
     if (!carModel) {
-      showToast("Avtomobil modelini kiriting");
+
+      showToast(
+        "Avtomobil modelini kiriting"
+      );
+
       return;
+
     }
 
+
     if (!carNumber) {
-      showToast("Avtomobil raqamini kiriting");
+
+      showToast(
+        "Avtomobil raqamini kiriting"
+      );
+
       return;
+
     }
+
+
+    const techPassport =
+      document.getElementById(
+        "techPassport"
+      );
+
+    const driverLicense =
+      document.getElementById(
+        "driverLicense"
+      );
+
+    const carPhoto =
+      document.getElementById(
+        "carPhoto"
+      );
+
+
+    if (
+      !techPassport.files.length
+    ) {
+
+      showToast(
+        "Texpasport rasmini yuklang"
+      );
+
+      return;
+
+    }
+
+
+    if (
+      !driverLicense.files.length
+    ) {
+
+      showToast(
+        "Haydovchilik guvohnomasini yuklang"
+      );
+
+      return;
+
+    }
+
+
+    if (
+      !carPhoto.files.length
+    ) {
+
+      showToast(
+        "Avtomobil rasmini yuklang"
+      );
+
+      return;
+
+    }
+
+
+    await saveDraft();
+
+
+    /*
+      DIQQAT:
+
+      Hozirgi bot.py dagi /api/driver/register
+      hali hujjat fayllarini qabul qilmaydi.
+
+      Shu sababli hozircha asosiy ma'lumotlar
+      eski API orqali yuboriladi.
+
+      Keyingi bot.py yangilanishida:
+      tech_passport
+      driver_license
+      car_photo
+
+      serverga multipart/base64 orqali yuboriladi.
+    */
 
 
     try {
@@ -1347,13 +3303,28 @@
         await api(
           "/api/driver/register",
           {
-            full_name: name,
-            phone: phone,
-            car_model: carModel,
-            car_number: carNumber,
-            seats: seats,
-            latitude: latitude,
-            longitude: longitude
+
+            full_name:
+              name,
+
+            phone:
+              phone,
+
+            car_model:
+              carModel,
+
+            car_number:
+              carNumber,
+
+            seats:
+              seats,
+
+            latitude:
+              latitude,
+
+            longitude:
+              longitude
+
           }
         );
 
@@ -1366,7 +3337,9 @@
 
     } catch(error) {
 
-      console.error(error);
+      console.error(
+        error
+      );
 
     }
 
@@ -1380,42 +3353,62 @@
   async function createRide() {
 
     const fromCity =
-      document.getElementById(
+      getValue(
         "driverFrom"
-      ).value.trim();
+      ).trim();
 
     const toCity =
-      document.getElementById(
+      getValue(
         "driverTo"
-      ).value.trim();
+      ).trim();
 
     const rideTime =
-      document.getElementById(
+      getValue(
         "driverTime"
-      ).value;
+      );
 
     const seats =
       Number(
-        document.getElementById(
+        getValue(
           "driverAvailableSeats"
-        ).value
+        ) || 4
       );
 
 
     if (!fromCity) {
-      showToast("Qayerdan ekanini kiriting");
+
+      showToast(
+        "Qayerdan ekanini kiriting"
+      );
+
       return;
+
     }
+
 
     if (!toCity) {
-      showToast("Qayerga ekanini kiriting");
+
+      showToast(
+        "Qayerga ekanini kiriting"
+      );
+
       return;
+
     }
 
+
     if (!rideTime) {
-      showToast("Safar vaqtini tanlang");
+
+      showToast(
+        "Safar vaqtini tanlang"
+      );
+
       return;
+
     }
+
+
+    await saveDraft();
 
 
     try {
@@ -1424,10 +3417,19 @@
         await api(
           "/api/driver/ride",
           {
-            from_city: fromCity,
-            to_city: toCity,
-            ride_time: rideTime,
-            seats: seats
+
+            from_city:
+              fromCity,
+
+            to_city:
+              toCity,
+
+            ride_time:
+              rideTime,
+
+            seats:
+              seats
+
           }
         );
 
@@ -1437,12 +3439,15 @@
         "Safar joylandi ✅"
       );
 
+
       loadRides();
 
 
     } catch(error) {
 
-      console.error(error);
+      console.error(
+        error
+      );
 
     }
 
@@ -1459,6 +3464,7 @@
       document.getElementById(
         "ridesList"
       );
+
 
     container.innerHTML =
       `<div class="loading">
@@ -1486,9 +3492,13 @@
         container.innerHTML =
           `<div class="empty">
 
-            <div class="empty-icon">🚕</div>
+            <div class="empty-icon">
+              🚕
+            </div>
 
-            <strong>Hozircha safarlar yo‘q</strong>
+            <strong>
+              Hozircha safarlar yo‘q
+            </strong>
 
             <p>
               Yangi safarlar paydo bo‘lganda
@@ -1498,70 +3508,82 @@
           </div>`;
 
         return;
+
       }
 
 
       container.innerHTML =
-        rides.map(ride => {
+        rides
+          .map(
+            ride => {
 
-          return `
+              return `
 
-            <div class="ride-card">
+                <div class="ride-card">
 
-              <div class="route">
+                  <div class="route">
 
-                <span>📍</span>
+                    <span>
+                      📍
+                    </span>
 
-                <span>
-                  ${escapeHtml(
-                    ride.from_city ||
-                    ride.from ||
-                    "-"
-                  )}
-                </span>
+                    <span>
+                      ${escapeHtml(
+                        ride.from_city ||
+                        ride.from ||
+                        "-"
+                      )}
+                    </span>
 
-                <span class="route-line">→</span>
+                    <span class="route-line">
+                      →
+                    </span>
 
-                <span>
-                  ${escapeHtml(
-                    ride.to_city ||
-                    ride.to ||
-                    "-"
-                  )}
-                </span>
+                    <span>
+                      ${escapeHtml(
+                        ride.to_city ||
+                        ride.to ||
+                        "-"
+                      )}
+                    </span>
 
-              </div>
+                  </div>
 
-              <div class="ride-info">
 
-                <span class="tag">
-                  🕐 ${escapeHtml(
-                    ride.ride_time ||
-                    ride.time ||
-                    "-"
-                  )}
-                </span>
+                  <div class="ride-info">
 
-                <span class="tag">
-                  💺 ${ride.available_seats ??
-                    ride.seats ??
-                    "-"} joy
-                </span>
+                    <span class="tag">
+                      🕐 ${escapeHtml(
+                        ride.ride_time ||
+                        ride.time ||
+                        "-"
+                      )}
+                    </span>
 
-                <span class="tag">
-                  🚗 ${escapeHtml(
-                    ride.car_model ||
-                    "Taksi"
-                  )}
-                </span>
+                    <span class="tag">
+                      💺 ${
+                        ride.available_seats ??
+                        ride.seats ??
+                        "-"
+                      } joy
+                    </span>
 
-              </div>
+                    <span class="tag">
+                      🚗 ${escapeHtml(
+                        ride.car_model ||
+                        "Taksi"
+                      )}
+                    </span>
 
-            </div>
+                  </div>
 
-          `;
+                </div>
 
-        }).join("");
+              `;
+
+            }
+          )
+          .join("");
 
 
     } catch(error) {
@@ -1569,7 +3591,9 @@
       container.innerHTML =
         `<div class="empty">
 
-          <div class="empty-icon">⚠️</div>
+          <div class="empty-icon">
+            ⚠️
+          </div>
 
           Safarlarni yuklashda xatolik.
 
@@ -1590,6 +3614,7 @@
       document.getElementById(
         "ordersList"
       );
+
 
     container.innerHTML =
       `<div class="loading">
@@ -1617,9 +3642,13 @@
         container.innerHTML =
           `<div class="empty">
 
-            <div class="empty-icon">📋</div>
+            <div class="empty-icon">
+              📋
+            </div>
 
-            <strong>Buyurtmalar yo‘q</strong>
+            <strong>
+              Buyurtmalar yo‘q
+            </strong>
 
             <p>
               Sizning buyurtmalaringiz shu yerda
@@ -1629,68 +3658,96 @@
           </div>`;
 
         return;
+
       }
 
 
       container.innerHTML =
-        orders.map(order => {
+        orders
+          .map(
+            order => {
 
-          const status =
-            order.status ||
-            "unknown";
+              const status =
+                order.status ||
+                "unknown";
 
 
-          return `
+              return `
 
-            <div class="order-card">
+                <div class="order-card">
 
-              <div class="route">
+                  <div class="route">
 
-                📍
+                    📍
 
-                ${escapeHtml(
-                  order.from_city ||
-                  order.from ||
-                  "-"
-                )}
+                    ${escapeHtml(
+                      order.from_city ||
+                      order.from ||
+                      "-"
+                    )}
 
-                <span class="route-line">
-                  →
-                </span>
+                    <span class="route-line">
+                      →
+                    </span>
 
-                ${escapeHtml(
-                  order.to_city ||
-                  order.to ||
-                  "-"
-                )}
+                    ${escapeHtml(
+                      order.to_city ||
+                      order.to ||
+                      "-"
+                    )}
 
-              </div>
+                  </div>
 
-              <div class="ride-info">
 
-                <span class="tag">
-                  🕐 ${escapeHtml(
-                    order.ride_time ||
-                    order.time ||
-                    "-"
-                  )}
-                </span>
+                  <div class="ride-info">
 
-                <span class="tag">
-                  💺 ${order.seats || "-"}
-                </span>
+                    <span class="tag">
+                      🕐 ${escapeHtml(
+                        order.ride_time ||
+                        order.time ||
+                        "-"
+                      )}
+                    </span>
 
-                <span class="tag">
-                  ${statusText(status)}
-                </span>
+                    <span class="tag">
+                      💺 ${
+                        order.seats ||
+                        "-"
+                      }
+                    </span>
 
-              </div>
+                    <span class="tag">
+                      ${statusText(
+                        status
+                      )}
+                    </span>
 
-            </div>
+                  </div>
 
-          `;
 
-        }).join("");
+                  ${
+                    status ===
+                    "accepted" ||
+                    status ===
+                    "confirmed"
+                      ? `
+                        <button
+                          class="primary-btn"
+                          onclick="openPage('activeTripPage')"
+                        >
+                          🗺 Safarni xaritada ko‘rish
+                        </button>
+                      `
+                      : ""
+                  }
+
+                </div>
+
+              `;
+
+            }
+          )
+          .join("");
 
 
     } catch(error) {
@@ -1698,7 +3755,9 @@
       container.innerHTML =
         `<div class="empty">
 
-          <div class="empty-icon">⚠️</div>
+          <div class="empty-icon">
+            ⚠️
+          </div>
 
           Buyurtmalarni yuklashda xatolik.
 
@@ -1724,7 +3783,13 @@
         );
 
 
+      /*
+        bot.py dagi yangi web_profile
+        result.user qaytaradi.
+      */
+
       const profile =
+        result.user ||
         result.profile ||
         result.data ||
         result;
@@ -1732,24 +3797,27 @@
 
       if (profile) {
 
-        document.getElementById(
-          "profileFullName"
-        ).value =
+        setValue(
+          "profileFullName",
           profile.full_name ||
-          "";
+          ""
+        );
 
-        document.getElementById(
-          "profilePhone"
-        ).value =
+
+        setValue(
+          "profilePhone",
           profile.phone ||
-          "";
+          ""
+        );
 
       }
 
 
     } catch(error) {
 
-      console.error(error);
+      console.error(
+        error
+      );
 
     }
 
@@ -1763,14 +3831,14 @@
   async function saveProfile() {
 
     const fullName =
-      document.getElementById(
+      getValue(
         "profileFullName"
-      ).value.trim();
+      ).trim();
 
     const phone =
-      document.getElementById(
+      getValue(
         "profilePhone"
-      ).value.trim();
+      ).trim();
 
 
     if (!fullName) {
@@ -1790,10 +3858,18 @@
         await api(
           "/api/profile/update",
           {
-            full_name: fullName,
-            phone: phone
+
+            full_name:
+              fullName,
+
+            phone:
+              phone
+
           }
         );
+
+
+      await saveDraft();
 
 
       showToast(
@@ -1804,9 +3880,288 @@
 
     } catch(error) {
 
-      console.error(error);
+      console.error(
+        error
+      );
 
     }
+
+  }
+
+
+  /* =========================
+     SELECT DRIVER
+  ========================= */
+
+  let selectedDriver =
+    null;
+
+
+  function showDrivers(
+    drivers
+  ) {
+
+    const container =
+      document.getElementById(
+        "driversList"
+      );
+
+
+    if (
+      !drivers ||
+      !drivers.length
+    ) {
+
+      container.innerHTML =
+        `<div class="empty">
+
+          <div class="empty-icon">
+            🚕
+          </div>
+
+          <strong>
+            Hozircha haydovchi topilmadi
+          </strong>
+
+          <p>
+            Birozdan keyin qayta urinib ko‘ring.
+          </p>
+
+        </div>`;
+
+      return;
+
+    }
+
+
+    container.innerHTML =
+      drivers
+        .map(
+          driver => {
+
+            const name =
+              driver.full_name ||
+              driver.name ||
+              "Haydovchi";
+
+
+            const car =
+              driver.car_model ||
+              driver.car ||
+              "Taksi";
+
+
+            const number =
+              driver.car_number ||
+              driver.number ||
+              "";
+
+
+            return `
+
+              <div class="driver-card">
+
+                <div class="driver-top">
+
+                  <div class="driver-avatar">
+                    🚗
+                  </div>
+
+                  <div class="driver-main">
+
+                    <strong>
+                      ${escapeHtml(
+                        name
+                      )}
+                    </strong>
+
+                    <span>
+                      🚗 ${escapeHtml(
+                        car
+                      )}
+                    </span>
+
+                    <span>
+                      🔢 ${escapeHtml(
+                        number
+                      )}
+                    </span>
+
+                  </div>
+
+                </div>
+
+
+                <div class="ride-info">
+
+                  <span class="tag">
+                    ⭐ ${
+                      driver.rating ||
+                      "Yangi"
+                    }
+                  </span>
+
+                  <span class="tag">
+                    💺 ${
+                      driver.available_seats ||
+                      driver.seats ||
+                      "-"
+                    } joy
+                  </span>
+
+                </div>
+
+
+                <button
+                  class="choose-driver"
+                  onclick='selectDriver(${JSON.stringify(
+                    driver
+                  )})'
+                >
+                  🚕 Shu haydovchini tanlash
+                </button>
+
+              </div>
+
+            `;
+
+          }
+        )
+        .join("");
+
+  }
+
+
+  function selectDriver(
+    driver
+  ) {
+
+    selectedDriver =
+      driver;
+
+
+    document.getElementById(
+      "selectedDriverBox"
+    ).style.display =
+      "block";
+
+
+    document.getElementById(
+      "selectedDriverName"
+    ).textContent =
+      driver.full_name ||
+      driver.name ||
+      "Haydovchi";
+
+
+    document.getElementById(
+      "selectedDriverCar"
+    ).textContent =
+      driver.car_model ||
+      driver.car ||
+      "Taksi";
+
+
+    document.getElementById(
+      "selectedDriverNumber"
+    ).textContent =
+      driver.car_number ||
+      driver.number ||
+      "";
+
+
+    window.scrollTo({
+      top: document.body.scrollHeight,
+      behavior: "smooth"
+    });
+
+  }
+
+
+  async function confirmSelectedDriver() {
+
+    if (
+      !selectedDriver
+    ) {
+
+      showToast(
+        "Haydovchini tanlang"
+      );
+
+      return;
+
+    }
+
+
+    /*
+      Keyingi bot.py yangilanishida:
+
+      /api/order/assign-driver
+
+      endpoint orqali tanlangan haydovchini
+      buyurtmaga biriktiramiz.
+    */
+
+
+    showToast(
+      "Haydovchi tanlandi ✅"
+    );
+
+
+    setTimeout(
+      () => {
+
+        openPage(
+          "activeTripPage"
+        );
+
+        initTripMap();
+
+      },
+      700
+    );
+
+  }
+
+
+  /* =========================
+     STATUS
+  ========================= */
+
+  function statusText(
+    status
+  ) {
+
+    const map = {
+
+      searching:
+        "🔎 Qidirilmoqda",
+
+      pending_driver:
+        "⏳ Haydovchi kutilyapti",
+
+      accepted:
+        "✅ Haydovchi qabul qildi",
+
+      confirmed:
+        "✅ Haydovchi tasdiqlandi",
+
+      cancelled:
+        "❌ Bekor qilindi",
+
+      completed:
+        "🏁 Yakunlandi",
+
+      active:
+        "🟢 Safar davom etmoqda"
+
+    };
+
+
+    return (
+      map[status] ||
+      `📌 ${status}`
+    );
 
   }
 
@@ -1815,45 +4170,46 @@
      HELPERS
   ========================= */
 
-  function statusText(status) {
+  function escapeHtml(
+    value
+  ) {
 
-    const map = {
+    if (
+      value === null ||
+      value === undefined
+    ) {
 
-      searching: "🔎 Qidirilmoqda",
-
-      pending_driver: "⏳ Haydovchi kutilyapti",
-
-      accepted: "✅ Qabul qilindi",
-
-      confirmed: "✅ Tasdiqlandi",
-
-      cancelled: "❌ Bekor qilindi",
-
-      completed: "🏁 Yakunlandi",
-
-      active: "🟢 Faol"
-
-    };
-
-    return map[status] ||
-      `📌 ${status}`;
-
-  }
-
-
-  function escapeHtml(value) {
-
-    if (value === null ||
-        value === undefined) {
       return "";
+
     }
 
+
     return String(value)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+
+      .replaceAll(
+        "&",
+        "&amp;"
+      )
+
+      .replaceAll(
+        "<",
+        "&lt;"
+      )
+
+      .replaceAll(
+        ">",
+        "&gt;"
+      )
+
+      .replaceAll(
+        '"',
+        "&quot;"
+      )
+
+      .replaceAll(
+        "'",
+        "&#039;"
+      );
 
   }
 
@@ -1861,6 +4217,13 @@
   /* =========================
      START
   ========================= */
+
+  initMap();
+
+  loadDraft();
+
+  loadProfile();
+
 
   if (!initData) {
 
@@ -1871,11 +4234,6 @@
   }
 
 
-  // Dastlab lokatsiyani avtomatik so‘ramaymiz.
-  // Foydalanuvchi o‘zi bosganda ruxsat beradi.
-
-
-  // Telegram MainButton uchun tayyor holat
   try {
 
     tg.MainButton.setText(
@@ -1888,6 +4246,6 @@
 
 
 </script>
-
 </body>
 </html>
+:::
