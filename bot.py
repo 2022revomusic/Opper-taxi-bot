@@ -1,5 +1,7 @@
 import os
 import asyncio
+from datetime import datetime, timedelta
+
 import aiosqlite
 
 from aiogram import Bot, Dispatcher, F
@@ -94,6 +96,27 @@ cities = ReplyKeyboardMarkup(
     ],
     resize_keyboard=True
 )
+
+
+# =========================
+# DATE BUTTONS
+# =========================
+
+def date_keyboard():
+    buttons = []
+
+    for i in range(7):
+        date = datetime.now() + timedelta(days=i)
+        date_text = date.strftime("%d.%m.%Y")
+
+        buttons.append([
+            KeyboardButton(text=date_text)
+        ])
+
+    return ReplyKeyboardMarkup(
+        keyboard=buttons,
+        resize_keyboard=True
+    )
 
 
 # =========================
@@ -260,8 +283,8 @@ async def driver_to(message: Message, state: FSMContext):
     await state.set_state(DriverState.date)
 
     await message.answer(
-        "📅 Safar sanasini yozing.\n\n"
-        "Masalan: 30.09.2026"
+        "📅 Safar sanasini tanlang:",
+        reply_markup=date_keyboard()
     )
 
 
@@ -329,7 +352,6 @@ async def driver_price(message: Message, state: FSMContext):
 
     async with aiosqlite.connect(DB) as db:
 
-        # Haydovchi safarini saqlash
         await db.execute("""
             INSERT INTO rides
             (telegram_id, name, phone, role, from_city, to_city,
@@ -351,7 +373,6 @@ async def driver_price(message: Message, state: FSMContext):
 
         await db.commit()
 
-        # Shu yo‘nalish va sanaga mos yo‘lovchilar
         cursor = await db.execute("""
             SELECT telegram_id, name, phone, from_city, to_city,
                    date, time, seats
@@ -370,7 +391,6 @@ async def driver_price(message: Message, state: FSMContext):
 
     passengers = []
 
-    # Haydovchining bo‘sh joyiga sig‘adigan yo‘lovchilar
     for passenger in all_passengers:
         try:
             passenger_count = int(passenger[7])
@@ -383,7 +403,6 @@ async def driver_price(message: Message, state: FSMContext):
 
     await state.clear()
 
-    # Haydovchiga asosiy e'lon
     text = (
         "✅ <b>E’loningiz joylandi!</b>\n\n"
         f"🚕 {data['from_city']} → {data['to_city']}\n"
@@ -394,7 +413,6 @@ async def driver_price(message: Message, state: FSMContext):
         f"💰 Narx: {data['price']}\n"
     )
 
-    # Mos yo‘lovchilar bo‘lsa
     if passengers:
         text += "\n👤 <b>Sizga mos yo‘lovchilar:</b>\n\n"
 
@@ -418,7 +436,6 @@ async def driver_price(message: Message, state: FSMContext):
                 f"📱 {phone}\n\n"
             )
 
-            # Yo‘lovchiga avtomatik xabar
             try:
                 await bot.send_message(
                     passenger_id,
@@ -430,16 +447,14 @@ async def driver_price(message: Message, state: FSMContext):
                     f"💺 Bo‘sh joy: {data['seats']}\n"
                     f"💰 Narx: {data['price']}\n"
                     f"👤 Haydovchi: {data['name']}\n"
-                    f"📱 Telefon: {data['phone']}",
+                    f"📱 {data['phone']}",
                     parse_mode="HTML"
                 )
             except Exception:
                 pass
 
     else:
-        text += (
-            "\n😔 Hozircha shu safarga mos yo‘lovchi topilmadi."
-        )
+        text += "\n😔 Hozircha shu safarga mos yo‘lovchi topilmadi."
 
     await message.answer(
         text,
@@ -551,8 +566,8 @@ async def passenger_to(message: Message, state: FSMContext):
     await state.set_state(PassengerState.date)
 
     await message.answer(
-        "📅 Safar sanasini yozing.\n\n"
-        "Masalan: 30.09.2026"
+        "📅 Safar sanasini tanlang:",
+        reply_markup=date_keyboard()
     )
 
 
@@ -579,7 +594,7 @@ async def passenger_time(message: Message, state: FSMContext):
 
 
 # =========================
-# PASSENGER FINISH + AUTO MATCH
+# PASSENGER FINISH
 # =========================
 
 @dp.message(PassengerState.passengers)
@@ -602,7 +617,6 @@ async def passenger_finish(message: Message, state: FSMContext):
 
     async with aiosqlite.connect(DB) as db:
 
-        # Yo‘lovchi safarini saqlash
         await db.execute("""
             INSERT INTO rides
             (telegram_id, name, phone, role, from_city, to_city,
@@ -622,7 +636,6 @@ async def passenger_finish(message: Message, state: FSMContext):
 
         await db.commit()
 
-        # Shu yo‘nalish va sanaga mos haydovchilar
         cursor = await db.execute("""
             SELECT telegram_id, name, phone, from_city, to_city,
                    date, time, car, seats, price
@@ -641,7 +654,6 @@ async def passenger_finish(message: Message, state: FSMContext):
 
     drivers = []
 
-    # Yo‘lovchilar soniga yetadigan haydovchilar
     for driver in all_drivers:
         try:
             driver_seats = int(driver[8])
@@ -701,7 +713,6 @@ async def passenger_finish(message: Message, state: FSMContext):
             f"📱 {phone}\n\n"
         )
 
-        # Haydovchiga avtomatik xabar
         try:
             await bot.send_message(
                 driver_id,
@@ -756,14 +767,15 @@ async def search_to(message: Message, state: FSMContext):
     await state.update_data(to_city=message.text)
     await state.set_state(SearchState.date)
 
+    keyboard = date_keyboard()
+
+    keyboard.keyboard.append([
+        KeyboardButton(text="⬅️ Bekor qilish")
+    ])
+
     await message.answer(
-        "📅 Safar sanasi?",
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard=[
-                [KeyboardButton(text="⬅️ Bekor qilish")]
-            ],
-            resize_keyboard=True
-        )
+        "📅 Safar sanasini tanlang:",
+        reply_markup=keyboard
     )
 
 
@@ -834,8 +846,7 @@ async def search_date(message: Message, state: FSMContext):
 
     await message.answer(
         text,
-        reply_markup=main_menu,
-        parse_mode="HTML"
+        reply_markup=main_menu
     )
 
 
