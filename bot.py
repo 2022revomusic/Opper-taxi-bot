@@ -348,8 +348,8 @@ async def driver_price(message: Message, state: FSMContext):
 
         # Shu yo‘nalish va sanaga mos yo‘lovchilarni topish
         cursor = await db.execute("""
-            SELECT name, phone, from_city, to_city,
-                   date, time, seats
+            SELECT telegram_id, name, phone, from_city, to_city,
+       date, time, seats
             FROM rides
             WHERE role = 'passenger'
             AND from_city = ?
