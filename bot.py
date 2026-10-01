@@ -662,7 +662,6 @@ async def init_db():
                 created_at INTEGER NOT NULL
             )
             """
-        )
 
         # -------------------------------------------------
         # MIGRATIONS
