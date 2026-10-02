@@ -1,0 +1,2984 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+>
+
+<title>OPPER TAXI</title>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+*{
+    box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent;
+}
+
+html,
+body{
+    margin:0;
+    padding:0;
+    min-height:100%;
+}
+
+body{
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Arial,
+        sans-serif;
+
+    background:#f3f4f6;
+    color:#111827;
+}
+
+button,
+input,
+select{
+    font-family:inherit;
+}
+
+button{
+    cursor:pointer;
+}
+
+.hidden{
+    display:none !important;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.header{
+    background:#111827;
+    color:white;
+    padding:
+        calc(20px + env(safe-area-inset-top))
+        18px
+        22px;
+
+    border-radius:0 0 26px 26px;
+    box-shadow:0 5px 20px rgba(0,0,0,.15);
+}
+
+.logo{
+    font-size:27px;
+    font-weight:900;
+    letter-spacing:.3px;
+}
+
+.subtitle{
+    margin-top:5px;
+    color:#cbd5e1;
+    font-size:14px;
+}
+
+/* =========================
+   CONTAINER
+========================= */
+
+.container{
+    width:100%;
+    max-width:680px;
+    margin:0 auto;
+    padding:16px 15px 35px;
+}
+
+/* =========================
+   TABS
+========================= */
+
+.tabs{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-bottom:15px;
+}
+
+.tab{
+    height:50px;
+    border:0;
+    border-radius:15px;
+    background:#e5e7eb;
+    color:#111827;
+    font-size:15px;
+    font-weight:800;
+}
+
+.tab.active{
+    background:#111827;
+    color:white;
+}
+
+/* =========================
+   CARD
+========================= */
+
+.card{
+    background:white;
+    border-radius:20px;
+    padding:17px;
+    margin-bottom:14px;
+    box-shadow:0 4px 18px rgba(0,0,0,.06);
+}
+
+.title{
+    font-size:20px;
+    font-weight:900;
+    margin-bottom:15px;
+}
+
+/* =========================
+   FORM
+========================= */
+
+label{
+    display:block;
+    margin:13px 0 6px;
+    color:#374151;
+    font-size:13px;
+    font-weight:800;
+}
+
+input,
+select{
+    width:100%;
+    height:49px;
+    border:1px solid #d1d5db;
+    border-radius:13px;
+    padding:0 13px;
+    background:#fff;
+    color:#111827;
+    font-size:16px;
+    outline:none;
+    appearance:auto;
+}
+
+input:focus,
+select:focus{
+    border-color:#111827;
+    box-shadow:0 0 0 2px rgba(17,24,39,.08);
+}
+
+/* =========================
+   BUTTON
+========================= */
+
+.btn{
+    width:100%;
+    min-height:50px;
+    border:0;
+    border-radius:14px;
+    margin-top:14px;
+    padding:12px 15px;
+    background:#111827;
+    color:white;
+    font-size:16px;
+    font-weight:850;
+}
+
+.btn:active{
+    transform:scale(.98);
+}
+
+.btn.secondary{
+    background:#e5e7eb;
+    color:#111827;
+}
+
+.btn.success{
+    background:#15803d;
+}
+
+.btn.danger{
+    background:#dc2626;
+}
+
+.btn:disabled{
+    opacity:.55;
+}
+
+/* =========================
+   RIDES
+========================= */
+
+.ride{
+    background:white;
+    border-radius:18px;
+    padding:16px;
+    margin-bottom:12px;
+    box-shadow:0 3px 15px rgba(0,0,0,.06);
+}
+
+.route{
+    font-size:18px;
+    font-weight:900;
+    line-height:1.35;
+}
+
+.arrow{
+    color:#6b7280;
+    padding:0 5px;
+}
+
+.info{
+    margin-top:10px;
+    color:#4b5563;
+    font-size:14px;
+    line-height:1.7;
+}
+
+.price{
+    margin-top:10px;
+    font-size:20px;
+    font-weight:950;
+    color:#111827;
+}
+
+.small{
+    margin-top:8px;
+    color:#6b7280;
+    font-size:13px;
+}
+
+.badge{
+    display:inline-block;
+    margin-top:9px;
+    padding:5px 9px;
+    border-radius:8px;
+    background:#f3f4f6;
+    color:#374151;
+    font-size:12px;
+    font-weight:800;
+}
+
+/* =========================
+   EMPTY
+========================= */
+
+.empty{
+    text-align:center;
+    padding:28px 12px;
+    color:#6b7280;
+    font-size:14px;
+}
+
+/* =========================
+   LOADING
+========================= */
+
+.loading{
+    text-align:center;
+    padding:25px 10px;
+    color:#6b7280;
+}
+
+/* =========================
+   TOAST
+========================= */
+
+.toast{
+    position:fixed;
+    left:15px;
+    right:15px;
+    bottom:
+        calc(18px + env(safe-area-inset-bottom));
+
+    background:#111827;
+    color:white;
+    padding:14px 16px;
+    border-radius:14px;
+    display:none;
+    z-index:9999;
+    text-align:center;
+    font-size:14px;
+    font-weight:700;
+    box-shadow:0 8px 30px rgba(0,0,0,.25);
+}
+
+/* =========================
+   PROFILE
+========================= */
+
+.profile-box{
+    background:#f9fafb;
+    border-radius:14px;
+    padding:13px;
+    margin-bottom:12px;
+}
+
+.profile-row{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    padding:7px 0;
+    border-bottom:1px solid #e5e7eb;
+    font-size:14px;
+}
+
+.profile-row:last-child{
+    border-bottom:0;
+}
+
+.profile-label{
+    color:#6b7280;
+}
+
+.profile-value{
+    font-weight:800;
+    text-align:right;
+}
+
+/* =========================
+   USER BAR
+========================= */
+
+.userbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:14px;
+    padding:11px 13px;
+    background:white;
+    border-radius:15px;
+    box-shadow:0 3px 12px rgba(0,0,0,.05);
+}
+
+.avatar{
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#111827;
+    color:white;
+    font-size:18px;
+    font-weight:900;
+}
+
+.username{
+    font-size:14px;
+    font-weight:800;
+}
+
+.userhint{
+    margin-top:2px;
+    color:#6b7280;
+    font-size:12px;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media(max-width:380px){
+
+    .container{
+        padding-left:10px;
+        padding-right:10px;
+    }
+
+    .card{
+        padding:14px;
+    }
+
+    .logo{
+        font-size:24px;
+    }
+
+    .title{
+        font-size:18px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- =========================
+     HEADER
+========================= -->
+
+<div class="header">
+
+    <div class="logo">
+        🚕 OPPER TAXI
+    </div>
+
+    <div class="subtitle">
+        O‘zbekiston bo‘ylab qulay va ishonchli safarlar
+    </div>
+
+</div>
+
+
+<div class="container">
+
+    <!-- USER -->
+
+    <div class="userbar">
+
+        <div class="avatar" id="avatar">
+            👤
+        </div>
+
+        <div>
+
+            <div
+                class="username"
+                id="username"
+            >
+                Telegram foydalanuvchisi
+            </div>
+
+            <div class="userhint">
+                OPPER TAXI xizmatiga xush kelibsiz
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- TABS -->
+
+    <div class="tabs">
+
+        <button
+            id="passengerTab"
+            class="tab active"
+            onclick="showPage('passenger')"
+        >
+            👤 Yo‘lovchi
+        </button>
+
+        <button
+            id="driverTab"
+            class="tab"
+            onclick="showPage('driver')"
+        >
+            🚕 Haydovchi
+        </button>
+
+    </div>
+
+
+    <!-- =========================
+         PASSENGER
+    ========================= -->
+
+    <div id="passengerPage">
+
+        <div class="card">
+
+            <div class="title">
+                🔎 Safar qidirish
+            </div>
+
+
+            <label>
+                Qayerdan — viloyat
+            </label>
+
+            <select
+                id="searchFromRegion"
+                onchange="loadDistricts(
+                    'searchFromRegion',
+                    'searchFromDistrict'
+                )"
+            >
+
+                <option value="">
+                    Viloyatni tanlang
+                </option>
+
+            </select>
+
+
+            <label>
+                Qayerdan — tuman/shahar
+            </label>
+
+            <select id="searchFromDistrict">
+
+                <option value="">
+                    Avval viloyatni tanlang
+                </option>
+
+            </select>
+
+
+            <label>
+                Qayerga — viloyat
+            </label>
+
+            <select
+                id="searchToRegion"
+                onchange="loadDistricts(
+                    'searchToRegion',
+                    'searchToDistrict'
+                )"
+            >
+
+                <option value="">
+                    Viloyatni tanlang
+                </option>
+
+            </select>
+
+
+            <label>
+                Qayerga — tuman/shahar
+            </label>
+
+            <select id="searchToDistrict">
+
+                <option value="">
+                    Avval viloyatni tanlang
+                </option>
+
+            </select>
+
+
+            <button
+                class="btn"
+                id="searchButton"
+                onclick="searchRides()"
+            >
+                🔎 Safarlarni qidirish
+            </button>
+
+        </div>
+
+
+        <div id="rides">
+
+            <div class="empty">
+                📍 Qayerdan va qayerga borishingizni tanlang.
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         DRIVER
+    ========================= -->
+
+    <div
+        id="driverPage"
+        class="hidden"
+    >
+
+        <!-- DRIVER PROFILE -->
+
+        <div class="card">
+
+            <div class="title">
+                🚕 Haydovchi profili
+            </div>
+
+
+            <label>
+                F.I.Sh.
+            </label>
+
+            <input
+                id="driverName"
+                type="text"
+                autocomplete="name"
+                placeholder="Ism Familiya"
+            >
+
+
+            <label>
+                Telefon
+            </label>
+
+            <input
+                id="driverPhone"
+                type="tel"
+                autocomplete="tel"
+                placeholder="+998901234567"
+            >
+
+
+            <label>
+                Avtomobil rusumi
+            </label>
+
+            <input
+                id="carModel"
+                type="text"
+                placeholder="Cobalt"
+            >
+
+
+            <label>
+                Avtomobil raqami
+            </label>
+
+            <input
+                id="carNumber"
+                type="text"
+                placeholder="01 A 123 BC"
+            >
+
+
+            <label>
+                Viloyat
+            </label>
+
+            <select
+                id="driverRegion"
+                onchange="loadDistricts(
+                    'driverRegion',
+                    'driverDistrict'
+                )"
+            >
+
+                <option value="">
+                    Viloyatni tanlang
+                </option>
+
+            </select>
+
+
+            <label>
+                Tuman/shahar
+            </label>
+
+            <select id="driverDistrict">
+
+                <option value="">
+                    Avval viloyatni tanlang
+                </option>
+
+            </select>
+
+
+            <label>
+                Bo‘sh o‘rindiqlar
+            </label>
+
+            <input
+                id="driverSeats"
+                type="number"
+                min="1"
+                max="4"
+                step="1"
+                value="4"
+            >
+
+
+            <button
+                class="btn"
+                onclick="registerDriver()"
+            >
+                💾 Profilni saqlash
+            </button>
+
+        </div>
+
+
+        <!-- ADD RIDE -->
+
+        <div class="card">
+
+            <div class="title">
+                ➕ Safar joylash
+            </div>
+
+
+            <label>
+                Qayerdan — viloyat
+            </label>
+
+            <select
+                id="rideFromRegion"
+                onchange="loadDistricts(
+                    'rideFromRegion',
+                    'rideFromDistrict'
+                )"
+            >
+
+                <option value="">
+                    Viloyatni tanlang
+                </option>
+
+            </select>
+
+
+            <label>
+                Qayerdan — tuman/shahar
+            </label>
+
+            <select id="rideFromDistrict">
+
+                <option value="">
+                    Avval viloyatni tanlang
+                </option>
+
+            </select>
+
+
+            <label>
+                Qayerga — viloyat
+            </label>
+
+            <select
+                id="rideToRegion"
+                onchange="loadDistricts(
+                    'rideToRegion',
+                    'rideToDistrict'
+                )"
+            >
+
+                <option value="">
+                    Viloyatni tanlang
+                </option>
+
+            </select>
+
+
+            <label>
+                Qayerga — tuman/shahar
+            </label>
+
+            <select id="rideToDistrict">
+
+                <option value="">
+                    Avval viloyatni tanlang
+                </option>
+
+            </select>
+
+
+            <label>
+                Sana
+            </label>
+
+            <input
+                id="rideDate"
+                type="date"
+            >
+
+
+            <label>
+                Vaqt
+            </label>
+
+            <input
+                id="rideTime"
+                type="time"
+            >
+
+
+            <label>
+                Bo‘sh joy
+            </label>
+
+            <input
+                id="rideSeats"
+                type="number"
+                min="1"
+                max="4"
+                step="1"
+                value="1"
+            >
+
+
+            <label>
+                Narx
+            </label>
+
+            <input
+                id="ridePrice"
+                type="number"
+                min="0"
+                step="1000"
+                inputmode="numeric"
+                placeholder="130000"
+            >
+
+
+            <button
+                class="btn"
+                onclick="addRide()"
+            >
+                🚕 Safarni joylash
+            </button>
+
+        </div>
+
+
+        <!-- MY RIDES -->
+
+        <div class="card">
+
+            <div class="title">
+                📋 Mening safarlarim
+            </div>
+
+            <div id="myRides">
+
+                <div class="empty">
+                    Hozircha safar yo‘q.
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- TOAST -->
+
+<div
+    id="toast"
+    class="toast"
+></div>
+
+
+<script>
+
+/* =====================================================
+   TELEGRAM
+===================================================== */
+
+const tg = window.Telegram
+    ? window.Telegram.WebApp
+    : null;
+
+if(tg){
+
+    tg.ready();
+
+    tg.expand();
+
+    try{
+        tg.enableClosingConfirmation();
+    }catch(e){}
+
+}
+
+const INIT_DATA =
+    tg && tg.initData
+        ? tg.initData
+        : "";
+
+
+/* =====================================================
+   TELEGRAM USER
+===================================================== */
+
+function loadTelegramUser(){
+
+    try{
+
+        if(!tg || !tg.initDataUnsafe){
+            return;
+        }
+
+        const user =
+            tg.initDataUnsafe.user;
+
+        if(!user){
+            return;
+        }
+
+        let name =
+            user.first_name || "";
+
+        if(user.last_name){
+            name +=
+                " " + user.last_name;
+        }
+
+        if(!name){
+            name =
+                user.username
+                ? "@" + user.username
+                : "Telegram foydalanuvchisi";
+        }
+
+        document.getElementById(
+            "username"
+        ).textContent = name;
+
+        const avatar =
+            document.getElementById(
+                "avatar"
+            );
+
+        if(user.first_name){
+
+            avatar.textContent =
+                user.first_name
+                    .charAt(0)
+                    .toUpperCase();
+
+        }
+
+    }
+    catch(error){
+
+        console.log(
+            "Telegram user error:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   REGIONS
+===================================================== */
+
+const REGIONS = {
+
+"Toshkent shahri":[
+"Chilonzor",
+"Yunusobod",
+"Mirzo Ulug‘bek",
+"Mirobod",
+"Shayxontohur",
+"Olmazor",
+"Sergeli",
+"Bektemir",
+"Yakkasaroy",
+"Uchtepa",
+"Yashnobod",
+"Yangihayot"
+],
+
+"Toshkent viloyati":[
+"Bekobod",
+"Bo‘ka",
+"Chinoz",
+"Ohangaron",
+"Oqqo‘rg‘on",
+"Parkent",
+"Piskent",
+"Quyi Chirchiq",
+"Toshkent tumani",
+"Yangiyo‘l",
+"Yuqori Chirchiq",
+"Zangiota",
+"Qibray"
+],
+
+"Farg‘ona viloyati":[
+"Bag‘dod",
+"Beshariq",
+"Buvayda",
+"Dang‘ara",
+"Farg‘ona tumani",
+"Furqat",
+"Oltiariq",
+"Qo‘shtepa",
+"Quva",
+"Rishton",
+"So‘x",
+"Toshloq",
+"Uchko‘prik",
+"Yozyovon",
+"Marg‘ilon shahri",
+"Farg‘ona shahri",
+"Qo‘qon shahri"
+],
+
+"Andijon viloyati":[
+"Andijon tumani",
+"Asaka",
+"Baliqchi",
+"Bo‘z",
+"Buloqboshi",
+"Izboskan",
+"Jalaquduq",
+"Marhamat",
+"Oltinko‘l",
+"Paxtaobod",
+"Qo‘rg‘ontepa",
+"Shahrixon",
+"Ulug‘nor",
+"Xo‘jaobod",
+"Andijon shahri"
+],
+
+"Namangan viloyati":[
+"Chortoq",
+"Chust",
+"Kosonsoy",
+"Mingbuloq",
+"Namangan tumani",
+"Norin",
+"Pop",
+"To‘raqo‘rg‘on",
+"Uchqo‘rg‘on",
+"Uychi",
+"Yangiqo‘rg‘on",
+"Namangan shahri"
+],
+
+"Sirdaryo viloyati":[
+"Boyovut",
+"Guliston",
+"Mirzaobod",
+"Oqoltin",
+"Sayxunobod",
+"Sardoba",
+"Sirdaryo tumani",
+"Xovos"
+],
+
+"Jizzax viloyati":[
+"Arnasoy",
+"Baxmal",
+"Do‘stlik",
+"Forish",
+"G‘allaorol",
+"Jizzax tumani",
+"Mirzacho‘l",
+"Paxtakor",
+"Yangiobod",
+"Zafarobod",
+"Zarbdor"
+],
+
+"Samarqand viloyati":[
+"Bulung‘ur",
+"Ishtixon",
+"Jomboy",
+"Kattaqo‘rg‘on",
+"Kattaqo‘rg‘on shahri",
+"Narpay",
+"Nurobod",
+"Oqdaryo",
+"Pastdarg‘om",
+"Paxtachi",
+"Payariq",
+"Qo‘shrabot",
+"Samarqand tumani",
+"Samarqand shahri",
+"Toyloq",
+"Urgut"
+],
+
+"Qashqadaryo viloyati":[
+"Chiroqchi",
+"Dehqonobod",
+"G‘uzor",
+"Kasbi",
+"Kitob",
+"Koson",
+"Mirishkor",
+"Muborak",
+"Nishon",
+"Qamashi",
+"Qarshi tumani",
+"Qarshi shahri",
+"Shahrisabz",
+"Yakkabog‘"
+],
+
+"Surxondaryo viloyati":[
+"Angor",
+"Boysun",
+"Denov",
+"Jarqo‘rg‘on",
+"Muzrabot",
+"Oltinsoy",
+"Qiziriq",
+"Qumqo‘rg‘on",
+"Sariosiyo",
+"Sherobod",
+"Sho‘rchi",
+"Termiz tumani",
+"Termiz shahri",
+"Uzun"
+],
+
+"Buxoro viloyati":[
+"Buxoro tumani",
+"Buxoro shahri",
+"G‘ijduvon",
+"Jondor",
+"Kogon",
+"Kogon shahri",
+"Olot",
+"Peshku",
+"Qorako‘l",
+"Qorovulbozor",
+"Romitan",
+"Shofirkon",
+"Vobkent"
+],
+
+"Navoiy viloyati":[
+"Karmana",
+"Konimex",
+"Navbahor",
+"Navoiy shahri",
+"Nurota",
+"Qiziltepa",
+"Tomdi",
+"Uchquduq",
+"Xatirchi"
+],
+
+"Xorazm viloyati":[
+"Bog‘ot",
+"Gurlan",
+"Hazorasp",
+"Honqa",
+"Qo‘shko‘pir",
+"Shovot",
+"Tuproqqal’a",
+"Urganch tumani",
+"Urganch shahri",
+"Xiva",
+"Xiva shahri",
+"Yangiariq",
+"Yangibozor"
+],
+
+"Qoraqalpog‘iston Respublikasi":[
+"Amudaryo",
+"Beruniy",
+"Chimboy",
+"Ellikqal’a",
+"Kegeyli",
+"Mo‘ynoq",
+"Nukus tumani",
+"Nukus shahri",
+"Qanliko‘l",
+"Qo‘ng‘irot",
+"Shumanay",
+"Taxtako‘pir",
+"To‘rtko‘l",
+"Xo‘jayli"
+]
+
+};
+
+
+/* =====================================================
+   API
+===================================================== */
+
+async function api(
+    url,
+    data = {},
+    method = "POST"
+){
+
+    const options = {
+
+        method:method,
+
+        headers:{
+            "Content-Type":
+                "application/json"
+        }
+
+    };
+
+
+    if(method !== "GET"){
+
+        options.body =
+            JSON.stringify({
+
+                ...data,
+
+                init_data:
+                    INIT_DATA
+
+            });
+
+    }
+
+
+    if(INIT_DATA){
+
+        options.headers[
+            "X-Telegram-Init-Data"
+        ] = INIT_DATA;
+
+    }
+
+
+    const response =
+        await fetch(
+            url,
+            options
+        );
+
+
+    let result;
+
+    try{
+
+        result =
+            await response.json();
+
+    }
+    catch(error){
+
+        throw new Error(
+            "Serverdan noto‘g‘ri javob keldi."
+        );
+
+    }
+
+
+    if(
+        !response.ok
+        || result.ok === false
+    ){
+
+        throw new Error(
+            result.error
+            || result.message
+            || "Xatolik yuz berdi."
+        );
+
+    }
+
+
+    return result;
+
+}
+
+
+/* =====================================================
+   TOAST
+===================================================== */
+
+let toastTimer = null;
+
+function toast(message){
+
+    const box =
+        document.getElementById(
+            "toast"
+        );
+
+    box.textContent =
+        message || "Bajarildi";
+
+    box.style.display =
+        "block";
+
+
+    clearTimeout(
+        toastTimer
+    );
+
+
+    toastTimer =
+        setTimeout(
+            function(){
+
+                box.style.display =
+                    "none";
+
+            },
+            3000
+        );
+
+}
+
+
+/* =====================================================
+   TELEGRAM POPUP
+===================================================== */
+
+function telegramAlert(message){
+
+    if(
+        tg
+        && typeof tg.showAlert === "function"
+    ){
+
+        tg.showAlert(
+            message
+        );
+
+        return;
+
+    }
+
+    toast(message);
+
+}
+
+
+/* =====================================================
+   PAGE
+===================================================== */
+
+function showPage(page){
+
+    const passenger =
+        document.getElementById(
+            "passengerPage"
+        );
+
+    const driver =
+        document.getElementById(
+            "driverPage"
+        );
+
+    const passengerTab =
+        document.getElementById(
+            "passengerTab"
+        );
+
+    const driverTab =
+        document.getElementById(
+            "driverTab"
+        );
+
+
+    if(page === "driver"){
+
+        passenger.classList.add(
+            "hidden"
+        );
+
+        driver.classList.remove(
+            "hidden"
+        );
+
+        passengerTab.classList.remove(
+            "active"
+        );
+
+        driverTab.classList.add(
+            "active"
+        );
+
+        loadMyRides();
+
+    }
+    else{
+
+        driver.classList.add(
+            "hidden"
+        );
+
+        passenger.classList.remove(
+            "hidden"
+        );
+
+        driverTab.classList.remove(
+            "active"
+        );
+
+        passengerTab.classList.add(
+            "active"
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   FILL REGIONS
+===================================================== */
+
+function fillRegions(id){
+
+    const select =
+        document.getElementById(id);
+
+    if(!select){
+        return;
+    }
+
+
+    select.innerHTML =
+        '<option value="">Viloyatni tanlang</option>';
+
+
+    Object.keys(
+        REGIONS
+    ).forEach(
+        function(region){
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+            option.value =
+                region;
+
+            option.textContent =
+                region;
+
+            select.appendChild(
+                option
+            );
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   DISTRICTS
+===================================================== */
+
+function loadDistricts(
+    regionId,
+    districtId
+){
+
+    const regionSelect =
+        document.getElementById(
+            regionId
+        );
+
+    const districtSelect =
+        document.getElementById(
+            districtId
+        );
+
+
+    if(
+        !regionSelect
+        || !districtSelect
+    ){
+
+        return;
+
+    }
+
+
+    const region =
+        regionSelect.value;
+
+
+    districtSelect.innerHTML =
+        '<option value="">Tuman/shaharni tanlang</option>';
+
+
+    if(!region){
+        return;
+    }
+
+
+    const districts =
+        REGIONS[region] || [];
+
+
+    districts.forEach(
+        function(item){
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+            option.value =
+                item;
+
+            option.textContent =
+                item;
+
+            districtSelect.appendChild(
+                option
+            );
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   VALIDATE SEATS
+===================================================== */
+
+function validSeats(value){
+
+    const seats =
+        Number(value);
+
+    return (
+        Number.isInteger(seats)
+        && seats >= 1
+        && seats <= 4
+    );
+
+}
+
+
+/* =====================================================
+   REGISTER DRIVER
+===================================================== */
+
+async function registerDriver(){
+
+    try{
+
+        const fullName =
+            document.getElementById(
+                "driverName"
+            ).value.trim();
+
+
+        const phone =
+            document.getElementById(
+                "driverPhone"
+            ).value.trim();
+
+
+        const carModel =
+            document.getElementById(
+                "carModel"
+            ).value.trim();
+
+
+        const carNumber =
+            document.getElementById(
+                "carNumber"
+            ).value.trim();
+
+
+        const region =
+            document.getElementById(
+                "driverRegion"
+            ).value;
+
+
+        const district =
+            document.getElementById(
+                "driverDistrict"
+            ).value;
+
+
+        const seats =
+            Number(
+                document.getElementById(
+                    "driverSeats"
+                ).value
+            );
+
+
+        if(!fullName){
+
+            toast(
+                "F.I.Sh.ni kiriting."
+            );
+
+            return;
+
+        }
+
+
+        if(!phone){
+
+            toast(
+                "Telefon raqamingizni kiriting."
+            );
+
+            return;
+
+        }
+
+
+        if(!carModel){
+
+            toast(
+                "Avtomobil rusumini kiriting."
+            );
+
+            return;
+
+        }
+
+
+        if(!carNumber){
+
+            toast(
+                "Avtomobil raqamini kiriting."
+            );
+
+            return;
+
+        }
+
+
+        if(!region){
+
+            toast(
+                "Viloyatni tanlang."
+            );
+
+            return;
+
+        }
+
+
+        if(!district){
+
+            toast(
+                "Tuman/shaharni tanlang."
+            );
+
+            return;
+
+        }
+
+
+        if(!validSeats(seats)){
+
+            toast(
+                "O‘rindiqlar soni 1–4 bo‘lishi kerak."
+            );
+
+            return;
+
+        }
+
+
+        const result =
+            await api(
+                "/api/driver/register",
+                {
+
+                    full_name:
+                        fullName,
+
+                    phone:
+                        phone,
+
+                    car_model:
+                        carModel,
+
+                    car_number:
+                        carNumber,
+
+                    region:
+                        region,
+
+                    district:
+                        district,
+
+                    seats:
+                        seats
+
+                }
+            );
+
+
+        telegramAlert(
+            result.message
+            || "Haydovchi ma'lumotlari saqlandi."
+        );
+
+    }
+    catch(error){
+
+        console.error(
+            error
+        );
+
+        telegramAlert(
+            error.message
+            || "Xatolik yuz berdi."
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   ADD RIDE
+===================================================== */
+
+async function addRide(){
+
+    try{
+
+        const fromRegion =
+            document.getElementById(
+                "rideFromRegion"
+            ).value;
+
+
+        const fromDistrict =
+            document.getElementById(
+                "rideFromDistrict"
+            ).value;
+
+
+        const toRegion =
+            document.getElementById(
+                "rideToRegion"
+            ).value;
+
+
+        const toDistrict =
+            document.getElementById(
+                "rideToDistrict"
+            ).value;
+
+
+        const rideDate =
+            document.getElementById(
+                "rideDate"
+            ).value;
+
+
+        const rideTime =
+            document.getElementById(
+                "rideTime"
+            ).value;
+
+
+        const seats =
+            Number(
+                document.getElementById(
+                    "rideSeats"
+                ).value
+            );
+
+
+        const price =
+            Number(
+                document.getElementById(
+                    "ridePrice"
+                ).value
+            );
+
+
+        if(!fromRegion){
+
+            toast(
+                "Qayerdan viloyatini tanlang."
+            );
+
+            return;
+
+        }
+
+
+        if(!fromDistrict){
+
+            toast(
+                "Qayerdan tuman/shahrini tanlang."
+            );
+
+            return;
+
+        }
+
+
+        if(!toRegion){
+
+            toast(
+                "Qayerga viloyatini tanlang."
+            );
+
+            return;
+
+        }
+
+
+        if(!toDistrict){
+
+            toast(
+                "Qayerga tuman/shahrini tanlang."
+            );
+
+            return;
+
+        }
+
+
+        if(
+            fromRegion === toRegion
+            && fromDistrict === toDistrict
+        ){
+
+            toast(
+                "Qayerdan va qayerga manzili bir xil bo‘lishi mumkin emas."
+            );
+
+            return;
+
+        }
+
+
+        if(!rideDate){
+
+            toast(
+                "Safar sanasini tanlang."
+            );
+
+            return;
+
+        }
+
+
+        if(!rideTime){
+
+            toast(
+                "Safar vaqtini tanlang."
+            );
+
+            return;
+
+        }
+
+
+        if(!validSeats(seats)){
+
+            toast(
+                "Bo‘sh joy 1–4 oralig‘ida bo‘lishi kerak."
+            );
+
+            return;
+
+        }
+
+
+        if(
+            !Number.isFinite(price)
+            || price < 0
+        ){
+
+            toast(
+                "Narxni to‘g‘ri kiriting."
+            );
+
+            return;
+
+        }
+
+
+        const result =
+            await api(
+                "/api/driver/ride",
+                {
+
+                    from_region:
+                        fromRegion,
+
+                    from_district:
+                        fromDistrict,
+
+                    to_region:
+                        toRegion,
+
+                    to_district:
+                        toDistrict,
+
+                    ride_date:
+                        rideDate,
+
+                    ride_time:
+                        rideTime,
+
+                    seats:
+                        seats,
+
+                    price:
+                        price
+
+                }
+            );
+
+
+        telegramAlert(
+            result.message
+            || "Safar muvaffaqiyatli joylandi."
+        );
+
+
+        document.getElementById(
+            "ridePrice"
+        ).value = "";
+
+
+        await loadMyRides();
+
+    }
+    catch(error){
+
+        console.error(
+            error
+        );
+
+        telegramAlert(
+            error.message
+            || "Safarni joylashda xatolik."
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   SEARCH RIDES
+===================================================== */
+
+async function searchRides(){
+
+    try{
+
+        const fromRegion =
+            document.getElementById(
+                "searchFromRegion"
+            ).value;
+
+
+        const fromDistrict =
+            document.getElementById(
+                "searchFromDistrict"
+            ).value;
+
+
+        const toRegion =
+            document.getElementById(
+                "searchToRegion"
+            ).value;
+
+
+        const toDistrict =
+            document.getElementById(
+                "searchToDistrict"
+            ).value;
+
+
+        if(!fromRegion){
+
+            toast(
+                "Qayerdan viloyatini tanlang."
+            );
+
+            return;
+
+        }
+
+
+        if(!fromDistrict){
+
+            toast(
+                "Qayerdan tuman/shahrini tanlang."
+            );
+
+            return;
+
+        }
+
+
+        if(!toRegion){
+
+            toast(
+                "Qayerga viloyatini tanlang."
+            );
+
+            return;
+
+        }
+
+
+        if(!toDistrict){
+
+            toast(
+                "Qayerga tuman/shahrini tanlang."
+            );
+
+            return;
+
+        }
+
+
+        const button =
+            document.getElementById(
+                "searchButton"
+            );
+
+
+        button.disabled =
+            true;
+
+        button.textContent =
+            "⏳ Qidirilmoqda...";
+
+
+        const result =
+            await api(
+                "/api/rides",
+                {
+
+                    from_region:
+                        fromRegion,
+
+                    from_district:
+                        fromDistrict,
+
+                    to_region:
+                        toRegion,
+
+                    to_district:
+                        toDistrict
+
+                }
+            );
+
+
+        renderRides(
+            result.rides
+            || []
+        );
+
+    }
+    catch(error){
+
+        console.error(
+            error
+        );
+
+        toast(
+            error.message
+            || "Safarlarni qidirishda xatolik."
+        );
+
+    }
+    finally{
+
+        const button =
+            document.getElementById(
+                "searchButton"
+            );
+
+        button.disabled =
+            false;
+
+        button.textContent =
+            "🔎 Safarlarni qidirish";
+
+    }
+
+}
+
+
+/* =====================================================
+   RENDER RIDES
+===================================================== */
+
+function renderRides(rides){
+
+    const box =
+        document.getElementById(
+            "rides"
+        );
+
+
+    if(!Array.isArray(rides)){
+        rides = [];
+    }
+
+
+    if(!rides.length){
+
+        box.innerHTML = `
+
+            <div class="card">
+
+                <div class="empty">
+
+                    😔
+
+                    <br><br>
+
+                    Bu yo‘nalishda hozircha
+                    safar topilmadi.
+
+                </div>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    box.innerHTML = "";
+
+
+    rides.forEach(
+        function(ride){
+
+            const div =
+                document.createElement(
+                    "div"
+                );
+
+
+            div.className =
+                "ride";
+
+
+            const available =
+                Number(
+                    ride.available_seats
+                    ?? ride.seats
+                    ?? 0
+                );
+
+
+            const price =
+                Number(
+                    ride.price || 0
+                );
+
+
+            const id =
+                Number(
+                    ride.id
+                );
+
+
+            div.innerHTML = `
+
+                <div class="route">
+
+                    ${escapeHtml(
+                        ride.from_district
+                        || ""
+                    )}
+
+                    <span class="arrow">
+                        →
+                    </span>
+
+                    ${escapeHtml(
+                        ride.to_district
+                        || ""
+                    )}
+
+                </div>
+
+
+                <div class="info">
+
+                    📍
+                    ${escapeHtml(
+                        ride.from_region
+                        || ""
+                    )}
+
+                    <br>
+
+                    📍
+                    ${escapeHtml(
+                        ride.to_region
+                        || ""
+                    )}
+
+                    <br>
+
+                    📅
+                    ${escapeHtml(
+                        ride.ride_date
+                        || ""
+                    )}
+
+                    &nbsp;&nbsp;
+
+                    🕐
+                    ${escapeHtml(
+                        ride.ride_time
+                        || ""
+                    )}
+
+                    <br>
+
+                    🚕
+                    ${escapeHtml(
+                        ride.car_model
+                        || "Avtomobil"
+                    )}
+
+                    <br>
+
+                    🚗
+                    ${escapeHtml(
+                        ride.car_number
+                        || ""
+                    )}
+
+                    <br>
+
+                    👤 Haydovchi:
+                    ${escapeHtml(
+                        ride.driver_name
+                        || "Noma'lum"
+                    )}
+
+                    <br>
+
+                    💺 Bo‘sh joy:
+                    ${available}
+
+                </div>
+
+
+                <div class="price">
+
+                    ${price.toLocaleString(
+                        "uz-UZ"
+                    )}
+
+                    so‘m
+
+                </div>
+
+
+                ${
+                    available > 0
+                    ?
+                    `
+                    <button
+                        class="btn"
+                        onclick="orderRide(
+                            ${id},
+                            ${available}
+                        )"
+                    >
+                        👤 Shu safarga joy olish
+                    </button>
+                    `
+                    :
+                    `
+                    <div class="badge">
+                        ❌ Bo‘sh joy qolmagan
+                    </div>
+                    `
+                }
+
+            `;
+
+
+            box.appendChild(
+                div
+            );
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   ORDER RIDE
+===================================================== */
+
+async function orderRide(
+    rideId,
+    available
+){
+
+    if(!rideId){
+
+        toast(
+            "Safar ID topilmadi."
+        );
+
+        return;
+
+    }
+
+
+    let seats =
+        prompt(
+            "Nechta joy kerak?\n\nBo‘sh joy: "
+            + available
+        );
+
+
+    if(
+        seats === null
+        || seats.trim() === ""
+    ){
+
+        return;
+
+    }
+
+
+    seats =
+        Number(
+            seats
+        );
+
+
+    if(!Number.isInteger(seats)){
+
+        toast(
+            "Joylar sonini butun son kiriting."
+        );
+
+        return;
+
+    }
+
+
+    if(
+        seats < 1
+        || seats > 4
+    ){
+
+        toast(
+            "Yo‘lovchilar soni 1–4 bo‘lishi kerak."
+        );
+
+        return;
+
+    }
+
+
+    if(
+        seats > available
+    ){
+
+        toast(
+            "Faqat "
+            + available
+            + " ta bo‘sh joy bor."
+        );
+
+        return;
+
+    }
+
+
+    let phone =
+        prompt(
+            "Telefon raqamingizni kiriting:"
+        );
+
+
+    if(!phone){
+
+        return;
+
+    }
+
+
+    phone =
+        phone.trim();
+
+
+    try{
+
+        const result =
+            await api(
+                "/api/passenger/order",
+                {
+
+                    ride_id:
+                        rideId,
+
+                    seats:
+                        seats,
+
+                    phone:
+                        phone
+
+                }
+            );
+
+
+        telegramAlert(
+            result.message
+            || "Buyurtma yuborildi."
+        );
+
+
+        if(
+            tg
+            && typeof tg.HapticFeedback !== "undefined"
+        ){
+
+            try{
+
+                tg.HapticFeedback.notificationOccurred(
+                    "success"
+                );
+
+            }catch(e){}
+
+        }
+
+    }
+    catch(error){
+
+        console.error(
+            error
+        );
+
+        telegramAlert(
+            error.message
+            || "Buyurtma yuborishda xatolik."
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   MY RIDES
+===================================================== */
+
+async function loadMyRides(){
+
+    const box =
+        document.getElementById(
+            "myRides"
+        );
+
+
+    if(!box){
+        return;
+    }
+
+
+    box.innerHTML = `
+
+        <div class="loading">
+            ⏳ Yuklanmoqda...
+        </div>
+
+    `;
+
+
+    try{
+
+        const result =
+            await api(
+                "/api/orders",
+                {}
+            );
+
+
+        const rides =
+            result.driver_rides
+            || result.rides
+            || [];
+
+
+        if(!rides.length){
+
+            box.innerHTML = `
+
+                <div class="empty">
+
+                    📋
+
+                    <br><br>
+
+                    Hozircha safar yo‘q.
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        box.innerHTML = "";
+
+
+        rides.forEach(
+            function(ride){
+
+                const div =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                div.className =
+                    "ride";
+
+
+                const price =
+                    Number(
+                        ride.price || 0
+                    );
+
+
+                const status =
+                    ride.status
+                    || "active";
+
+
+                div.innerHTML = `
+
+                    <div class="route">
+
+                        ${escapeHtml(
+                            ride.from_district
+                            || ""
+                        )}
+
+                        <span class="arrow">
+                            →
+                        </span>
+
+                        ${escapeHtml(
+                            ride.to_district
+                            || ""
+                        )}
+
+                    </div>
+
+
+                    <div class="info">
+
+                        📅
+                        ${escapeHtml(
+                            ride.ride_date
+                            || ""
+                        )}
+
+                        <br>
+
+                        🕐
+                        ${escapeHtml(
+                            ride.ride_time
+                            || ""
+                        )}
+
+                        <br>
+
+                        💺
+                        ${Number(
+                            ride.seats || 0
+                        )}
+                        ta joy
+
+                    </div>
+
+
+                    <div class="price">
+
+                        ${price.toLocaleString(
+                            "uz-UZ"
+                        )}
+
+                        so‘m
+
+                    </div>
+
+
+                    ${
+                        status === "active"
+                        ?
+                        `
+                        <button
+                            class="btn secondary"
+                            onclick="cancelRide(
+                                ${Number(ride.id)}
+                            )"
+                        >
+                            ❌ Safarni bekor qilish
+                        </button>
+                        `
+                        :
+                        `
+                        <div class="badge">
+                            ${escapeHtml(
+                                status
+                            )}
+                        </div>
+                        `
+                    }
+
+                `;
+
+
+                box.appendChild(
+                    div
+                );
+
+            }
+        );
+
+    }
+    catch(error){
+
+        console.error(
+            error
+        );
+
+
+        box.innerHTML = `
+
+            <div class="empty">
+
+                Safarlarni yuklashda xatolik.
+
+            </div>
+
+        `;
+
+    }
+
+}
+
+
+/* =====================================================
+   CANCEL RIDE
+===================================================== */
+
+async function cancelRide(id){
+
+    if(!id){
+        return;
+    }
+
+
+    let confirmed =
+        true;
+
+
+    if(
+        tg
+        && typeof tg.showConfirm === "function"
+    ){
+
+        confirmed =
+            await new Promise(
+                function(resolve){
+
+                    tg.showConfirm(
+                        "Safarni bekor qilasizmi?",
+                        function(ok){
+
+                            resolve(ok);
+
+                        }
+                    );
+
+                }
+            );
+
+    }
+    else{
+
+        confirmed =
+            confirm(
+                "Safarni bekor qilasizmi?"
+            );
+
+    }
+
+
+    if(!confirmed){
+        return;
+    }
+
+
+    try{
+
+        const result =
+            await api(
+                "/api/order/cancel",
+                {
+                    ride_id:id
+                }
+            );
+
+
+        telegramAlert(
+            result.message
+            || "Safar bekor qilindi."
+        );
+
+
+        await loadMyRides();
+
+    }
+    catch(error){
+
+        telegramAlert(
+            error.message
+            || "Safarni bekor qilishda xatolik."
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   ESCAPE HTML
+===================================================== */
+
+function escapeHtml(value){
+
+    if(
+        value === null
+        || value === undefined
+    ){
+
+        return "";
+
+    }
+
+
+    return String(value)
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
+
+
+/* =====================================================
+   DATE / TIME
+===================================================== */
+
+function setDateTimeDefaults(){
+
+    const dateInput =
+        document.getElementById(
+            "rideDate"
+        );
+
+
+    const timeInput =
+        document.getElementById(
+            "rideTime"
+        );
+
+
+    const now =
+        new Date();
+
+
+    const year =
+        now.getFullYear();
+
+
+    const month =
+        String(
+            now.getMonth() + 1
+        ).padStart(
+            2,
+            "0"
+        );
+
+
+    const day =
+        String(
+            now.getDate()
+        ).padStart(
+            2,
+            "0"
+        );
+
+
+    const today =
+        year
+        + "-"
+        + month
+        + "-"
+        + day;
+
+
+    if(dateInput){
+
+        dateInput.min =
+            today;
+
+    }
+
+
+    if(
+        dateInput
+        && !dateInput.value
+    ){
+
+        dateInput.value =
+            today;
+
+    }
+
+
+    if(
+        timeInput
+        && !timeInput.value
+    ){
+
+        const hours =
+            String(
+                now.getHours()
+            ).padStart(
+                2,
+                "0"
+            );
+
+
+        const minutes =
+            String(
+                now.getMinutes()
+            ).padStart(
+                2,
+                "0"
+            );
+
+
+        timeInput.value =
+            hours
+            + ":"
+            + minutes;
+
+    }
+
+}
+
+
+/* =====================================================
+   INITIALIZATION
+===================================================== */
+
+async function init(){
+
+    /* REGIONS */
+
+    fillRegions(
+        "searchFromRegion"
+    );
+
+    fillRegions(
+        "searchToRegion"
+    );
+
+    fillRegions(
+        "driverRegion"
+    );
+
+    fillRegions(
+        "rideFromRegion"
+    );
+
+    fillRegions(
+        "rideToRegion"
+    );
+
+
+    /* TELEGRAM USER */
+
+    loadTelegramUser();
+
+
+    /* DATE / TIME */
+
+    setDateTimeDefaults();
+
+
+    /* DEFAULT PAGE */
+
+    showPage(
+        "passenger"
+    );
+
+
+    /* URL MODE */
+
+    try{
+
+        const params =
+            new URLSearchParams(
+                window.location.search
+            );
+
+
+        const mode =
+            params.get(
+                "mode"
+            );
+
+
+        if(mode === "driver"){
+
+            showPage(
+                "driver"
+            );
+
+        }
+
+    }
+    catch(error){
+
+        console.log(
+            error
+        );
+
+    }
+
+}
+
+
+/* START */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    init
+);
+
+</script>
+
+</body>
+</html>
