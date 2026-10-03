@@ -4,7 +4,7 @@ from database.database import execute, fetchone
 
 
 # =========================================================
-# OPPER TAXI — DRIVERS API
+# DRIVER STATUS
 # =========================================================
 
 DRIVER_PENDING = "pending"
@@ -12,37 +12,69 @@ DRIVER_APPROVED = "approved"
 DRIVER_REJECTED = "rejected"
 
 
+# =========================================================
+# TIME
+# =========================================================
+
 def now_str():
     return datetime.now(timezone.utc).isoformat()
 
 
-async def get_driver_by_user_id(user_id: int):
+# =========================================================
+# GET DRIVER BY TELEGRAM ID
+# =========================================================
+
+async def get_driver_by_telegram_id(
+    telegram_id: int,
+):
+    """
+    Telegram ID orqali haydovchini olish.
+    """
+
     return await fetchone(
         """
         SELECT
             id,
-            user_id,
+            telegram_id,
+            full_name,
             phone,
+            region,
+            district,
+            passport_file,
+            driver_license_file,
             status,
-            car_id,
             created_at,
             updated_at
         FROM drivers
-        WHERE user_id = ?
+        WHERE telegram_id = ?
         """,
-        (user_id,),
+        (telegram_id,),
     )
 
 
-async def get_driver_by_id(driver_id: int):
+# =========================================================
+# GET DRIVER BY ID
+# =========================================================
+
+async def get_driver_by_id(
+    driver_id: int,
+):
+    """
+    Database ID orqali haydovchini olish.
+    """
+
     return await fetchone(
         """
         SELECT
             id,
-            user_id,
+            telegram_id,
+            full_name,
             phone,
+            region,
+            district,
+            passport_file,
+            driver_license_file,
             status,
-            car_id,
             created_at,
             updated_at
         FROM drivers
@@ -52,80 +84,149 @@ async def get_driver_by_id(driver_id: int):
     )
 
 
+# =========================================================
+# CHECK DRIVER APPLICATION
+# =========================================================
+
+async def driver_exists(
+    telegram_id: int,
+):
+    """
+    Haydovchi arizasi mavjudligini tekshiradi.
+    """
+
+    driver = await get_driver_by_telegram_id(
+        telegram_id
+    )
+
+    return driver is not None
+
+
+# =========================================================
+# SUBMIT DRIVER APPLICATION
+# =========================================================
+
 async def submit_driver_application(
-    user_id: int,
-    phone: str,
+    telegram_id: int,
+    full_name: str = "",
+    phone: str = "",
+    region: str = "",
+    district: str = "",
+    passport_file: str = "",
+    driver_license_file: str = "",
 ):
     """
     Haydovchi arizasini yuborish.
 
-    Agar foydalanuvchida oldindan ariza mavjud bo'lsa,
-    ikkinchi marta yangi ariza yaratmaydi.
+    Muhim:
+    Agar foydalanuvchi oldin ariza bergan bo'lsa,
+    ikkinchi marta yangi driver yozuvi yaratilmaydi.
     """
 
-    existing = await get_driver_by_user_id(user_id)
+    existing = await get_driver_by_telegram_id(
+        telegram_id
+    )
+
+    # -----------------------------------------------------
+    # OLDIN ARIZA BERGAN
+    # -----------------------------------------------------
 
     if existing:
+
         return {
             "success": False,
             "already_exists": True,
             "driver": existing,
+            "status": existing.get("status"),
         }
+
+    # -----------------------------------------------------
+    # YANGI ARIZA
+    # -----------------------------------------------------
 
     created_at = now_str()
 
     driver_id = await execute(
         """
         INSERT INTO drivers (
-            user_id,
+            telegram_id,
+            full_name,
             phone,
+            region,
+            district,
+            passport_file,
+            driver_license_file,
             status,
-            car_id,
             created_at,
             updated_at
         )
-        VALUES (?, ?, ?, NULL, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
-            user_id,
+            telegram_id,
+            full_name,
             phone,
+            region,
+            district,
+            passport_file,
+            driver_license_file,
             DRIVER_PENDING,
             created_at,
             created_at,
         ),
     )
 
-    driver = await get_driver_by_id(driver_id)
+    driver = await get_driver_by_id(
+        driver_id
+    )
 
     return {
         "success": True,
         "already_exists": False,
         "driver": driver,
+        "status": DRIVER_PENDING,
     }
 
 
-async def get_driver_status(user_id: int):
+# =========================================================
+# GET DRIVER STATUS
+# =========================================================
+
+async def get_driver_status(
+    telegram_id: int,
+):
     """
-    Haydovchining hozirgi statusini qaytaradi.
+    Haydovchining holatini qaytaradi.
     """
 
-    driver = await get_driver_by_user_id(user_id)
+    driver = await get_driver_by_telegram_id(
+        telegram_id
+    )
 
     if not driver:
+
         return {
             "exists": False,
+            "registered": False,
             "status": None,
             "driver": None,
         }
 
     return {
         "exists": True,
-        "status": driver[3],
+        "registered": True,
+        "status": driver.get("status"),
         "driver": driver,
     }
 
 
-async def approve_driver(driver_id: int):
+# =========================================================
+# APPROVE DRIVER
+# =========================================================
+
+async def approve_driver(
+    driver_id: int,
+):
     """
     Admin haydovchini tasdiqlaydi.
     """
@@ -145,10 +246,18 @@ async def approve_driver(driver_id: int):
         ),
     )
 
-    return await get_driver_by_id(driver_id)
+    return await get_driver_by_id(
+        driver_id
+    )
 
 
-async def reject_driver(driver_id: int):
+# =========================================================
+# REJECT DRIVER
+# =========================================================
+
+async def reject_driver(
+    driver_id: int,
+):
     """
     Admin haydovchi arizasini rad etadi.
     """
@@ -168,13 +277,20 @@ async def reject_driver(driver_id: int):
         ),
     )
 
-    return await get_driver_by_id(driver_id)
+    return await get_driver_by_id(
+        driver_id
+    )
 
 
-async def reset_driver_application(driver_id: int):
+# =========================================================
+# RESET DRIVER APPLICATION
+# =========================================================
+
+async def reset_driver_application(
+    driver_id: int,
+):
     """
-    Faqat kerak bo'lganda admin tomonidan
-    rad etilgan arizani qayta topshirishga imkon beradi.
+    Rad etilgan haydovchini qayta pending holatiga o'tkazadi.
     """
 
     await execute(
@@ -192,4 +308,81 @@ async def reset_driver_application(driver_id: int):
         ),
     )
 
-    return await get_driver_by_id(driver_id)
+    return await get_driver_by_id(
+        driver_id
+    )
+
+
+# =========================================================
+# UPDATE DRIVER
+# =========================================================
+
+async def update_driver(
+    telegram_id: int,
+    full_name: str = "",
+    phone: str = "",
+    region: str = "",
+    district: str = "",
+    passport_file: str = "",
+    driver_license_file: str = "",
+):
+    """
+    Mavjud haydovchi ma'lumotlarini yangilaydi.
+    """
+
+    existing = await get_driver_by_telegram_id(
+        telegram_id
+    )
+
+    if not existing:
+        return None
+
+    await execute(
+        """
+        UPDATE drivers
+        SET
+            full_name = ?,
+            phone = ?,
+            region = ?,
+            district = ?,
+            passport_file = ?,
+            driver_license_file = ?,
+            updated_at = ?
+        WHERE telegram_id = ?
+        """,
+        (
+            full_name,
+            phone,
+            region,
+            district,
+            passport_file,
+            driver_license_file,
+            now_str(),
+            telegram_id,
+        ),
+    )
+
+    return await get_driver_by_telegram_id(
+        telegram_id
+    )
+
+
+# =========================================================
+# DRIVER APPROVED CHECK
+# =========================================================
+
+async def is_driver_approved(
+    telegram_id: int,
+):
+    """
+    Haydovchi tasdiqlanganmi?
+    """
+
+    driver = await get_driver_by_telegram_id(
+        telegram_id
+    )
+
+    if not driver:
+        return False
+
+    return driver.get("status") == DRIVER_APPROVED
