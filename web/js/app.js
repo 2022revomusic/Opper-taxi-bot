@@ -18,14 +18,10 @@ const state = {
 ========================= */
 
 function initTelegram() {
-
     if (window.Telegram && window.Telegram.WebApp) {
-
-        state.telegram =
-            window.Telegram.WebApp;
+        state.telegram = window.Telegram.WebApp;
 
         state.telegram.ready();
-
         state.telegram.expand();
 
         if (state.telegram.setHeaderColor) {
@@ -57,7 +53,6 @@ function $$(selector) {
 
 
 function escapeHtml(value) {
-
     return String(value ?? "")
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
@@ -68,37 +63,26 @@ function escapeHtml(value) {
 
 
 function formatPrice(price) {
+    const number = Number(price || 0);
 
-    const number =
-        Number(price || 0);
-
-    return new Intl.NumberFormat(
-        "uz-UZ"
-    ).format(number);
+    return new Intl.NumberFormat("uz-UZ").format(number);
 }
 
 
 function formatDate(date) {
-
     if (!date) {
         return "—";
     }
 
     try {
-
-        return new Date(date)
-            .toLocaleDateString("uz-UZ");
-
+        return new Date(date).toLocaleDateString("uz-UZ");
     } catch {
-
         return date;
-
     }
 }
 
 
 function formatTime(time) {
-
     if (!time) {
         return "—";
     }
@@ -108,46 +92,30 @@ function formatTime(time) {
 
 
 function showToast(message) {
-
-    let container =
-        $(".toast-container");
+    let container = $(".toast-container");
 
     if (!container) {
-
-        container =
-            document.createElement("div");
-
-        container.className =
-            "toast-container";
-
-        document.body.appendChild(
-            container
-        );
+        container = document.createElement("div");
+        container.className = "toast-container";
+        document.body.appendChild(container);
     }
 
-    const toast =
-        document.createElement("div");
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.textContent = message;
 
-    toast.className =
-        "toast";
-
-    toast.textContent =
-        message;
-
-    container.appendChild(
-        toast
-    );
+    container.appendChild(toast);
 
     setTimeout(() => {
-
         toast.remove();
-
     }, 3000);
 }
 
 
-function showLoading(element, text = "Yuklanmoqda...") {
-
+function showLoading(
+    element,
+    text = "Yuklanmoqda..."
+) {
     if (!element) {
         return;
     }
@@ -169,7 +137,6 @@ function showEmpty(
     title,
     text = ""
 ) {
-
     if (!element) {
         return;
     }
@@ -208,73 +175,89 @@ async function api(
     url,
     options = {}
 ) {
-
     const headers = {
-        "Content-Type":
-            "application/json",
-
+        "Content-Type": "application/json",
         ...(options.headers || {})
     };
-
 
     if (
         state.telegram &&
         state.telegram.initData
     ) {
-
-        headers[
-            "X-Telegram-Init-Data"
-        ] =
+        headers["X-Telegram-Init-Data"] =
             state.telegram.initData;
     }
 
+    const response = await fetch(
+        API_BASE + url,
+        {
+            ...options,
+            headers
+        }
+    );
 
-    const response =
-        await fetch(
-            API_BASE + url,
-            {
-                ...options,
-                headers
-            }
-        );
-
-
-    let data = null;
+    let result = null;
 
     try {
-
-        data =
-            await response.json();
-
+        result = await response.json();
     } catch {
-
-        data = null;
-
+        result = null;
     }
 
-
     if (!response.ok) {
-
         throw new Error(
-            data?.error ||
+            result?.error ||
+            result?.message ||
+            result?.data?.error ||
             "Server xatosi."
         );
     }
 
-
     if (
-        data &&
-        data.success === false
+        result &&
+        result.success === false
     ) {
-
         throw new Error(
-            data.error ||
+            result.error ||
+            result.message ||
             "Amal bajarilmadi."
         );
     }
 
+    if (
+        result &&
+        result.ok === false
+    ) {
+        throw new Error(
+            result.error ||
+            result.message ||
+            "Amal bajarilmadi."
+        );
+    }
 
-    return data;
+    /*
+       Backend ayrim joylarda:
+
+       {
+           ok: true,
+           data: {...}
+       }
+
+       formatida javob beradi.
+
+       Frontend esa bevosita data ichidagi
+       ma'lumotlar bilan ishlaydi.
+    */
+
+    if (
+        result &&
+        result.ok === true &&
+        result.data !== undefined
+    ) {
+        return result.data;
+    }
+
+    return result || {};
 }
 
 
@@ -282,45 +265,31 @@ async function api(
    NAVIGATION
 ========================= */
 
-function showScreen(
-    screenName
-) {
-
-    state.currentScreen =
-        screenName;
-
+function showScreen(screenName) {
+    state.currentScreen = screenName;
 
     $$(".screen").forEach(
         screen => {
-
             screen.classList.toggle(
                 "active",
-                screen.dataset.screen ===
-                    screenName
+                screen.dataset.screen === screenName
             );
-
         }
     );
-
 
     $$(".nav-item").forEach(
         item => {
-
             item.classList.toggle(
                 "active",
-                item.dataset.screen ===
-                    screenName
+                item.dataset.screen === screenName
             );
-
         }
     );
-
 
     window.scrollTo({
         top: 0,
         behavior: "smooth"
     });
-
 
     if (screenName === "home") {
         loadHome();
@@ -341,7 +310,6 @@ function showScreen(
     if (screenName === "profile") {
         loadProfile();
     }
-
 }
 
 
@@ -350,9 +318,7 @@ function showScreen(
 ========================= */
 
 async function loadProfile() {
-
-    const container =
-        $("#profile-content");
+    const container = $("#profile-content");
 
     if (!container) {
         return;
@@ -363,43 +329,33 @@ async function loadProfile() {
         "Profil yuklanmoqda..."
     );
 
-
     try {
-
-        const data =
-            await api(
-                "/api/profile"
-            );
-
+        const data = await api(
+            "/api/profile"
+        );
 
         state.profile =
             data.profile ||
             data.user ||
             null;
 
-
         state.driver =
             data.driver ||
             null;
 
-
         renderProfile();
 
     } catch (error) {
-
         container.innerHTML = `
             <div class="alert alert-error">
                 ${escapeHtml(error.message)}
             </div>
         `;
-
     }
-
 }
 
 
 function renderProfile() {
-
     const container =
         $("#profile-content");
 
@@ -407,82 +363,58 @@ function renderProfile() {
         return;
     }
 
-
     const profile =
         state.profile || {};
-
 
     const firstName =
         profile.first_name ||
         state.user?.first_name ||
         "";
 
-
     const lastName =
         profile.last_name ||
         state.user?.last_name ||
         "";
-
 
     const username =
         profile.username ||
         state.user?.username ||
         "";
 
-
     const phone =
         profile.phone ||
         "";
 
-
     const fullName =
-        `${firstName} ${lastName}`
-            .trim() ||
+        `${firstName} ${lastName}`.trim() ||
         "Foydalanuvchi";
 
-
-    let driverStatus =
-        "";
-
+    let driverStatus = "";
 
     if (state.driver) {
-
         const status =
             state.driver.status;
 
-
         if (status === "approved") {
-
             driverStatus = `
                 <span class="badge badge-green">
                     🚕 Haydovchi tasdiqlangan
                 </span>
             `;
-
-        } else if (
-            status === "pending"
-        ) {
-
+        } else if (status === "pending") {
             driverStatus = `
                 <span class="badge badge-yellow">
                     ⏳ Ariza ko'rib chiqilmoqda
                 </span>
             `;
-
-        } else if (
-            status === "rejected"
-        ) {
-
+        } else if (status === "rejected") {
             driverStatus = `
                 <span class="badge badge-red">
                     ❌ Ariza rad etilgan
                 </span>
             `;
-
         }
-
     }
-
 
     container.innerHTML = `
 
@@ -503,8 +435,7 @@ function renderProfile() {
                     <div class="profile-meta">
                         ${
                             username
-                                ? "@" +
-                                  escapeHtml(username)
+                                ? "@" + escapeHtml(username)
                                 : "Telegram foydalanuvchisi"
                         }
                     </div>
@@ -567,7 +498,6 @@ function renderProfile() {
         </div>
 
     `;
-
 }
 
 
@@ -576,25 +506,21 @@ function renderProfile() {
 ========================= */
 
 function openDriverApplication() {
-
     const phone =
         state.profile?.phone ||
         state.user?.phone ||
         "";
 
-
     const modal =
         $("#driver-modal");
 
     if (!modal) {
-
         showToast(
             "Haydovchi ariza oynasi mavjud emas."
         );
 
         return;
     }
-
 
     const input =
         $("#driver-phone");
@@ -603,41 +529,28 @@ function openDriverApplication() {
         input.value = phone;
     }
 
-
-    modal.classList.add(
-        "active"
-    );
-
+    modal.classList.add("active");
 }
 
 
 function closeDriverApplication() {
-
     const modal =
         $("#driver-modal");
 
     if (modal) {
-
-        modal.classList.remove(
-            "active"
-        );
-
+        modal.classList.remove("active");
     }
-
 }
 
 
 async function submitDriverApplication() {
-
     const input =
         $("#driver-phone");
 
     const phone =
         input?.value?.trim() || "";
 
-
     if (!phone) {
-
         showToast(
             "Telefon raqamingizni kiriting."
         );
@@ -645,38 +558,52 @@ async function submitDriverApplication() {
         return;
     }
 
-
     try {
+        const data =
+            await api(
+                "/api/driver/register",
+                {
+                    method: "POST",
 
-        await api(
-            "/api/driver/register",
-            {
-                method: "POST",
-
-                body: JSON.stringify({
-                    phone
-                })
-            }
-        );
-
+                    body: JSON.stringify({
+                        phone
+                    })
+                }
+            );
 
         closeDriverApplication();
 
-        showToast(
-            "✅ Haydovchilik arizasi yuborildi."
-        );
-
+        if (data.already_exists) {
+            if (data.status === "approved") {
+                showToast(
+                    "🚕 Siz allaqachon tasdiqlangan haydovchisiz."
+                );
+            } else if (data.status === "pending") {
+                showToast(
+                    "⏳ Arizangiz hali ko'rib chiqilmoqda."
+                );
+            } else if (data.status === "rejected") {
+                showToast(
+                    "❌ Arizangiz avval rad etilgan."
+                );
+            } else {
+                showToast(
+                    "Sizning haydovchi arizangiz mavjud."
+                );
+            }
+        } else {
+            showToast(
+                "✅ Haydovchilik arizasi yuborildi."
+            );
+        }
 
         await loadProfile();
 
     } catch (error) {
-
         showToast(
             error.message
         );
-
     }
-
 }
 
 
@@ -685,51 +612,42 @@ async function submitDriverApplication() {
 ========================= */
 
 async function loadRides() {
-
     const container =
         $("#rides-list");
 
     if (!container) {
         return;
     }
-
 
     showLoading(
         container,
         "Safarlar yuklanmoqda..."
     );
 
-
     try {
-
         const data =
             await api(
                 "/api/rides"
             );
 
-
         state.rides =
-            data.rides ||
-            [];
-
+            Array.isArray(data.rides)
+                ? data.rides
+                : [];
 
         renderRides();
 
     } catch (error) {
-
         container.innerHTML = `
             <div class="alert alert-error">
                 ${escapeHtml(error.message)}
             </div>
         `;
-
     }
-
 }
 
 
 function renderRides() {
-
     const container =
         $("#rides-list");
 
@@ -737,9 +655,7 @@ function renderRides() {
         return;
     }
 
-
     if (!state.rides.length) {
-
         showEmpty(
             container,
             "🚕",
@@ -750,10 +666,14 @@ function renderRides() {
         return;
     }
 
-
     container.innerHTML =
         state.rides.map(
             ride => {
+
+                const availableSeats =
+                    ride.available_seats ??
+                    ride.seats ??
+                    0;
 
                 return `
                     <div class="ride-card">
@@ -828,11 +748,9 @@ function renderRides() {
                                 </div>
 
                                 <div class="ride-info-value">
-                                    ${
-                                        ride.available_seats ??
-                                        ride.seats ??
-                                        0
-                                    }
+                                    ${Number(
+                                        availableSeats
+                                    )}
                                 </div>
 
                             </div>
@@ -847,6 +765,7 @@ function renderRides() {
                                 <div class="ride-info-value">
                                     ${escapeHtml(
                                         ride.driver_name ||
+                                        ride.full_name ||
                                         "Haydovchi"
                                     )}
                                 </div>
@@ -886,10 +805,8 @@ function renderRides() {
 
                     </div>
                 `;
-
             }
         ).join("");
-
 }
 
 
@@ -900,7 +817,6 @@ function renderRides() {
 async function orderRide(
     rideId
 ) {
-
     const seats =
         Number(
             prompt(
@@ -909,22 +825,34 @@ async function orderRide(
             )
         );
 
-
     if (
         !Number.isInteger(seats) ||
-        seats < 1
+        seats < 1 ||
+        seats > 4
     ) {
-
         showToast(
-            "O'rinlar soni noto'g'ri."
+            "O'rinlar soni 1 dan 4 gacha bo'lishi kerak."
         );
 
         return;
     }
 
+    const phone =
+        state.profile?.phone ||
+        state.user?.phone ||
+        "";
+
+    if (!phone) {
+        showToast(
+            "Avval profilingizga telefon raqamingizni kiriting."
+        );
+
+        showScreen("profile");
+
+        return;
+    }
 
     try {
-
         await api(
             "/api/passenger/order",
             {
@@ -932,27 +860,27 @@ async function orderRide(
 
                 body: JSON.stringify({
                     ride_id: rideId,
-                    seats
+                    seats,
+                    phone
                 })
             }
         );
-
 
         showToast(
             "✅ Buyurtma yuborildi."
         );
 
-
-        await loadOrders();
+        await Promise.allSettled([
+            loadOrders(),
+            loadRides(),
+            loadNotifications()
+        ]);
 
     } catch (error) {
-
         showToast(
             error.message
         );
-
     }
-
 }
 
 
@@ -961,51 +889,42 @@ async function orderRide(
 ========================= */
 
 async function loadOrders() {
-
     const container =
         $("#orders-list");
 
     if (!container) {
         return;
     }
-
 
     showLoading(
         container,
         "Buyurtmalar yuklanmoqda..."
     );
 
-
     try {
-
         const data =
             await api(
                 "/api/orders"
             );
 
-
         state.orders =
-            data.orders ||
-            [];
-
+            Array.isArray(data.orders)
+                ? data.orders
+                : [];
 
         renderOrders();
 
     } catch (error) {
-
         container.innerHTML = `
             <div class="alert alert-error">
                 ${escapeHtml(error.message)}
             </div>
         `;
-
     }
-
 }
 
 
 function renderOrders() {
-
     const container =
         $("#orders-list");
 
@@ -1013,9 +932,7 @@ function renderOrders() {
         return;
     }
 
-
     if (!state.orders.length) {
-
         showEmpty(
             container,
             "📦",
@@ -1025,7 +942,6 @@ function renderOrders() {
 
         return;
     }
-
 
     container.innerHTML =
         state.orders.map(
@@ -1037,12 +953,10 @@ function renderOrders() {
                 let statusClass =
                     "badge-yellow";
 
-
                 if (
                     order.status ===
                     "accepted"
                 ) {
-
                     statusText =
                         "Qabul qilindi";
 
@@ -1053,7 +967,6 @@ function renderOrders() {
                     order.status ===
                     "rejected"
                 ) {
-
                     statusText =
                         "Rad etildi";
 
@@ -1064,7 +977,6 @@ function renderOrders() {
                     order.status ===
                     "cancelled"
                 ) {
-
                     statusText =
                         "Bekor qilindi";
 
@@ -1075,15 +987,12 @@ function renderOrders() {
                     order.status ===
                     "finished"
                 ) {
-
                     statusText =
                         "Tugallangan";
 
                     statusClass =
                         "badge-blue";
-
                 }
-
 
                 return `
                     <div class="card">
@@ -1112,21 +1021,17 @@ function renderOrders() {
 
                         <div class="card-text">
 
-                            ${
-                                escapeHtml(
-                                    order.from_region ||
-                                    ""
-                                )
-                            }
+                            ${escapeHtml(
+                                order.from_region ||
+                                ""
+                            )}
 
                             →
 
-                            ${
-                                escapeHtml(
-                                    order.to_region ||
-                                    ""
-                                )
-                            }
+                            ${escapeHtml(
+                                order.to_region ||
+                                ""
+                            )}
 
                         </div>
 
@@ -1176,10 +1081,8 @@ function renderOrders() {
 
                     </div>
                 `;
-
             }
         ).join("");
-
 }
 
 
@@ -1188,59 +1091,51 @@ function renderOrders() {
 ========================= */
 
 async function loadNotifications() {
-
     const container =
         $("#notifications-list");
 
     if (!container) {
         return;
     }
-
 
     showLoading(
         container,
         "Bildirishnomalar yuklanmoqda..."
     );
 
-
     try {
-
         const data =
             await api(
                 "/api/notifications"
             );
 
-
         state.notifications =
-            data.notifications ||
-            [];
-
+            Array.isArray(data.notifications)
+                ? data.notifications
+                : [];
 
         state.unreadNotifications =
             Number(
-                data.unread_count || 0
+                data.unread_count ??
+                data.unread ??
+                0
             );
-
 
         renderNotifications();
 
         updateNotificationBadges();
 
     } catch (error) {
-
         container.innerHTML = `
             <div class="alert alert-error">
                 ${escapeHtml(error.message)}
             </div>
         `;
-
     }
-
 }
 
 
 function renderNotifications() {
-
     const container =
         $("#notifications-list");
 
@@ -1248,9 +1143,7 @@ function renderNotifications() {
         return;
     }
 
-
     if (!state.notifications.length) {
-
         showEmpty(
             container,
             "🔔",
@@ -1261,7 +1154,6 @@ function renderNotifications() {
         return;
     }
 
-
     container.innerHTML =
         state.notifications.map(
             notification => {
@@ -1270,7 +1162,6 @@ function renderNotifications() {
                     Number(
                         notification.is_read
                     ) === 0;
-
 
                 return `
                     <div
@@ -1323,19 +1214,15 @@ function renderNotifications() {
 
                     </div>
                 `;
-
             }
         ).join("");
-
 }
 
 
 async function markNotificationRead(
     notificationId
 ) {
-
     try {
-
         await api(
             "/api/notifications/read",
             {
@@ -1348,25 +1235,19 @@ async function markNotificationRead(
             }
         );
 
-
         await loadNotifications();
 
     } catch (error) {
-
         showToast(
             error.message
         );
-
     }
-
 }
 
 
 function updateNotificationBadges() {
-
     const badges =
         $$(".nav-badge");
-
 
     badges.forEach(
         badge => {
@@ -1378,7 +1259,6 @@ function updateNotificationBadges() {
 
                 const count =
                     state.unreadNotifications;
-
 
                 if (count > 0) {
 
@@ -1394,14 +1274,10 @@ function updateNotificationBadges() {
 
                     badge.style.display =
                         "none";
-
                 }
-
             }
-
         }
     );
-
 }
 
 
@@ -1410,18 +1286,10 @@ function updateNotificationBadges() {
 ========================= */
 
 async function loadHome() {
-
-    try {
-
-        await Promise.allSettled([
-            loadProfile(),
-            loadNotifications()
-        ]);
-
-    } catch {
-        // Home should remain usable.
-    }
-
+    await Promise.allSettled([
+        loadProfile(),
+        loadNotifications()
+    ]);
 }
 
 
@@ -1430,7 +1298,6 @@ async function loadHome() {
 ========================= */
 
 function setupNavigation() {
-
     $$(".nav-item").forEach(
         item => {
 
@@ -1441,18 +1308,12 @@ function setupNavigation() {
                     const screen =
                         item.dataset.screen;
 
-
                     if (screen) {
-
-                        showScreen(
-                            screen
-                        );
-
+                        showScreen(screen);
                     }
 
                 }
             );
-
         }
     );
 
@@ -1467,21 +1328,14 @@ function setupNavigation() {
                     const screen =
                         button.dataset.go;
 
-
                     if (screen) {
-
-                        showScreen(
-                            screen
-                        );
-
+                        showScreen(screen);
                     }
 
                 }
             );
-
         }
     );
-
 }
 
 
@@ -1490,27 +1344,29 @@ function setupNavigation() {
 ========================= */
 
 async function updateProfile() {
-
     const firstName =
         $("#profile-first-name")
             ?.value
             ?.trim() || "";
-
 
     const lastName =
         $("#profile-last-name")
             ?.value
             ?.trim() || "";
 
-
     const username =
         $("#profile-username")
             ?.value
             ?.trim() || "";
 
+    const phone =
+        $("#profile-phone")
+            ?.value
+            ?.trim() ||
+        state.profile?.phone ||
+        "";
 
     try {
-
         await api(
             "/api/profile/update",
             {
@@ -1519,27 +1375,23 @@ async function updateProfile() {
                 body: JSON.stringify({
                     first_name: firstName,
                     last_name: lastName,
-                    username
+                    username,
+                    phone
                 })
             }
         );
-
 
         showToast(
             "✅ Profil saqlandi."
         );
 
-
         await loadProfile();
 
     } catch (error) {
-
         showToast(
             error.message
         );
-
     }
-
 }
 
 
@@ -1550,9 +1402,7 @@ async function updateProfile() {
 async function submitDriverRide(
     payload
 ) {
-
     try {
-
         await api(
             "/api/driver/ride",
             {
@@ -1564,13 +1414,14 @@ async function submitDriverRide(
             }
         );
 
-
         showToast(
             "✅ Safar muvaffaqiyatli joylandi."
         );
 
-
-        await loadRides();
+        await Promise.allSettled([
+            loadRides(),
+            loadNotifications()
+        ]);
 
         return true;
 
@@ -1582,7 +1433,6 @@ async function submitDriverRide(
 
         return false;
     }
-
 }
 
 
@@ -1591,7 +1441,6 @@ async function submitDriverRide(
 ========================= */
 
 async function initApp() {
-
     initTelegram();
 
     setupNavigation();
@@ -1599,7 +1448,6 @@ async function initApp() {
     showScreen("home");
 
     await loadHome();
-
 }
 
 
@@ -1648,6 +1496,3 @@ window.updateProfile =
 
 window.submitDriverRide =
     submitDriverRide;
-
-window.loadDashboard =
-    loadDashboard;
