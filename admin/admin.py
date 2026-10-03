@@ -1,503 +1,474 @@
-from datetime import datetime, timezone
-
-from database.database import fetchone, fetchall, execute
-
-
-def now_str():
-    return datetime.now(timezone.utc).isoformat()
+from database.database import fetchall, fetchone
+from database.database import execute
 
 
-async def get_dashboard_stats():
-    users = await fetchone(
-        """
-        SELECT COUNT(*)
-        FROM users
-        """
-    )
-
-    drivers = await fetchone(
-        """
-        SELECT COUNT(*)
-        FROM drivers
-        """
-    )
-
-    pending_drivers = await fetchone(
-        """
-        SELECT COUNT(*)
-        FROM drivers
-        WHERE status = 'pending'
-        """
-    )
-
-    approved_drivers = await fetchone(
-        """
-        SELECT COUNT(*)
-        FROM drivers
-        WHERE status = 'approved'
-        """
-    )
-
-    active_rides = await fetchone(
-        """
-        SELECT COUNT(*)
-        FROM rides
-        WHERE status = 'active'
-        """
-    )
-
-    total_rides = await fetchone(
-        """
-        SELECT COUNT(*)
-        FROM rides
-        """
-    )
-
-    pending_orders = await fetchone(
-        """
-        SELECT COUNT(*)
-        FROM orders
-        WHERE status = 'pending'
-        """
-    )
-
-    total_orders = await fetchone(
-        """
-        SELECT COUNT(*)
-        FROM orders
-        """
-    )
-
-    total_ratings = await fetchone(
-        """
-        SELECT COUNT(*)
-        FROM ratings
-        """
-    )
-
-    unread_notifications = await fetchone(
-        """
-        SELECT COUNT(*)
-        FROM notifications
-        WHERE is_read = 0
-        """
-    )
-
-    return {
-        "users": users[0] if users else 0,
-        "drivers": drivers[0] if drivers else 0,
-        "pending_drivers": pending_drivers[0] if pending_drivers else 0,
-        "approved_drivers": approved_drivers[0] if approved_drivers else 0,
-        "active_rides": active_rides[0] if active_rides else 0,
-        "total_rides": total_rides[0] if total_rides else 0,
-        "pending_orders": pending_orders[0] if pending_orders else 0,
-        "total_orders": total_orders[0] if total_orders else 0,
-        "total_ratings": total_ratings[0] if total_ratings else 0,
-        "unread_notifications": (
-            unread_notifications[0]
-            if unread_notifications
-            else 0
-        ),
-    }
-
+# =========================================================
+# DRIVER APPLICATIONS
+# =========================================================
 
 async def get_pending_drivers():
+    """
+    Tasdiqlashni kutayotgan haydovchilar.
+    """
+
     return await fetchall(
         """
         SELECT
             d.id,
-            d.user_id,
+            d.telegram_id,
+            d.full_name,
             d.phone,
+            d.region,
+            d.district,
+            d.passport_file,
+            d.driver_license_file,
             d.status,
-            d.car_id,
             d.created_at,
             d.updated_at,
-            u.telegram_id,
-            u.first_name,
-            u.last_name,
+
             u.username,
-            u.phone
+            u.first_name,
+            u.last_name
+
         FROM drivers d
-        JOIN users u
-            ON u.id = d.user_id
-        WHERE d.status = 'pending'
+
+        LEFT JOIN users u
+            ON u.telegram_id = d.telegram_id
+
+        WHERE d.status = ?
+
         ORDER BY d.id DESC
-        """
+        """,
+        ("pending",),
     )
 
 
-async def get_all_drivers():
-    return await fetchall(
-        """
-        SELECT
-            d.id,
-            d.user_id,
-            d.phone,
-            d.status,
-            d.car_id,
-            d.created_at,
-            d.updated_at,
-            u.telegram_id,
-            u.first_name,
-            u.last_name,
-            u.username,
-            u.phone
-        FROM drivers d
-        JOIN users u
-            ON u.id = d.user_id
-        ORDER BY d.id DESC
-        """
-    )
+# =========================================================
+# GET DRIVER
+# =========================================================
 
+async def get_driver(
+    driver_id: int,
+):
+    """
+    Driver ID orqali haydovchi ma'lumotlarini olish.
+    """
 
-async def get_driver_details(driver_id: int):
     return await fetchone(
         """
         SELECT
             d.id,
-            d.user_id,
+            d.telegram_id,
+            d.full_name,
             d.phone,
+            d.region,
+            d.district,
+            d.passport_file,
+            d.driver_license_file,
             d.status,
-            d.car_id,
             d.created_at,
             d.updated_at,
-            u.telegram_id,
-            u.first_name,
-            u.last_name,
+
             u.username,
-            u.phone
+            u.first_name,
+            u.last_name
+
         FROM drivers d
-        JOIN users u
-            ON u.id = d.user_id
+
+        LEFT JOIN users u
+            ON u.telegram_id = d.telegram_id
+
         WHERE d.id = ?
         """,
         (driver_id,),
     )
 
 
-async def approve_driver(driver_id: int):
-    driver = await get_driver_details(driver_id)
+# =========================================================
+# APPROVE DRIVER
+# =========================================================
+
+async def approve_driver(
+    driver_id: int,
+):
+    """
+    Haydovchini tasdiqlash.
+    """
+
+    driver = await get_driver(
+        driver_id
+    )
 
     if not driver:
         return {
             "success": False,
-            "error": "Haydovchi topilmadi.",
+            "error": "driver_not_found",
         }
 
     await execute(
         """
         UPDATE drivers
         SET
-            status = 'approved',
-            updated_at = ?
+            status = ?,
+            updated_at = datetime('now')
         WHERE id = ?
         """,
         (
-            now_str(),
+            "approved",
             driver_id,
         ),
     )
 
     return {
         "success": True,
-        "driver": await get_driver_details(driver_id),
+        "driver": await get_driver(
+            driver_id
+        ),
     }
 
+
+# =========================================================
+# REJECT DRIVER
+# =========================================================
 
 async def reject_driver(
     driver_id: int,
-    reason: str = "",
 ):
-    driver = await get_driver_details(driver_id)
+    """
+    Haydovchi arizasini rad etish.
+    """
+
+    driver = await get_driver(
+        driver_id
+    )
 
     if not driver:
         return {
             "success": False,
-            "error": "Haydovchi topilmadi.",
+            "error": "driver_not_found",
         }
 
     await execute(
         """
         UPDATE drivers
         SET
-            status = 'rejected',
-            updated_at = ?
+            status = ?,
+            updated_at = datetime('now')
         WHERE id = ?
         """,
         (
-            now_str(),
+            "rejected",
             driver_id,
         ),
     )
 
     return {
         "success": True,
-        "driver": await get_driver_details(driver_id),
-        "reason": reason[:500],
-    }
-
-
-async def reset_driver(driver_id: int):
-    driver = await get_driver_details(driver_id)
-
-    if not driver:
-        return {
-            "success": False,
-            "error": "Haydovchi topilmadi.",
-        }
-
-    await execute(
-        """
-        UPDATE drivers
-        SET
-            status = 'pending',
-            updated_at = ?
-        WHERE id = ?
-        """,
-        (
-            now_str(),
-            driver_id,
+        "driver": await get_driver(
+            driver_id
         ),
-    )
-
-    return {
-        "success": True,
-        "driver": await get_driver_details(driver_id),
     }
 
 
-async def get_users(limit: int = 100):
-    limit = max(1, min(int(limit), 500))
+# =========================================================
+# DRIVER COUNT
+# =========================================================
 
-    return await fetchall(
-        f"""
-        SELECT
-            id,
-            telegram_id,
-            first_name,
-            last_name,
-            username,
-            phone,
-            created_at,
-            updated_at
-        FROM users
-        ORDER BY id DESC
-        LIMIT {limit}
-        """
-    )
+async def get_driver_counts():
+    """
+    Haydovchilar statistikasi.
+    """
 
-
-async def get_user_details(user_id: int):
-    return await fetchone(
+    result = await fetchone(
         """
         SELECT
-            id,
-            telegram_id,
-            first_name,
-            last_name,
-            username,
-            phone,
-            created_at,
-            updated_at
-        FROM users
-        WHERE id = ?
-        """,
-        (user_id,),
-    )
-
-
-async def get_all_rides(limit: int = 200):
-    limit = max(1, min(int(limit), 1000))
-
-    return await fetchall(
-        f"""
-        SELECT
-            r.id,
-            r.driver_id,
-            r.from_region,
-            r.from_district,
-            r.to_region,
-            r.to_district,
-            r.travel_date,
-            r.travel_time,
-            r.seats,
-            r.available_seats,
-            r.price,
-            r.status,
-            r.created_at,
-            u.first_name,
-            u.last_name,
-            u.username
-        FROM rides r
-        JOIN drivers d
-            ON d.id = r.driver_id
-        JOIN users u
-            ON u.id = d.user_id
-        ORDER BY r.id DESC
-        LIMIT {limit}
-        """
-    )
-
-
-async def get_all_orders(limit: int = 200):
-    limit = max(1, min(int(limit), 1000))
-
-    return await fetchall(
-        f"""
-        SELECT
-            o.id,
-            o.ride_id,
-            o.passenger_id,
-            o.seats,
-            o.status,
-            o.created_at,
-            o.updated_at,
-            u.first_name,
-            u.last_name,
-            u.username,
-            u.phone,
-            r.from_region,
-            r.from_district,
-            r.to_region,
-            r.to_district,
-            r.travel_date,
-            r.travel_time,
-            r.price
-        FROM orders o
-        JOIN users u
-            ON u.id = o.passenger_id
-        JOIN rides r
-            ON r.id = o.ride_id
-        ORDER BY o.id DESC
-        LIMIT {limit}
-        """
-    )
-
-
-async def get_all_ratings(limit: int = 200):
-    limit = max(1, min(int(limit), 1000))
-
-    return await fetchall(
-        f"""
-        SELECT
-            r.id,
-            r.ride_id,
-            r.order_id,
-            r.from_user_id,
-            r.to_user_id,
-            r.rating,
-            r.comment,
-            r.created_at,
-            sender.first_name,
-            sender.last_name,
-            sender.username,
-            receiver.first_name,
-            receiver.last_name,
-            receiver.username
-        FROM ratings r
-        JOIN users sender
-            ON sender.id = r.from_user_id
-        JOIN users receiver
-            ON receiver.id = r.to_user_id
-        ORDER BY r.id DESC
-        LIMIT {limit}
-        """
-    )
-
-
-async def delete_ride(ride_id: int):
-    ride = await fetchone(
-        """
-        SELECT id, status
-        FROM rides
-        WHERE id = ?
-        """,
-        (ride_id,),
-    )
-
-    if not ride:
-        return {
-            "success": False,
-            "error": "Safar topilmadi.",
-        }
-
-    await execute(
-        """
-        UPDATE rides
-        SET status = 'cancelled'
-        WHERE id = ?
-        """,
-        (ride_id,),
-    )
-
-    return {
-        "success": True,
-        "ride_id": ride_id,
-    }
-
-
-async def get_recent_activity(limit: int = 50):
-    limit = max(1, min(int(limit), 200))
-
-    users = await fetchall(
-        f"""
-        SELECT
-            'user' AS type,
-            id,
-            first_name,
-            last_name,
-            created_at
-        FROM users
-        ORDER BY id DESC
-        LIMIT {limit}
-        """
-    )
-
-    drivers = await fetchall(
-        f"""
-        SELECT
-            'driver' AS type,
-            id,
-            status,
-            '',
-            created_at
+            COUNT(*) AS total,
+            SUM(
+                CASE
+                    WHEN status = 'pending'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS pending,
+            SUM(
+                CASE
+                    WHEN status = 'approved'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS approved,
+            SUM(
+                CASE
+                    WHEN status = 'rejected'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS rejected
         FROM drivers
-        ORDER BY id DESC
-        LIMIT {limit}
-        """
-    )
-
-    rides = await fetchall(
-        f"""
-        SELECT
-            'ride' AS type,
-            id,
-            status,
-            from_region || ' → ' || to_region,
-            created_at
-        FROM rides
-        ORDER BY id DESC
-        LIMIT {limit}
-        """
-    )
-
-    orders = await fetchall(
-        f"""
-        SELECT
-            'order' AS type,
-            id,
-            status,
-            '',
-            created_at
-        FROM orders
-        ORDER BY id DESC
-        LIMIT {limit}
         """
     )
 
     return {
-        "users": users,
+        "total": int(
+            result.get("total") or 0
+        ),
+        "pending": int(
+            result.get("pending") or 0
+        ),
+        "approved": int(
+            result.get("approved") or 0
+        ),
+        "rejected": int(
+            result.get("rejected") or 0
+        ),
+    }
+
+
+# =========================================================
+# USER COUNT
+# =========================================================
+
+async def get_user_count():
+    """
+    Ro'yxatdan o'tgan foydalanuvchilar soni.
+    """
+
+    result = await fetchone(
+        """
+        SELECT COUNT(*) AS count
+        FROM users
+        """
+    )
+
+    return int(
+        result.get("count") or 0
+    )
+
+
+# =========================================================
+# RIDE COUNT
+# =========================================================
+
+async def get_ride_counts():
+    """
+    Safarlar statistikasi.
+    """
+
+    result = await fetchone(
+        """
+        SELECT
+            COUNT(*) AS total,
+            SUM(
+                CASE
+                    WHEN status = 'active'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS active,
+            SUM(
+                CASE
+                    WHEN status = 'full'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS full,
+            SUM(
+                CASE
+                    WHEN status = 'cancelled'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS cancelled,
+            SUM(
+                CASE
+                    WHEN status = 'finished'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS finished
+        FROM rides
+        """
+    )
+
+    return {
+        "total": int(
+            result.get("total") or 0
+        ),
+        "active": int(
+            result.get("active") or 0
+        ),
+        "full": int(
+            result.get("full") or 0
+        ),
+        "cancelled": int(
+            result.get("cancelled") or 0
+        ),
+        "finished": int(
+            result.get("finished") or 0
+        ),
+    }
+
+
+# =========================================================
+# ORDER COUNT
+# =========================================================
+
+async def get_order_counts():
+    """
+    Buyurtmalar statistikasi.
+    """
+
+    result = await fetchone(
+        """
+        SELECT
+            COUNT(*) AS total,
+            SUM(
+                CASE
+                    WHEN status = 'pending'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS pending,
+            SUM(
+                CASE
+                    WHEN status = 'accepted'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS accepted,
+            SUM(
+                CASE
+                    WHEN status = 'rejected'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS rejected,
+            SUM(
+                CASE
+                    WHEN status = 'cancelled'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS cancelled,
+            SUM(
+                CASE
+                    WHEN status = 'finished'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS finished
+        FROM orders
+        """
+    )
+
+    return {
+        "total": int(
+            result.get("total") or 0
+        ),
+        "pending": int(
+            result.get("pending") or 0
+        ),
+        "accepted": int(
+            result.get("accepted") or 0
+        ),
+        "rejected": int(
+            result.get("rejected") or 0
+        ),
+        "cancelled": int(
+            result.get("cancelled") or 0
+        ),
+        "finished": int(
+            result.get("finished") or 0
+        ),
+    }
+
+
+# =========================================================
+# RATING STATISTICS
+# =========================================================
+
+async def get_rating_statistics():
+    """
+    Reyting statistikasi.
+    """
+
+    result = await fetchone(
+        """
+        SELECT
+            COUNT(*) AS total,
+            COALESCE(
+                ROUND(AVG(rating), 2),
+                0
+            ) AS average
+        FROM ratings
+        """
+    )
+
+    return {
+        "total": int(
+            result.get("total") or 0
+        ),
+        "average": float(
+            result.get("average") or 0
+        ),
+    }
+
+
+# =========================================================
+# ADMIN DASHBOARD
+# =========================================================
+
+async def get_dashboard():
+    """
+    Admin panel uchun umumiy statistika.
+    """
+
+    drivers = await get_driver_counts()
+    rides = await get_ride_counts()
+    orders = await get_order_counts()
+    ratings = await get_rating_statistics()
+
+    return {
+        "users": await get_user_count(),
         "drivers": drivers,
         "rides": rides,
         "orders": orders,
+        "ratings": ratings,
+        "pending_drivers": await get_pending_drivers(),
     }
+
+
+# =========================================================
+# ADMIN ACTION LOG
+# =========================================================
+
+async def log_admin_action(
+    admin_telegram_id: int,
+    action: str,
+    target_telegram_id: int = None,
+    details: str = "",
+):
+    """
+    Admin bajargan amalni yozib boradi.
+    """
+
+    await execute(
+        """
+        INSERT INTO admin_actions (
+            admin_telegram_id,
+            action,
+            target_telegram_id,
+            details,
+            created_at
+        )
+        VALUES (?, ?, ?, ?, datetime('now'))
+        """,
+        (
+            admin_telegram_id,
+            action,
+            target_telegram_id,
+            details,
+        ),
+    )
+
+    return True
