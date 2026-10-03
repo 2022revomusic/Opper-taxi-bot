@@ -1,10 +1,10 @@
 from datetime import datetime, timezone
 
-from database.database import execute, fetchone, fetchall
+from database.database import execute, fetchall, fetchone
 
 
 # =========================================================
-# OPPER TAXI — ORDERS API
+# ORDER STATUS
 # =========================================================
 
 ORDER_PENDING = "pending"
@@ -14,76 +14,112 @@ ORDER_CANCELLED = "cancelled"
 ORDER_FINISHED = "finished"
 
 
+# =========================================================
+# TIME
+# =========================================================
+
 def now_str():
     return datetime.now(timezone.utc).isoformat()
 
 
-async def get_order_by_id(order_id: int):
+# =========================================================
+# GET ORDER
+# =========================================================
+
+async def get_order_by_id(
+    order_id: int,
+):
+    """
+    Buyurtmani ID orqali olish.
+    """
+
     return await fetchone(
         """
         SELECT
-            id,
-            ride_id,
-            passenger_id,
-            seats,
-            status,
-            created_at,
-            updated_at
-        FROM orders
-        WHERE id = ?
+            o.id,
+            o.ride_id,
+            o.passenger_telegram_id,
+            o.driver_telegram_id,
+            o.seats,
+            o.phone,
+            o.note,
+            o.status,
+            o.created_at,
+            o.updated_at,
+
+            r.from_region,
+            r.from_district,
+            r.to_region,
+            r.to_district,
+            r.travel_date,
+            r.travel_time,
+            r.price,
+            r.available_seats,
+            r.status AS ride_status,
+
+            pu.first_name AS passenger_first_name,
+            pu.last_name AS passenger_last_name,
+            pu.username AS passenger_username,
+
+            du.first_name AS driver_first_name,
+            du.last_name AS driver_last_name,
+            du.username AS driver_username,
+
+            d.full_name AS driver_full_name
+
+        FROM orders o
+
+        LEFT JOIN rides r
+            ON r.id = o.ride_id
+
+        LEFT JOIN users pu
+            ON pu.telegram_id = o.passenger_telegram_id
+
+        LEFT JOIN users du
+            ON du.telegram_id = o.driver_telegram_id
+
+        LEFT JOIN drivers d
+            ON d.telegram_id = o.driver_telegram_id
+
+        WHERE o.id = ?
         """,
         (order_id,),
     )
 
 
-async def get_pending_order_for_passenger(
-    ride_id: int,
-    passenger_id: int,
-):
-    return await fetchone(
-        """
-        SELECT
-            id,
-            ride_id,
-            passenger_id,
-            seats,
-            status,
-            created_at,
-            updated_at
-        FROM orders
-        WHERE ride_id = ?
-          AND passenger_id = ?
-          AND status = ?
-        LIMIT 1
-        """,
-        (
-            ride_id,
-            passenger_id,
-            ORDER_PENDING,
-        ),
-    )
-
+# =========================================================
+# CREATE ORDER
+# =========================================================
 
 async def create_order(
     ride_id: int,
-    passenger_id: int,
+    passenger_telegram_id: int,
+    driver_telegram_id: int,
     seats: int = 1,
+    phone: str = "",
+    note: str = "",
 ):
     """
     Yo'lovchi safarga buyurtma beradi.
     """
 
-    if seats < 1:
+    seats = int(seats)
+
+    if seats < 1 or seats > 4:
         return {
             "success": False,
-            "error": "O'rinlar soni kamida 1 ta bo'lishi kerak.",
+            "error": "invalid_seats",
         }
+
+    # -----------------------------------------------------
+    # SAFARNI TEKSHIRISH
+    # -----------------------------------------------------
 
     ride = await fetchone(
         """
         SELECT
             id,
-            driver_id,
+            driver_telegram_id,
             available_seats,
             status
         FROM rides
@@ -95,54 +131,70 @@ async def create_order(
     if not ride:
         return {
             "success": False,
-            "error": "Safar topilmadi.",
+            "error": "ride_not_found",
         }
 
-    driver_id = ride[1]
-    available_seats = ride[2]
-    ride_status = ride[3]
-
-    if ride_status != "active":
+    if ride["status"] != "active":
         return {
             "success": False,
-            "error": "Bu safar hozir faol emas.",
+            "error": "ride_not_active",
         }
 
-    if available_seats < seats:
+    if int(ride["available_seats"]) < seats:
         return {
             "success": False,
-            "error": "Yetarli bo'sh o'rin mavjud emas.",
+            "error": "not_enough_seats",
         }
 
-    # Haydovchining o'z safariga o'zi buyurtma bera olmaydi.
-    driver_user = await fetchone(
-        """
-        SELECT user_id
-        FROM drivers
-        WHERE id = ?
-        """,
-        (driver_id,),
+    # -----------------------------------------------------
+    # DRIVER ID
+    # -----------------------------------------------------
+
+    real_driver_id = int(
+        ride["driver_telegram_id"]
     )
 
-    if driver_user and driver_user[0] == passenger_id:
-        return {
-            "success": False,
-            "error": "Haydovchi o'z safariga buyurtma bera olmaydi.",
-        }
+    # Frontend yuborgan driver ID noto'g'ri bo'lsa,
+    # safarning haqiqiy driver ID'sidan foydalanamiz.
+    driver_telegram_id = real_driver_id
 
-    # Bir xil safarga bir foydalanuvchi qayta-qayta
-    # pending buyurtma yubora olmaydi.
-    existing = await get_pending_order_for_passenger(
-        ride_id,
-        passenger_id,
+    # -----------------------------------------------------
+    # TAKRORIY BUYURTMA
+    # -----------------------------------------------------
+
+    existing = await fetchone(
+        """
+        SELECT
+            id,
+            status
+        FROM orders
+        WHERE
+            ride_id = ?
+            AND passenger_telegram_id = ?
+            AND status IN (?, ?)
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (
+            ride_id,
+            passenger_telegram_id,
+            ORDER_PENDING,
+            ORDER_ACCEPTED,
+        ),
     )
 
     if existing:
         return {
             "success": False,
-            "error": "Siz bu safarga allaqachon buyurtma yuborgansiz.",
-            "order": existing,
+            "error": "already_ordered",
+            "order": await get_order_by_id(
+                existing["id"]
+            ),
         }
+
+    # -----------------------------------------------------
+    # BUYURTMA YARATISH
+    # -----------------------------------------------------
 
     created_at = now_str()
 
@@ -150,75 +202,47 @@ async def create_order(
         """
         INSERT INTO orders (
             ride_id,
-            passenger_id,
+            passenger_telegram_id,
+            driver_telegram_id,
             seats,
+            phone,
+            note,
             status,
             created_at,
             updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             ride_id,
-            passenger_id,
+            passenger_telegram_id,
+            driver_telegram_id,
             seats,
+            phone,
+            note,
             ORDER_PENDING,
             created_at,
             created_at,
         ),
     )
 
-    order = await get_order_by_id(order_id)
-
     return {
         "success": True,
-        "order": order,
+        "order": await get_order_by_id(
+            order_id
+        ),
     }
 
 
-async def get_driver_orders(driver_id: int):
-    """
-    Haydovchining barcha buyurtmalarini chiqaradi.
-    """
+# =========================================================
+# PASSENGER ORDERS
+# =========================================================
 
-    return await fetchall(
-        """
-        SELECT
-            o.id,
-            o.ride_id,
-            o.passenger_id,
-            o.seats,
-            o.status,
-            o.created_at,
-            o.updated_at,
-            u.first_name,
-            u.last_name,
-            u.username,
-            u.phone,
-            r.from_region,
-            r.from_district,
-            r.to_region,
-            r.to_district,
-            r.travel_date,
-            r.travel_time,
-            r.price
-        FROM orders o
-        JOIN rides r
-            ON r.id = o.ride_id
-        JOIN drivers d
-            ON d.id = r.driver_id
-        JOIN users u
-            ON u.id = o.passenger_id
-        WHERE d.id = ?
-        ORDER BY o.id DESC
-        """,
-        (driver_id,),
-    )
-
-
-async def get_passenger_orders(passenger_id: int):
+async def get_passenger_orders(
+    passenger_telegram_id: int,
+):
     """
-    Yo'lovchining barcha buyurtmalari.
+    Yo'lovchining buyurtmalari.
     """
 
     return await fetchall(
@@ -226,151 +250,321 @@ async def get_passenger_orders(passenger_id: int):
         SELECT
             o.id,
             o.ride_id,
-            o.passenger_id,
+            o.passenger_telegram_id,
+            o.driver_telegram_id,
             o.seats,
+            o.phone,
+            o.note,
             o.status,
             o.created_at,
             o.updated_at,
-            r.driver_id,
+
             r.from_region,
             r.from_district,
             r.to_region,
             r.to_district,
             r.travel_date,
             r.travel_time,
-            r.price
+            r.price,
+            r.available_seats,
+            r.status AS ride_status,
+
+            du.first_name AS driver_first_name,
+            du.last_name AS driver_last_name,
+            du.username AS driver_username,
+
+            d.full_name AS driver_full_name
+
         FROM orders o
-        JOIN rides r
+
+        LEFT JOIN rides r
             ON r.id = o.ride_id
-        WHERE o.passenger_id = ?
-        ORDER BY o.id DESC
+
+        LEFT JOIN users du
+            ON du.telegram_id = o.driver_telegram_id
+
+        LEFT JOIN drivers d
+            ON d.telegram_id = o.driver_telegram_id
+
+        WHERE o.passenger_telegram_id = ?
+
+        ORDER BY
+            o.id DESC
         """,
-        (passenger_id,),
+        (passenger_telegram_id,),
     )
 
 
-async def accept_order(order_id: int):
+# =========================================================
+# DRIVER ORDERS
+# =========================================================
+
+async def get_driver_orders(
+    driver_telegram_id: int,
+):
+    """
+    Haydovchining buyurtmalari.
+    """
+
+    return await fetchall(
+        """
+        SELECT
+            o.id,
+            o.ride_id,
+            o.passenger_telegram_id,
+            o.driver_telegram_id,
+            o.seats,
+            o.phone,
+            o.note,
+            o.status,
+            o.created_at,
+            o.updated_at,
+
+            r.from_region,
+            r.from_district,
+            r.to_region,
+            r.to_district,
+            r.travel_date,
+            r.travel_time,
+            r.price,
+            r.available_seats,
+            r.status AS ride_status,
+
+            pu.first_name AS passenger_first_name,
+            pu.last_name AS passenger_last_name,
+            pu.username AS passenger_username,
+            pu.phone AS passenger_profile_phone
+
+        FROM orders o
+
+        LEFT JOIN rides r
+            ON r.id = o.ride_id
+
+        LEFT JOIN users pu
+            ON pu.telegram_id = o.passenger_telegram_id
+
+        WHERE o.driver_telegram_id = ?
+
+        ORDER BY
+            o.id DESC
+        """,
+        (driver_telegram_id,),
+    )
+
+
+# =========================================================
+# ACCEPT ORDER
+# =========================================================
+
+async def accept_order(
+    order_id: int,
+    driver_telegram_id: int,
+):
     """
     Haydovchi buyurtmani qabul qiladi.
 
-    Qabul qilinganda safardagi bo'sh o'rinlar kamayadi.
+    Muhim:
+    BEGIN IMMEDIATE orqali parallel buyurtmalarda
+    joylar noto'g'ri hisoblanishining oldini oladi.
     """
 
-    order = await get_order_by_id(order_id)
+    async with __import__(
+        "aiosqlite"
+    ).connect(
+        __import__(
+            "database.database",
+            fromlist=["DB_PATH"]
+        ).DB_PATH
+    ) as db:
 
-    if not order:
-        return {
-            "success": False,
-            "error": "Buyurtma topilmadi.",
-        }
+        db.row_factory = __import__(
+            "aiosqlite"
+        ).Row
 
-    if order[4] != ORDER_PENDING:
-        return {
-            "success": False,
-            "error": "Bu buyurtma endi pending holatda emas.",
-        }
+        try:
 
-    ride_id = order[1]
-    requested_seats = order[3]
+            await db.execute(
+                "BEGIN IMMEDIATE"
+            )
 
-    ride = await fetchone(
-        """
-        SELECT
-            available_seats,
-            status
-        FROM rides
-        WHERE id = ?
-        """,
-        (ride_id,),
-    )
+            cursor = await db.execute(
+                """
+                SELECT
+                    o.id,
+                    o.ride_id,
+                    o.seats,
+                    o.status,
+                    o.driver_telegram_id,
 
-    if not ride:
-        return {
-            "success": False,
-            "error": "Safar topilmadi.",
-        }
+                    r.available_seats,
+                    r.status AS ride_status
 
-    available_seats = ride[0]
-    ride_status = ride[1]
+                FROM orders o
 
-    if ride_status != "active":
-        return {
-            "success": False,
-            "error": "Safar faol emas.",
-        }
+                JOIN rides r
+                    ON r.id = o.ride_id
 
-    if available_seats < requested_seats:
-        return {
-            "success": False,
-            "error": "Bo'sh o'rin yetarli emas.",
-        }
+                WHERE
+                    o.id = ?
+                    AND o.driver_telegram_id = ?
 
-    new_available_seats = available_seats - requested_seats
+                LIMIT 1
+                """,
+                (
+                    order_id,
+                    driver_telegram_id,
+                ),
+            )
 
-    new_ride_status = (
-        "full"
-        if new_available_seats == 0
-        else "active"
-    )
+            order = await cursor.fetchone()
 
-    updated_at = now_str()
+            if not order:
+                await db.rollback()
 
-    await execute(
-        """
-        UPDATE orders
-        SET
-            status = ?,
-            updated_at = ?
-        WHERE id = ?
-          AND status = ?
-        """,
-        (
-            ORDER_ACCEPTED,
-            updated_at,
-            order_id,
-            ORDER_PENDING,
-        ),
-    )
+                return {
+                    "success": False,
+                    "error": "order_not_found",
+                }
 
-    await execute(
-        """
-        UPDATE rides
-        SET
-            available_seats = ?,
-            status = ?
-        WHERE id = ?
-        """,
-        (
-            new_available_seats,
-            new_ride_status,
-            ride_id,
-        ),
-    )
+            if order["status"] != ORDER_PENDING:
+                await db.rollback()
+
+                return {
+                    "success": False,
+                    "error": "order_not_pending",
+                }
+
+            if order["ride_status"] not in (
+                "active",
+                "full",
+            ):
+                await db.rollback()
+
+                return {
+                    "success": False,
+                    "error": "ride_not_active",
+                }
+
+            requested_seats = int(
+                order["seats"]
+            )
+
+            available_seats = int(
+                order["available_seats"]
+            )
+
+            if available_seats < requested_seats:
+                await db.rollback()
+
+                return {
+                    "success": False,
+                    "error": "not_enough_seats",
+                }
+
+            new_available = (
+                available_seats
+                - requested_seats
+            )
+
+            new_ride_status = (
+                ORDER_ACCEPTED
+                if new_available > 0
+                else "full"
+            )
+
+            # -------------------------------------------------
+            # UPDATE RIDE
+            # -------------------------------------------------
+
+            await db.execute(
+                """
+                UPDATE rides
+                SET
+                    available_seats = ?,
+                    status = ?,
+                    updated_at = ?
+                WHERE id = ?
+                """,
+                (
+                    new_available,
+                    new_ride_status,
+                    now_str(),
+                    order["ride_id"],
+                ),
+            )
+
+            # -------------------------------------------------
+            # ACCEPT ORDER
+            # -------------------------------------------------
+
+            await db.execute(
+                """
+                UPDATE orders
+                SET
+                    status = ?,
+                    updated_at = ?
+                WHERE
+                    id = ?
+                    AND driver_telegram_id = ?
+                """,
+                (
+                    ORDER_ACCEPTED,
+                    now_str(),
+                    order_id,
+                    driver_telegram_id,
+                ),
+            )
+
+            await db.commit()
+
+        except Exception:
+
+            await db.rollback()
+            raise
 
     return {
         "success": True,
-        "order": await get_order_by_id(order_id),
+        "order": await get_order_by_id(
+            order_id
+        ),
     }
 
 
-async def reject_order(order_id: int):
+# =========================================================
+# REJECT ORDER
+# =========================================================
+
+async def reject_order(
+    order_id: int,
+    driver_telegram_id: int,
+):
     """
     Haydovchi buyurtmani rad etadi.
     """
 
-    order = await get_order_by_id(order_id)
+    order = await fetchone(
+        """
+        SELECT
+            id,
+            status
+        FROM orders
+        WHERE
+            id = ?
+            AND driver_telegram_id = ?
+        """,
+        (
+            order_id,
+            driver_telegram_id,
+        ),
+    )
 
     if not order:
-        return {
-            "success": False,
-            "error": "Buyurtma topilmadi.",
-        }
+        return None
 
-    if order[4] != ORDER_PENDING:
-        return {
-            "success": False,
-            "error": "Bu buyurtma endi pending holatda emas.",
-        }
+    if order["status"] != ORDER_PENDING:
+        return await get_order_by_id(
+            order_id
+        )
 
     await execute(
         """
@@ -378,137 +572,253 @@ async def reject_order(order_id: int):
         SET
             status = ?,
             updated_at = ?
-        WHERE id = ?
-          AND status = ?
+        WHERE
+            id = ?
+            AND driver_telegram_id = ?
         """,
         (
             ORDER_REJECTED,
             now_str(),
             order_id,
-            ORDER_PENDING,
+            driver_telegram_id,
         ),
     )
 
-    return {
-        "success": True,
-        "order": await get_order_by_id(order_id),
-    }
+    return await get_order_by_id(
+        order_id
+    )
 
 
-async def cancel_order(order_id: int):
+# =========================================================
+# CANCEL ORDER
+# =========================================================
+
+async def cancel_order(
+    order_id: int,
+    telegram_id: int,
+):
     """
-    Buyurtmani bekor qiladi.
+    Yo'lovchi yoki haydovchi buyurtmani bekor qiladi.
 
-    Agar buyurtma oldin qabul qilingan bo'lsa,
-    bo'sh o'rin qayta tiklanadi.
+    Agar buyurtma accepted bo'lsa,
+    joy safarga qaytariladi.
     """
 
-    order = await get_order_by_id(order_id)
+    async with __import__(
+        "aiosqlite"
+    ).connect(
+        __import__(
+            "database.database",
+            fromlist=["DB_PATH"]
+        ).DB_PATH
+    ) as db:
 
-    if not order:
-        return {
-            "success": False,
-            "error": "Buyurtma topilmadi.",
-        }
+        db.row_factory = __import__(
+            "aiosqlite"
+        ).Row
 
-    current_status = order[4]
+        try:
 
-    if current_status in {
-        ORDER_CANCELLED,
-        ORDER_REJECTED,
-        ORDER_FINISHED,
-    }:
-        return {
-            "success": False,
-            "error": "Bu buyurtmani bekor qilib bo'lmaydi.",
-        }
-
-    ride_id = order[1]
-    seats = order[3]
-
-    if current_status == ORDER_ACCEPTED:
-
-        ride = await fetchone(
-            """
-            SELECT
-                available_seats,
-                seats
-            FROM rides
-            WHERE id = ?
-            """,
-            (ride_id,),
-        )
-
-        if ride:
-
-            available_seats = ride[0]
-            total_seats = ride[1]
-
-            restored_seats = min(
-                available_seats + seats,
-                total_seats,
+            await db.execute(
+                "BEGIN IMMEDIATE"
             )
 
-            ride_status = (
-                "active"
-                if restored_seats > 0
-                else "full"
-            )
-
-            await execute(
+            cursor = await db.execute(
                 """
-                UPDATE rides
+                SELECT
+                    o.id,
+                    o.ride_id,
+                    o.seats,
+                    o.status,
+                    o.passenger_telegram_id,
+                    o.driver_telegram_id,
+
+                    r.available_seats,
+                    r.seats AS total_seats
+
+                FROM orders o
+
+                JOIN rides r
+                    ON r.id = o.ride_id
+
+                WHERE o.id = ?
+
+                LIMIT 1
+                """,
+                (order_id,),
+            )
+
+            order = await cursor.fetchone()
+
+            if not order:
+                await db.rollback()
+
+                return {
+                    "success": False,
+                    "error": "order_not_found",
+                }
+
+            is_passenger = (
+                int(
+                    order["passenger_telegram_id"]
+                )
+                == int(telegram_id)
+            )
+
+            is_driver = (
+                int(
+                    order["driver_telegram_id"]
+                )
+                == int(telegram_id)
+            )
+
+            if not (
+                is_passenger
+                or is_driver
+            ):
+                await db.rollback()
+
+                return {
+                    "success": False,
+                    "error": "not_allowed",
+                }
+
+            if order["status"] in (
+                ORDER_CANCELLED,
+                ORDER_REJECTED,
+                ORDER_FINISHED,
+            ):
+                await db.rollback()
+
+                return {
+                    "success": False,
+                    "error": "already_closed",
+                }
+
+            # -------------------------------------------------
+            # QABUL QILINGAN BUYURTMA
+            # -------------------------------------------------
+
+            if order["status"] == ORDER_ACCEPTED:
+
+                available = int(
+                    order["available_seats"]
+                )
+
+                total = int(
+                    order["total_seats"]
+                )
+
+                restored = min(
+                    total,
+                    available
+                    + int(order["seats"]),
+                )
+
+                ride_status = (
+                    "full"
+                    if restored <= 0
+                    else "active"
+                )
+
+                await db.execute(
+                    """
+                    UPDATE rides
+                    SET
+                        available_seats = ?,
+                        status = ?,
+                        updated_at = ?
+                    WHERE id = ?
+                    """,
+                    (
+                        restored,
+                        ride_status,
+                        now_str(),
+                        order["ride_id"],
+                    ),
+                )
+
+            # -------------------------------------------------
+            # CANCEL ORDER
+            # -------------------------------------------------
+
+            await db.execute(
+                """
+                UPDATE orders
                 SET
-                    available_seats = ?,
-                    status = ?
+                    status = ?,
+                    updated_at = ?
                 WHERE id = ?
                 """,
                 (
-                    restored_seats,
-                    ride_status,
-                    ride_id,
+                    ORDER_CANCELLED,
+                    now_str(),
+                    order_id,
                 ),
             )
 
-    await execute(
-        """
-        UPDATE orders
-        SET
-            status = ?,
-            updated_at = ?
-        WHERE id = ?
-        """,
-        (
-            ORDER_CANCELLED,
-            now_str(),
-            order_id,
-        ),
-    )
+            await db.commit()
+
+        except Exception:
+
+            await db.rollback()
+            raise
 
     return {
         "success": True,
-        "order": await get_order_by_id(order_id),
+        "order": await get_order_by_id(
+            order_id
+        ),
     }
 
 
-async def finish_order(order_id: int):
+# =========================================================
+# FINISH ORDER
+# =========================================================
+
+async def finish_order(
+    order_id: int,
+    telegram_id: int,
+):
     """
     Buyurtmani tugallangan holatga o'tkazadi.
     """
 
-    order = await get_order_by_id(order_id)
+    order = await fetchone(
+        """
+        SELECT
+            id,
+            passenger_telegram_id,
+            driver_telegram_id,
+            status
+        FROM orders
+        WHERE id = ?
+        """,
+        (order_id,),
+    )
 
     if not order:
-        return {
-            "success": False,
-            "error": "Buyurtma topilmadi.",
-        }
+        return None
 
-    if order[4] != ORDER_ACCEPTED:
-        return {
-            "success": False,
-            "error": "Faqat qabul qilingan buyurtma tugatiladi.",
-        }
+    allowed = (
+        int(
+            order["passenger_telegram_id"]
+        )
+        == int(telegram_id)
+        or
+        int(
+            order["driver_telegram_id"]
+        )
+        == int(telegram_id)
+    )
+
+    if not allowed:
+        return None
+
+    if order["status"] != ORDER_ACCEPTED:
+        return await get_order_by_id(
+            order_id
+        )
 
     await execute(
         """
@@ -525,7 +835,50 @@ async def finish_order(order_id: int):
         ),
     )
 
-    return {
-        "success": True,
-        "order": await get_order_by_id(order_id),
-    }
+    return await get_order_by_id(
+        order_id
+    )
+
+
+# =========================================================
+# GET ACTIVE ORDERS FOR RIDE
+# =========================================================
+
+async def get_ride_orders(
+    ride_id: int,
+):
+    """
+    Bitta safarga tegishli buyurtmalar.
+    """
+
+    return await fetchall(
+        """
+        SELECT
+            o.id,
+            o.ride_id,
+            o.passenger_telegram_id,
+            o.driver_telegram_id,
+            o.seats,
+            o.phone,
+            o.note,
+            o.status,
+            o.created_at,
+            o.updated_at,
+
+            u.first_name AS passenger_first_name,
+            u.last_name AS passenger_last_name,
+            u.username AS passenger_username,
+            u.phone AS passenger_profile_phone
+
+        FROM orders o
+
+        LEFT JOIN users u
+            ON u.telegram_id = o.passenger_telegram_id
+
+        WHERE o.ride_id = ?
+
+        ORDER BY
+            o.id DESC
+        """,
+        (ride_id,),
+    )
