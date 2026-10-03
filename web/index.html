@@ -8,152 +8,128 @@
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     >
 
-    <meta
-        name="theme-color"
-        content="#111827"
-    >
-
-    <meta
-        http-equiv="Cache-Control"
-        content="no-cache, no-store, must-revalidate"
-    >
-
-    <meta
-        http-equiv="Pragma"
-        content="no-cache"
-    >
-
-    <meta
-        http-equiv="Expires"
-        content="0"
-    >
+    <meta name="theme-color" content="#111111">
 
     <title>OPPER TAXI</title>
 
+    <!-- Telegram Mini App -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-    <link
-        rel="stylesheet"
-        href="/web/css/style.css?v=20261003"
-    >
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="/web/css/style.css">
 </head>
 
 <body>
 
-<div class="app">
+<div id="app">
 
     <!-- =========================
          HEADER
     ========================== -->
+    <header class="app-header">
 
-    <header class="header">
+        <div class="header-left">
 
-        <div class="header-top">
-
-            <div class="logo">
-
-                <div class="logo-icon">
-                    🚕
-                </div>
-
-                <div>
-
-                    <div class="logo-text">
-                        OPPER TAXI
-                    </div>
-
-                    <div class="logo-sub">
-                        O'zbekiston bo'ylab safarlar
-                    </div>
-
-                </div>
-
+            <div class="logo-box">
+                🚕
             </div>
 
-            <button
-                class="notification-btn"
-                type="button"
-                onclick="showScreen('notifications')"
-            >
-                🔔
-
-                <span
-                    class="notification-dot"
-                    id="notificationDot"
-                ></span>
-
-            </button>
-
-        </div>
-
-        <div class="user-mini">
-
-            <div
-                class="avatar"
-                id="headerAvatar"
-            >
-                U
-            </div>
-
-            <div>
-
-                <div
-                    class="user-name"
-                    id="headerName"
-                >
-                    Foydalanuvchi
+            <div class="brand">
+                <div class="brand-name">OPPER TAXI</div>
+                <div class="brand-subtitle">
+                    O‘zbekiston bo‘ylab safarlar
                 </div>
-
-                <div class="user-status">
-                    OPPER TAXI foydalanuvchisi
-                </div>
-
             </div>
 
         </div>
+
+        <button
+            class="notification-btn"
+            type="button"
+            onclick="openPage('notifications')"
+            aria-label="Bildirishnomalar"
+        >
+            🔔
+            <span id="notificationBadge" class="notification-badge hidden">
+                0
+            </span>
+        </button>
 
     </header>
 
 
     <!-- =========================
-         CONTENT
+         USER MINI PROFILE
     ========================== -->
+    <div class="mini-profile">
 
-    <main class="content">
+        <div class="mini-avatar" id="headerAvatar">
+            👤
+        </div>
+
+        <div class="mini-user-info">
+
+            <div
+                class="mini-user-name"
+                id="headerUserName"
+            >
+                Foydalanuvchi
+            </div>
+
+            <div
+                class="mini-user-phone"
+                id="headerUserPhone"
+            >
+                OPPER TAXI
+            </div>
+
+        </div>
+
+    </div>
 
 
-        <!-- =====================
-             HOME
-        ====================== -->
+    <!-- =========================
+         MAIN CONTENT
+    ========================== -->
+    <main class="main-content">
 
+
+        <!-- =========================
+             HOME PAGE
+        ========================== -->
         <section
-            class="screen active"
-            data-screen="home"
+            id="page-home"
+            class="page active"
+            data-page="home"
         >
 
             <div class="hero">
 
-                <h2>
-                    Safaringizni boshlang 🚕
-                </h2>
+                <div class="hero-icon">
+                    🚕
+                </div>
+
+                <h1>
+                    Manzilingizga<br>
+                    <span>birga boramiz.</span>
+                </h1>
 
                 <p>
-                    O'zbekiston bo'ylab kerakli
-                    yo'nalishda haydovchi yoki
-                    yo'lovchi toping.
+                    Shaharlar orasida ishonchli safar toping.
+                    Narxni oldindan biling va haydovchi bilan bog‘laning.
                 </p>
 
             </div>
 
 
-            <div class="action-grid">
+            <!-- Quick actions -->
+            <div class="quick-actions">
 
                 <button
                     class="action-card"
                     type="button"
-                    data-go="rides"
+                    onclick="openPage('search')"
                 >
-
                     <div class="action-icon">
                         🔎
                     </div>
@@ -162,324 +138,162 @@
                         Safar qidirish
                     </div>
 
-                    <div class="action-desc">
-                        Kerakli yo'nalishni toping
+                    <div class="action-text">
+                        O‘zingizga mos safarni toping
                     </div>
-
                 </button>
 
 
                 <button
                     class="action-card"
                     type="button"
-                    data-go="driver"
+                    onclick="openPage('driver')"
                 >
-
                     <div class="action-icon">
                         🚕
                     </div>
 
                     <div class="action-title">
-                        Safar joylash
+                        Haydovchi bo‘lish
                     </div>
 
-                    <div class="action-desc">
-                        Yo'lovchilarni toping
+                    <div class="action-text">
+                        Safaringizni joylashtiring
                     </div>
-
                 </button>
 
             </div>
 
 
-            <div class="section-title">
-                Ommabop yo'nalishlar
+            <!-- Popular routes -->
+            <div class="section-header">
+
+                <h2>
+                    Mashhur yo‘nalishlar
+                </h2>
+
             </div>
 
 
-            <button
-                class="card"
-                type="button"
-                style="
-                    width:100%;
-                    border:none;
-                    text-align:left;
-                    cursor:pointer;
-                "
-                data-go="rides"
-            >
-
-                <div
-                    style="
-                        display:flex;
-                        justify-content:space-between;
-                        align-items:center;
-                    "
-                >
-
-                    <div>
-
-                        <div style="font-weight:800">
-                            Toshkent → Farg‘ona
-                        </div>
-
-                        <div
-                            style="
-                                font-size:12px;
-                                color:#9ca3af;
-                                margin-top:4px;
-                            "
-                        >
-                            Safarlarni ko'rish
-                        </div>
-
-                    </div>
-
-                    <div style="font-size:24px">
-                        →
-                    </div>
-
-                </div>
-
-            </button>
-
-
-            <button
-                class="card"
-                type="button"
-                style="
-                    width:100%;
-                    border:none;
-                    text-align:left;
-                    cursor:pointer;
-                "
-                data-go="rides"
-            >
-
-                <div
-                    style="
-                        display:flex;
-                        justify-content:space-between;
-                        align-items:center;
-                    "
-                >
-
-                    <div>
-
-                        <div style="font-weight:800">
-                            Toshkent → Andijon
-                        </div>
-
-                        <div
-                            style="
-                                font-size:12px;
-                                color:#9ca3af;
-                                margin-top:4px;
-                            "
-                        >
-                            Safarlarni ko'rish
-                        </div>
-
-                    </div>
-
-                    <div style="font-size:24px">
-                        →
-                    </div>
-
-                </div>
-
-            </button>
-
-
-            <button
-                class="card"
-                type="button"
-                style="
-                    width:100%;
-                    border:none;
-                    text-align:left;
-                    cursor:pointer;
-                "
-                data-go="rides"
-            >
-
-                <div
-                    style="
-                        display:flex;
-                        justify-content:space-between;
-                        align-items:center;
-                    "
-                >
-
-                    <div>
-
-                        <div style="font-weight:800">
-                            Toshkent → Namangan
-                        </div>
-
-                        <div
-                            style="
-                                font-size:12px;
-                                color:#9ca3af;
-                                margin-top:4px;
-                            "
-                        >
-                            Safarlarni ko'rish
-                        </div>
-
-                    </div>
-
-                    <div style="font-size:24px">
-                        →
-                    </div>
-
-                </div>
-
-            </button>
-
-        </section>
-
-
-        <!-- =====================
-             RIDES
-        ====================== -->
-
-        <section
-            class="screen"
-            data-screen="rides"
-        >
-
-            <div class="page-title">
-                🔎 Safar qidirish
-            </div>
-
-            <div class="page-subtitle">
-                Mavjud safarlar ro'yxati.
-            </div>
-
-
-            <div
-                class="card"
-                style="
-                    display:flex;
-                    align-items:center;
-                    justify-content:space-between;
-                    gap:12px;
-                "
-            >
-
-                <div>
-
-                    <div class="card-title">
-                        🚕 Mavjud safarlar
-                    </div>
-
-                    <div class="card-text">
-                        Hozir joylangan faol safarlarni
-                        ko'ring.
-                    </div>
-
-                </div>
+            <div class="route-list">
 
                 <button
-                    class="btn btn-primary btn-small"
+                    class="route-card"
                     type="button"
-                    onclick="loadRides()"
+                    onclick="quickSearch('Toshkent','Farg‘ona')"
                 >
-                    🔄
+                    <div class="route-icon">
+                        🚕
+                    </div>
+
+                    <div class="route-info">
+                        <strong>Toshkent → Farg‘ona</strong>
+                        <span>Safar qidiring</span>
+                    </div>
+
+                    <div class="route-arrow">
+                        ›
+                    </div>
                 </button>
 
-            </div>
+
+                <button
+                    class="route-card"
+                    type="button"
+                    onclick="quickSearch('Toshkent','Namangan')"
+                >
+                    <div class="route-icon">
+                        🚕
+                    </div>
+
+                    <div class="route-info">
+                        <strong>Toshkent → Namangan</strong>
+                        <span>Safar qidiring</span>
+                    </div>
+
+                    <div class="route-arrow">
+                        ›
+                    </div>
+                </button>
 
 
-            <div id="rides-list">
+                <button
+                    class="route-card"
+                    type="button"
+                    onclick="quickSearch('Toshkent','Andijon')"
+                >
+                    <div class="route-icon">
+                        🚕
+                    </div>
 
-                <div class="loading">
+                    <div class="route-info">
+                        <strong>Toshkent → Andijon</strong>
+                        <span>Safar qidiring</span>
+                    </div>
 
-                    <div class="spinner"></div>
+                    <div class="route-arrow">
+                        ›
+                    </div>
+                </button>
 
-                    Safarlar yuklanmoqda...
 
-                </div>
+                <button
+                    class="route-card"
+                    type="button"
+                    onclick="quickSearch('Toshkent','Samarqand')"
+                >
+                    <div class="route-icon">
+                        🚕
+                    </div>
+
+                    <div class="route-info">
+                        <strong>Toshkent → Samarqand</strong>
+                        <span>Safar qidiring</span>
+                    </div>
+
+                    <div class="route-arrow">
+                        ›
+                    </div>
+                </button>
 
             </div>
 
         </section>
 
 
-        <!-- =====================
-             DRIVER
-        ====================== -->
-
+        <!-- =========================
+             SEARCH PAGE
+        ========================== -->
         <section
-            class="screen"
-            data-screen="driver"
+            id="page-search"
+            class="page"
+            data-page="search"
         >
 
             <div class="page-title">
-                🚕 Haydovchi
+                Safar qidirish
             </div>
 
             <div class="page-subtitle">
-                Safaringizni joylang yoki haydovchi
-                sifatida ro'yxatdan o'ting.
+                Kerakli yo‘nalishni tanlang
             </div>
 
 
-            <!-- RIDE FORM -->
-
-            <div class="card">
-
-                <div class="card-title">
-                    🚕 Safar joylash
-                </div>
-
-                <div
-                    class="card-text"
-                    style="margin-bottom:16px;"
-                >
-                    Tasdiqlangan haydovchilar
-                    o'z safarlarini shu yerda
-                    joylashlari mumkin.
-                </div>
-
+            <div class="form-card">
 
                 <div class="form-group">
 
-                    <label class="form-label">
-                        Qayerdan — viloyat
+                    <label for="searchFromRegion">
+                        Qayerdan
                     </label>
 
-                    <select id="ride-from-region">
-
+                    <select
+                        id="searchFromRegion"
+                        onchange="fillDistricts('searchFromRegion','searchFromDistrict')"
+                    >
                         <option value="">
                             Viloyatni tanlang
                         </option>
-
-                        <option>
-                            Toshkent
-                        </option>
-
-                        <option>
-                            Namangan
-                        </option>
-
-                        <option>
-                            Andijon
-                        </option>
-
-                        <option>
-                            Farg‘ona
-                        </option>
-
-                        <option>
-                            Qo‘qon
-                        </option>
-
-                        <option>
-                            Marg‘ilon
-                        </option>
-
                     </select>
 
                 </div>
@@ -487,55 +301,14 @@
 
                 <div class="form-group">
 
-                    <label class="form-label">
-                        Qayerdan — tuman/shahar
+                    <label for="searchFromDistrict">
+                        Tuman / shahar
                     </label>
 
-                    <input
-                        id="ride-from-district"
-                        type="text"
-                        placeholder="Masalan: Chilonzor"
-                    >
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label class="form-label">
-                        Qayerga — viloyat
-                    </label>
-
-                    <select id="ride-to-region">
-
+                    <select id="searchFromDistrict">
                         <option value="">
-                            Viloyatni tanlang
+                            Avval viloyatni tanlang
                         </option>
-
-                        <option>
-                            Toshkent
-                        </option>
-
-                        <option>
-                            Namangan
-                        </option>
-
-                        <option>
-                            Andijon
-                        </option>
-
-                        <option>
-                            Farg‘ona
-                        </option>
-
-                        <option>
-                            Qo‘qon
-                        </option>
-
-                        <option>
-                            Marg‘ilon
-                        </option>
-
                     </select>
 
                 </div>
@@ -543,15 +316,33 @@
 
                 <div class="form-group">
 
-                    <label class="form-label">
-                        Qayerga — tuman/shahar
+                    <label for="searchToRegion">
+                        Qayerga
                     </label>
 
-                    <input
-                        id="ride-to-district"
-                        type="text"
-                        placeholder="Masalan: Farg‘ona shahri"
+                    <select
+                        id="searchToRegion"
+                        onchange="fillDistricts('searchToRegion','searchToDistrict')"
                     >
+                        <option value="">
+                            Viloyatni tanlang
+                        </option>
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="searchToDistrict">
+                        Tuman / shahar
+                    </label>
+
+                    <select id="searchToDistrict">
+                        <option value="">
+                            Avval viloyatni tanlang
+                        </option>
+                    </select>
 
                 </div>
 
@@ -560,13 +351,13 @@
 
                     <div class="form-group">
 
-                        <label class="form-label">
+                        <label for="searchDate">
                             Sana
                         </label>
 
                         <input
-                            id="ride-date"
                             type="date"
+                            id="searchDate"
                         >
 
                     </div>
@@ -574,44 +365,139 @@
 
                     <div class="form-group">
 
-                        <label class="form-label">
-                            Vaqt
+                        <label for="searchSeats">
+                            O‘rin
                         </label>
 
-                        <input
-                            id="ride-time"
-                            type="time"
-                        >
+                        <select id="searchSeats">
+                            <option value="1">1 o‘rin</option>
+                            <option value="2">2 o‘rin</option>
+                            <option value="3">3 o‘rin</option>
+                            <option value="4">4 o‘rin</option>
+                        </select>
 
                     </div>
 
                 </div>
 
 
-                <div class="form-row">
+                <button
+                    class="primary-btn"
+                    type="button"
+                    onclick="searchRides()"
+                >
+                    🔎 Safarlarni qidirish
+                </button>
+
+            </div>
+
+
+            <div
+                id="searchResults"
+                class="results-container"
+            >
+
+                <div class="empty-state">
+
+                    <div class="empty-icon">
+                        🚕
+                    </div>
+
+                    <h3>
+                        Safar qidiring
+                    </h3>
+
+                    <p>
+                        Yo‘nalishni tanlab, qidirish tugmasini bosing.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             DRIVER PAGE
+        ========================== -->
+        <section
+            id="page-driver"
+            class="page"
+            data-page="driver"
+        >
+
+            <div class="page-title">
+                Haydovchi
+            </div>
+
+            <div class="page-subtitle">
+                Safar joylashtiring yoki haydovchi sifatida ro‘yxatdan o‘ting.
+            </div>
+
+
+            <!-- Driver tabs -->
+            <div class="tabs">
+
+                <button
+                    id="driverTabRide"
+                    class="tab-btn active"
+                    type="button"
+                    onclick="showDriverTab('ride')"
+                >
+                    🚕 Safar joylash
+                </button>
+
+                <button
+                    id="driverTabRegister"
+                    class="tab-btn"
+                    type="button"
+                    onclick="showDriverTab('register')"
+                >
+                    👤 Ro‘yxatdan o‘tish
+                </button>
+
+            </div>
+
+
+            <!-- =========================
+                 RIDE CREATE
+            ========================== -->
+            <div
+                id="driverRideTab"
+                class="driver-tab"
+            >
+
+                <div class="form-card">
 
                     <div class="form-group">
 
-                        <label class="form-label">
-                            O'rinlar
+                        <label for="rideFromRegion">
+                            Qayerdan
                         </label>
 
-                        <select id="ride-seats">
-
-                            <option value="1">
-                                1 o'rin
+                        <select
+                            id="rideFromRegion"
+                            onchange="fillDistricts('rideFromRegion','rideFromDistrict')"
+                        >
+                            <option value="">
+                                Viloyatni tanlang
                             </option>
+                        </select>
 
-                            <option value="2">
-                                2 o'rin
-                            </option>
+                    </div>
 
-                            <option value="3">
-                                3 o'rin
-                            </option>
 
-                            <option value="4">
-                                4 o'rin
+                    <div class="form-group">
+
+                        <label for="rideFromDistrict">
+                            Tuman / shahar
+                        </label>
+
+                        <select id="rideFromDistrict">
+
+                            <option value="">
+                                Avval viloyatni tanlang
                             </option>
 
                         </select>
@@ -621,157 +507,448 @@
 
                     <div class="form-group">
 
-                        <label class="form-label">
-                            Narx
+                        <label for="rideToRegion">
+                            Qayerga
+                        </label>
+
+                        <select
+                            id="rideToRegion"
+                            onchange="fillDistricts('rideToRegion','rideToDistrict')"
+                        >
+                            <option value="">
+                                Viloyatni tanlang
+                            </option>
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="rideToDistrict">
+                            Tuman / shahar
+                        </label>
+
+                        <select id="rideToDistrict">
+
+                            <option value="">
+                                Avval viloyatni tanlang
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-row">
+
+                        <div class="form-group">
+
+                            <label for="rideDate">
+                                Sana
+                            </label>
+
+                            <input
+                                type="date"
+                                id="rideDate"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="rideTime">
+                                Vaqt
+                            </label>
+
+                            <input
+                                type="time"
+                                id="rideTime"
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-row">
+
+                        <div class="form-group">
+
+                            <label for="ridePrice">
+                                Narx
+                            </label>
+
+                            <input
+                                type="number"
+                                id="ridePrice"
+                                placeholder="130000"
+                                min="0"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="rideSeats">
+                                Bo‘sh o‘rin
+                            </label>
+
+                            <select id="rideSeats">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4" selected>4</option>
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="rideNote">
+                            Izoh
+                        </label>
+
+                        <textarea
+                            id="rideNote"
+                            rows="3"
+                            placeholder="Qo‘shimcha ma’lumot..."
+                        ></textarea>
+
+                    </div>
+
+
+                    <button
+                        class="primary-btn"
+                        type="button"
+                        onclick="createRide()"
+                    >
+                        🚕 Safarni joylash
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- =========================
+                 DRIVER REGISTER
+            ========================== -->
+            <div
+                id="driverRegisterTab"
+                class="driver-tab hidden"
+            >
+
+                <div class="form-card">
+
+                    <div class="info-box">
+                        Haydovchi sifatida ro‘yxatdan o‘tish uchun
+                        ma’lumotlaringizni kiriting.
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="driverFullName">
+                            F.I.Sh.
                         </label>
 
                         <input
-                            id="ride-price"
-                            type="number"
-                            min="1"
-                            inputmode="numeric"
-                            placeholder="130000"
+                            type="text"
+                            id="driverFullName"
+                            placeholder="To‘liq ism familiya"
                         >
 
                     </div>
 
+
+                    <div class="form-group">
+
+                        <label for="driverPhone">
+                            Telefon raqam
+                        </label>
+
+                        <input
+                            type="tel"
+                            id="driverPhone"
+                            placeholder="+998 90 123 45 67"
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="driverRegion">
+                            Viloyat
+                        </label>
+
+                        <select id="driverRegion">
+
+                            <option value="">
+                                Viloyatni tanlang
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="driverDistrict">
+                            Tuman / shahar
+                        </label>
+
+                        <select id="driverDistrict">
+
+                            <option value="">
+                                Avval viloyatni tanlang
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="driverPassport">
+                            Pasport / ID
+                        </label>
+
+                        <input
+                            type="file"
+                            id="driverPassport"
+                            accept="image/*,.pdf"
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="driverLicense">
+                            Haydovchilik guvohnomasi
+                        </label>
+
+                        <input
+                            type="file"
+                            id="driverLicense"
+                            accept="image/*,.pdf"
+                        >
+
+                    </div>
+
+
+                    <button
+                        class="primary-btn"
+                        type="button"
+                        onclick="registerDriver()"
+                    >
+                        👤 Ariza yuborish
+                    </button>
+
                 </div>
-
-
-                <button
-                    class="btn btn-primary"
-                    type="button"
-                    onclick="createRideFromForm()"
-                >
-                    🚕 Safarni joylash
-                </button>
 
             </div>
 
+        </section>
 
-            <!-- DRIVER APPLICATION -->
 
-            <div class="card">
+        <!-- =========================
+             ORDERS PAGE
+        ========================== -->
+        <section
+            id="page-orders"
+            class="page"
+            data-page="orders"
+        >
 
-                <div class="card-title">
-                    👤 Haydovchi bo'lish
+            <div class="page-title">
+                Mening safarlarim
+            </div>
+
+            <div class="page-subtitle">
+                Buyurtmalar va safarlaringiz
+            </div>
+
+
+            <div
+                id="ordersList"
+                class="orders-list"
+            >
+
+                <div class="loading-state">
+                    Yuklanmoqda...
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             PROFILE PAGE
+        ========================== -->
+        <section
+            id="page-profile"
+            class="page"
+            data-page="profile"
+        >
+
+            <div class="page-title">
+                Profilim
+            </div>
+
+
+            <div class="profile-card">
+
+                <div
+                    id="profileAvatar"
+                    class="profile-avatar"
+                >
+                    👤
                 </div>
 
                 <div
-                    class="card-text"
-                    style="margin-bottom:14px;"
+                    id="profileName"
+                    class="profile-name"
                 >
-                    Agar hali haydovchi sifatida
-                    ro'yxatdan o'tmagan bo'lsangiz,
-                    ariza yuboring.
+                    Foydalanuvchi
                 </div>
+
+                <div
+                    id="profileUsername"
+                    class="profile-username"
+                >
+                    @username
+                </div>
+
+            </div>
+
+
+            <div class="profile-info-card">
+
+                <div class="profile-info-row">
+
+                    <span>
+                        📱 Telefon
+                    </span>
+
+                    <strong id="profilePhone">
+                        —
+                    </strong>
+
+                </div>
+
+
+                <div class="profile-info-row">
+
+                    <span>
+                        🚕 Haydovchi
+                    </span>
+
+                    <strong id="profileDriverStatus">
+                        Yo‘q
+                    </strong>
+
+                </div>
+
+
+                <div class="profile-info-row">
+
+                    <span>
+                        ⭐ Reyting
+                    </span>
+
+                    <strong id="profileRating">
+                        —
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <button
+                class="secondary-btn"
+                type="button"
+                onclick="showHelp()"
+            >
+                📞 Yordam
+            </button>
+
+        </section>
+
+
+        <!-- =========================
+             NOTIFICATIONS PAGE
+        ========================== -->
+        <section
+            id="page-notifications"
+            class="page"
+            data-page="notifications"
+        >
+
+            <div class="page-title">
+                Bildirishnomalar
+            </div>
+
+            <div
+                id="notificationsList"
+                class="notifications-list"
+            >
+
+                <div class="loading-state">
+                    Yuklanmoqda...
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             HELP PAGE
+        ========================== -->
+        <section
+            id="page-help"
+            class="page"
+            data-page="help"
+        >
+
+            <div class="page-title">
+                Yordam
+            </div>
+
+            <div class="help-card">
+
+                <div class="help-icon">
+                    📞
+                </div>
+
+                <h2>
+                    OPPER TAXI yordam xizmati
+                </h2>
+
+                <p>
+                    Bot yoki ilova bilan bog‘liq muammo yuzaga kelsa,
+                    administrator bilan bog‘lanishingiz mumkin.
+                </p>
 
                 <button
-                    class="btn btn-primary"
+                    class="primary-btn"
                     type="button"
-                    onclick="openDriverApplication()"
+                    onclick="showHelp()"
                 >
-                    🚕 Haydovchi bo'lish
+                    📞 Yordam so‘rash
                 </button>
-
-            </div>
-
-        </section>
-
-
-        <!-- =====================
-             ORDERS
-        ====================== -->
-
-        <section
-            class="screen"
-            data-screen="orders"
-        >
-
-            <div class="page-title">
-                📋 Buyurtmalar
-            </div>
-
-            <div class="page-subtitle">
-                Sizning buyurtmalaringiz.
-            </div>
-
-
-            <div id="orders-list">
-
-                <div class="loading">
-
-                    <div class="spinner"></div>
-
-                    Buyurtmalar yuklanmoqda...
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- =====================
-             PROFILE
-        ====================== -->
-
-        <section
-            class="screen"
-            data-screen="profile"
-        >
-
-            <div class="page-title">
-                👤 Profil
-            </div>
-
-            <div class="page-subtitle">
-                Shaxsiy ma'lumotlaringiz.
-            </div>
-
-
-            <div id="profile-content">
-
-                <div class="loading">
-
-                    <div class="spinner"></div>
-
-                    Profil yuklanmoqda...
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- =====================
-             NOTIFICATIONS
-        ====================== -->
-
-        <section
-            class="screen"
-            data-screen="notifications"
-        >
-
-            <div class="page-title">
-                🔔 Bildirishnomalar
-            </div>
-
-            <div class="page-subtitle">
-                Oxirgi xabarlaringiz.
-            </div>
-
-
-            <div id="notifications-list">
-
-                <div class="loading">
-
-                    <div class="spinner"></div>
-
-                    Bildirishnomalar yuklanmoqda...
-
-                </div>
 
             </div>
 
@@ -781,100 +958,71 @@
 
 
     <!-- =========================
+         TOAST
+    ========================== -->
+    <div
+        id="toast"
+        class="toast"
+    ></div>
+
+
+    <!-- =========================
          BOTTOM NAVIGATION
     ========================== -->
-
     <nav class="bottom-nav">
 
         <button
-            class="nav-item active"
+            class="nav-btn active"
+            data-page="home"
             type="button"
-            data-screen="home"
+            onclick="openPage('home')"
         >
-
-            <span class="nav-icon">
-                🏠
-            </span>
-
-            <span>
-                Bosh sahifa
-            </span>
-
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">Bosh sahifa</span>
         </button>
 
 
         <button
-            class="nav-item"
+            class="nav-btn"
+            data-page="search"
             type="button"
-            data-screen="rides"
+            onclick="openPage('search')"
         >
-
-            <span class="nav-icon">
-                🔎
-            </span>
-
-            <span>
-                Qidirish
-            </span>
-
+            <span class="nav-icon">🔎</span>
+            <span class="nav-label">Qidirish</span>
         </button>
 
 
         <button
-            class="nav-item"
+            class="nav-btn"
+            data-page="driver"
             type="button"
-            data-screen="driver"
+            onclick="openPage('driver')"
         >
-
-            <span class="nav-icon">
-                🚕
-            </span>
-
-            <span>
-                Safar
-            </span>
-
+            <span class="nav-icon">🚕</span>
+            <span class="nav-label">Haydovchi</span>
         </button>
 
 
         <button
-            class="nav-item"
+            class="nav-btn"
+            data-page="orders"
             type="button"
-            data-screen="orders"
+            onclick="openPage('orders')"
         >
-
-            <span class="nav-icon">
-                📋
-            </span>
-
-            <span>
-                Buyurtmalar
-            </span>
-
+            <span class="nav-icon">📋</span>
+            <span class="nav-label">Safarlarim</span>
         </button>
 
 
         <button
-            class="nav-item"
+            class="nav-btn"
+            data-page="profile"
             type="button"
-            data-screen="profile"
+            onclick="openPage('profile')"
         >
-
-            <span class="nav-icon">
-                👤
-            </span>
-
-            <span>
-                Profil
-            </span>
-
-            <span
-                class="nav-badge"
-                data-type="notifications"
-                style="display:none;"
-            >
-            </span>
-
+            <span class="nav-icon">👤</span>
+            <span class="nav-label">Profil</span>
         </button>
 
     </nav>
@@ -882,313 +1030,8 @@
 </div>
 
 
-<!-- =========================
-     DRIVER MODAL
-========================== -->
-
-<div
-    id="driver-modal"
-    class="modal"
->
-
-    <div class="modal-content">
-
-        <div class="modal-header">
-
-            <div class="modal-title">
-                🚕 Haydovchi bo'lish
-            </div>
-
-            <button
-                type="button"
-                class="modal-close"
-                onclick="closeDriverApplication()"
-            >
-                ✕
-            </button>
-
-        </div>
-
-
-        <div class="form-group">
-
-            <label class="form-label">
-                Telefon raqami
-            </label>
-
-            <input
-                id="driver-phone"
-                type="tel"
-                placeholder="+998 90 123 45 67"
-            >
-
-        </div>
-
-
-        <button
-            type="button"
-            class="btn btn-primary"
-            onclick="submitDriverApplication()"
-        >
-            Ariza yuborish
-        </button>
-
-    </div>
-
-</div>
-
-
-<!-- =========================
-     TOAST
-========================== -->
-
-<div class="toast-container"></div>
-
-
-<!-- =========================
-     COMPATIBILITY FUNCTIONS
-     web/js/app.js bilan ishlaydi
-========================== -->
-
-<script>
-
-function createRideFromForm() {
-
-    const fromRegion =
-        document.getElementById("ride-from-region")?.value?.trim() || "";
-
-    const fromDistrict =
-        document.getElementById("ride-from-district")?.value?.trim() || "";
-
-    const toRegion =
-        document.getElementById("ride-to-region")?.value?.trim() || "";
-
-    const toDistrict =
-        document.getElementById("ride-to-district")?.value?.trim() || "";
-
-    const travelDate =
-        document.getElementById("ride-date")?.value?.trim() || "";
-
-    const travelTime =
-        document.getElementById("ride-time")?.value?.trim() || "";
-
-    const seats =
-        Number(
-            document.getElementById("ride-seats")?.value || 0
-        );
-
-    const price =
-        Number(
-            document.getElementById("ride-price")?.value || 0
-        );
-
-
-    if (!fromRegion) {
-        showToast("Qayerdan viloyatini tanlang.");
-        return;
-    }
-
-    if (!fromDistrict) {
-        showToast("Qayerdan tuman/shaharini kiriting.");
-        return;
-    }
-
-    if (!toRegion) {
-        showToast("Qayerga viloyatini tanlang.");
-        return;
-    }
-
-    if (!toDistrict) {
-        showToast("Qayerga tuman/shaharini kiriting.");
-        return;
-    }
-
-    if (!travelDate) {
-        showToast("Safar sanasini tanlang.");
-        return;
-    }
-
-    if (!travelTime) {
-        showToast("Safar vaqtini tanlang.");
-        return;
-    }
-
-    if (!Number.isInteger(seats) || seats < 1 || seats > 4) {
-        showToast("O'rinlar soni 1 dan 4 gacha bo'lishi kerak.");
-        return;
-    }
-
-    if (!Number.isFinite(price) || price <= 0) {
-        showToast("Safar narxini kiriting.");
-        return;
-    }
-
-
-    submitDriverRide({
-
-        from_region: fromRegion,
-        from_district: fromDistrict,
-
-        to_region: toRegion,
-        to_district: toDistrict,
-
-        travel_date: travelDate,
-        travel_time: travelTime,
-
-        date: travelDate,
-        time: travelTime,
-
-        ride_date: travelDate,
-        ride_time: travelTime,
-
-        seats: seats,
-        price: price
-
-    }).then(success => {
-
-        if (success) {
-
-            document.getElementById("ride-price").value = "";
-
-            showScreen("rides");
-
-            loadRides();
-
-        }
-
-    });
-
-}
-
-
-/*
-   Eski interfeysdagi showToast nomi
-   ishlatilishi mumkin bo'lgan holatlar uchun.
-*/
-
-if (typeof showToast !== "function") {
-
-    window.showToast = function(message) {
-
-        const container =
-            document.querySelector(".toast-container");
-
-        if (!container) {
-            alert(message);
-            return;
-        }
-
-        const toast =
-            document.createElement("div");
-
-        toast.className = "toast";
-
-        toast.textContent = message;
-
-        container.appendChild(toast);
-
-        setTimeout(() => {
-            toast.remove();
-        }, 3000);
-
-    };
-
-}
-
-
-/*
-   Modal uchun CSS classlar mavjud bo'lmasa
-   ham modal ishlashi uchun.
-*/
-
-document.addEventListener("click", function(event) {
-
-    const modal =
-        document.getElementById("driver-modal");
-
-    if (!modal) {
-        return;
-    }
-
-    if (event.target === modal) {
-        closeDriverApplication();
-    }
-
-});
-
-
-/*
-   Sana uchun bugungi sanani avtomatik qo'yish.
-*/
-
-document.addEventListener("DOMContentLoaded", function() {
-
-    const dateInput =
-        document.getElementById("ride-date");
-
-    const timeInput =
-        document.getElementById("ride-time");
-
-
-    if (dateInput) {
-
-        const now = new Date();
-
-        const year =
-            now.getFullYear();
-
-        const month =
-            String(now.getMonth() + 1)
-                .padStart(2, "0");
-
-        const day =
-            String(now.getDate())
-                .padStart(2, "0");
-
-        const today =
-            `${year}-${month}-${day}`;
-
-        dateInput.min = today;
-
-        if (!dateInput.value) {
-            dateInput.value = today;
-        }
-
-    }
-
-
-    if (timeInput) {
-
-        const now = new Date();
-
-        const hours =
-            String(now.getHours())
-                .padStart(2, "0");
-
-        const minutes =
-            String(now.getMinutes())
-                .padStart(2, "0");
-
-        if (!timeInput.value) {
-            timeInput.value =
-                `${hours}:${minutes}`;
-        }
-
-    }
-
-});
-
-</script>
-
-
-<!-- =========================
-     MAIN APP JAVASCRIPT
-========================== -->
-
-<script
-    src="/web/js/app.js?v=20261003"
-    defer
-></script>
+<!-- Main JavaScript -->
+<script src="/web/js/app.js"></script>
 
 </body>
 </html>
