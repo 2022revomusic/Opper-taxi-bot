@@ -1,1498 +1,3185 @@
-const API_BASE = "";
+/* =========================================================
+   OPPER TAXI
+   Main Frontend JavaScript
+   ========================================================= */
 
-const state = {
-    user: null,
-    profile: null,
-    driver: null,
-    rides: [],
-    orders: [],
-    notifications: [],
-    unreadNotifications: 0,
-    currentScreen: "home",
-    telegram: null,
-};
+"use strict";
 
-
-/* =========================
+/* =========================================================
    TELEGRAM
-========================= */
+   ========================================================= */
 
-function initTelegram() {
-    if (window.Telegram && window.Telegram.WebApp) {
-        state.telegram = window.Telegram.WebApp;
+const tg = window.Telegram?.WebApp || null;
 
-        state.telegram.ready();
-        state.telegram.expand();
+if (tg) {
+    try {
+        tg.ready();
+        tg.expand();
 
-        if (state.telegram.setHeaderColor) {
-            state.telegram.setHeaderColor("#111827");
+        if (tg.setHeaderColor) {
+            tg.setHeaderColor("#111111");
         }
 
-        if (state.telegram.setBackgroundColor) {
-            state.telegram.setBackgroundColor("#f5f6f8");
+        if (tg.setBackgroundColor) {
+            tg.setBackgroundColor("#f5f5f5");
         }
-
-        state.user =
-            state.telegram.initDataUnsafe?.user || null;
+    } catch (error) {
+        console.error("Telegram WebApp error:", error);
     }
 }
 
 
-/* =========================
+/* =========================================================
+   GLOBAL VARIABLES
+   ========================================================= */
+
+let currentUser = null;
+let currentPage = "home";
+
+const API_BASE = "";
+
+
+/* =========================================================
+   UZBEKISTAN REGIONS / DISTRICTS
+   ========================================================= */
+
+const REGIONS = {
+
+    "Toshkent shahri": [
+        "Bektemir",
+        "Chilonzor",
+        "Mirobod",
+        "Mirzo Ulug‘bek",
+        "Olmazor",
+        "Sergeli",
+        "Shayxontohur",
+        "Uchtepa",
+        "Yakkasaroy",
+        "Yashnobod",
+        "Yunusobod",
+        "Yangihayot"
+    ],
+
+    "Toshkent viloyati": [
+        "Angren",
+        "Bekobod",
+        "Bo‘ka",
+        "Chirchiq",
+        "Chinoz",
+        "Ohangaron",
+        "Olmaliq",
+        "Parkent",
+        "Piskent",
+        "Quyichirchiq",
+        "Oqqo‘rg‘on",
+        "Toshkent tumani",
+        "Uchtepa",
+        "Yangiyo‘l",
+        "Yuqorichirchiq",
+        "Zangiota"
+    ],
+
+    "Andijon": [
+        "Andijon shahri",
+        "Asaka",
+        "Baliqchi",
+        "Bo‘ston",
+        "Buloqboshi",
+        "Izboskan",
+        "Jalaquduq",
+        "Marhamat",
+        "Oltinko‘l",
+        "Paxtaobod",
+        "Qo‘rg‘ontepa",
+        "Shahrixon",
+        "Ulug‘nor",
+        "Xo‘jaobod"
+    ],
+
+    "Buxoro": [
+        "Buxoro shahri",
+        "Buxoro tumani",
+        "G‘ijduvon",
+        "Jondor",
+        "Kogon",
+        "Kogon shahri",
+        "Olot",
+        "Peshku",
+        "Qorako‘l",
+        "Qorovulbozor",
+        "Romitan",
+        "Shofirkon",
+        "Vobkent"
+    ],
+
+    "Farg‘ona": [
+        "Farg‘ona shahri",
+        "Bag‘dod",
+        "Beshariq",
+        "Buvayda",
+        "Dang‘ara",
+        "Furqat",
+        "Qo‘qon",
+        "Quva",
+        "Quvasoy",
+        "Oltiariq",
+        "Rishton",
+        "So‘x",
+        "Toshloq",
+        "Uchko‘prik",
+        "Yozyovon"
+    ],
+
+    "Jizzax": [
+        "Jizzax shahri",
+        "Arnasoy",
+        "Baxmal",
+        "Do‘stlik",
+        "Forish",
+        "G‘allaorol",
+        "Mirzacho‘l",
+        "Paxtakor",
+        "Sharof Rashidov",
+        "Yangiobod",
+        "Zarbdor",
+        "Zomin"
+    ],
+
+    "Namangan": [
+        "Namangan shahri",
+        "Chortoq",
+        "Chust",
+        "Kosonsoy",
+        "Mingbuloq",
+        "Norin",
+        "Pop",
+        "To‘raqo‘rg‘on",
+        "Uchqo‘rg‘on",
+        "Uychi",
+        "Yangiqo‘rg‘on"
+    ],
+
+    "Navoiy": [
+        "Navoiy shahri",
+        "Karmana",
+        "Konimex",
+        "Navbahor",
+        "Nurota",
+        "Qiziltepa",
+        "Tomdi",
+        "Uchquduq",
+        "Xatirchi",
+        "Zarafshon"
+    ],
+
+    "Qashqadaryo": [
+        "Qarshi shahri",
+        "Chiroqchi",
+        "Dehqonobod",
+        "G‘uzor",
+        "Kasbi",
+        "Kitob",
+        "Koson",
+        "Mirishkor",
+        "Muborak",
+        "Nishon",
+        "Qamashi",
+        "Shahrisabz",
+        "Yakkabog‘"
+    ],
+
+    "Samarqand": [
+        "Samarqand shahri",
+        "Bulung‘ur",
+        "Ishtixon",
+        "Jomboy",
+        "Kattaqo‘rg‘on",
+        "Kattaqo‘rg‘on shahri",
+        "Narpay",
+        "Nurobod",
+        "Oqdaryo",
+        "Paxtachi",
+        "Payariq",
+        "Pastdarg‘om",
+        "Qo‘shrabot",
+        "Samarqand tumani",
+        "Toyloq",
+        "Urgut"
+    ],
+
+    "Sirdaryo": [
+        "Guliston shahri",
+        "Boyovut",
+        "Guliston tumani",
+        "Mirzaobod",
+        "Oqoltin",
+        "Sardoba",
+        "Sayxunobod",
+        "Shirin",
+        "Sirdaryo",
+        "Yangiyer"
+    ],
+
+    "Surxondaryo": [
+        "Termiz shahri",
+        "Angor",
+        "Bandixon",
+        "Boysun",
+        "Denov",
+        "Jarqo‘rg‘on",
+        "Muzrabot",
+        "Oltinsoy",
+        "Qiziriq",
+        "Qumqo‘rg‘on",
+        "Sariosiyo",
+        "Sherobod",
+        "Sho‘rchi",
+        "Uzun"
+    ],
+
+    "Xorazm": [
+        "Urganch shahri",
+        "Bog‘ot",
+        "Gurlan",
+        "Hazorasp",
+        "Xiva",
+        "Xonqa",
+        "Qo‘shko‘pir",
+        "Shovot",
+        "Tuproqqal’a",
+        "Urganch tumani",
+        "Yangiariq",
+        "Yangibozor"
+    ],
+
+    "Qoraqalpog‘iston": [
+        "Nukus shahri",
+        "Amudaryo",
+        "Beruniy",
+        "Bo‘zatov",
+        "Chimboy",
+        "Ellikqal’a",
+        "Kegeyli",
+        "Mo‘ynoq",
+        "Qanliko‘l",
+        "Qo‘ng‘irot",
+        "Qorao‘zak",
+        "Shumanay",
+        "Taxtako‘pir",
+        "To‘rtko‘l",
+        "Xo‘jayli"
+    ]
+
+};
+
+
+/* =========================================================
    HELPERS
-========================= */
+   ========================================================= */
 
-function $(selector) {
-    return document.querySelector(selector);
-}
-
-
-function $$(selector) {
-    return document.querySelectorAll(selector);
+function $(id) {
+    return document.getElementById(id);
 }
 
 
 function escapeHtml(value) {
-    return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+
+    if (value === null || value === undefined) {
+        return "";
+    }
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 
-function formatPrice(price) {
-    const number = Number(price || 0);
+function formatMoney(value) {
 
-    return new Intl.NumberFormat("uz-UZ").format(number);
+    const number = Number(value || 0);
+
+    return new Intl.NumberFormat("uz-UZ").format(number) + " so‘m";
 }
 
 
-function formatDate(date) {
-    if (!date) {
+function formatDate(value) {
+
+    if (!value) {
         return "—";
     }
 
-    try {
-        return new Date(date).toLocaleDateString("uz-UZ");
-    } catch {
-        return date;
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return value;
     }
+
+    return date.toLocaleDateString("uz-UZ");
 }
 
 
-function formatTime(time) {
-    if (!time) {
-        return "—";
+function showLoading(element, text = "Yuklanmoqda...") {
+
+    if (!element) {
+        return;
     }
 
-    return String(time);
+    element.innerHTML = `
+        <div class="loading-state">
+            <div class="loading-spinner"></div>
+            <span>${escapeHtml(text)}</span>
+        </div>
+    `;
 }
 
 
-function showToast(message) {
-    let container = $(".toast-container");
+/* =========================================================
+   TOAST
+   ========================================================= */
 
-    if (!container) {
-        container = document.createElement("div");
-        container.className = "toast-container";
-        document.body.appendChild(container);
+let toastTimer = null;
+
+function toast(message, type = "info") {
+
+    const element = $("toast");
+
+    if (!element) {
+        alert(message);
+        return;
     }
 
-    const toast = document.createElement("div");
-    toast.className = "toast";
-    toast.textContent = message;
+    element.textContent = message;
 
-    container.appendChild(toast);
+    element.classList.remove(
+        "show",
+        "success",
+        "error",
+        "warning"
+    );
 
-    setTimeout(() => {
-        toast.remove();
+    if (type === "success") {
+        element.classList.add("success");
+    }
+
+    if (type === "error") {
+        element.classList.add("error");
+    }
+
+    if (type === "warning") {
+        element.classList.add("warning");
+    }
+
+    requestAnimationFrame(() => {
+        element.classList.add("show");
+    });
+
+    clearTimeout(toastTimer);
+
+    toastTimer = setTimeout(() => {
+        element.classList.remove("show");
     }, 3000);
 }
 
 
-function showLoading(
-    element,
-    text = "Yuklanmoqda..."
-) {
-    if (!element) {
-        return;
-    }
-
-    element.innerHTML = `
-        <div class="loading">
-            <div class="spinner"></div>
-            <span>
-                ${escapeHtml(text)}
-            </span>
-        </div>
-    `;
-}
-
-
-function showEmpty(
-    element,
-    icon,
-    title,
-    text = ""
-) {
-    if (!element) {
-        return;
-    }
-
-    element.innerHTML = `
-        <div class="empty-state">
-
-            <div class="empty-icon">
-                ${icon}
-            </div>
-
-            <div class="empty-title">
-                ${escapeHtml(title)}
-            </div>
-
-            ${
-                text
-                    ? `
-                        <div>
-                            ${escapeHtml(text)}
-                        </div>
-                    `
-                    : ""
-            }
-
-        </div>
-    `;
-}
-
-
-/* =========================
+/* =========================================================
    API
-========================= */
+   ========================================================= */
 
-async function api(
-    url,
-    options = {}
-) {
-    const headers = {
-        "Content-Type": "application/json",
-        ...(options.headers || {})
+async function api(endpoint, options = {}) {
+
+    const config = {
+        method: options.method || "GET",
+        headers: {
+            ...(options.headers || {})
+        }
     };
 
-    if (
-        state.telegram &&
-        state.telegram.initData
-    ) {
-        headers["X-Telegram-Init-Data"] =
-            state.telegram.initData;
-    }
-
-    const response = await fetch(
-        API_BASE + url,
-        {
-            ...options,
-            headers
-        }
-    );
-
-    let result = null;
-
-    try {
-        result = await response.json();
-    } catch {
-        result = null;
-    }
-
-    if (!response.ok) {
-        throw new Error(
-            result?.error ||
-            result?.message ||
-            result?.data?.error ||
-            "Server xatosi."
-        );
-    }
-
-    if (
-        result &&
-        result.success === false
-    ) {
-        throw new Error(
-            result.error ||
-            result.message ||
-            "Amal bajarilmadi."
-        );
-    }
-
-    if (
-        result &&
-        result.ok === false
-    ) {
-        throw new Error(
-            result.error ||
-            result.message ||
-            "Amal bajarilmadi."
-        );
-    }
 
     /*
-       Backend ayrim joylarda:
+     Telegram Mini App authentication.
+    */
 
-       {
-           ok: true,
-           data: {...}
-       }
+    if (tg && tg.initData) {
 
-       formatida javob beradi.
+        config.headers["X-Telegram-Init-Data"] = tg.initData;
 
-       Frontend esa bevosita data ichidagi
-       ma'lumotlar bilan ishlaydi.
+    }
+
+
+    /*
+     JSON body.
     */
 
     if (
-        result &&
-        result.ok === true &&
-        result.data !== undefined
+        options.body &&
+        typeof options.body === "object" &&
+        !(options.body instanceof FormData)
     ) {
-        return result.data;
+
+        config.headers["Content-Type"] = "application/json";
+
+        config.body = JSON.stringify(options.body);
+
+    } else if (options.body) {
+
+        config.body = options.body;
+
     }
 
-    return result || {};
+
+    const response = await fetch(
+        API_BASE + endpoint,
+        config
+    );
+
+
+    let data = null;
+
+    try {
+
+        data = await response.json();
+
+    } catch (error) {
+
+        data = {
+            success: false,
+            message: await response.text()
+        };
+
+    }
+
+
+    if (!response.ok) {
+
+        throw new Error(
+            data?.message ||
+            data?.error ||
+            `Server xatosi: ${response.status}`
+        );
+
+    }
+
+
+    return data;
 }
 
 
-/* =========================
-   NAVIGATION
-========================= */
+/* =========================================================
+   TELEGRAM USER
+   ========================================================= */
 
-function showScreen(screenName) {
-    state.currentScreen = screenName;
+function getTelegramUser() {
 
-    $$(".screen").forEach(
-        screen => {
-            screen.classList.toggle(
-                "active",
-                screen.dataset.screen === screenName
-            );
+    if (
+        tg &&
+        tg.initDataUnsafe &&
+        tg.initDataUnsafe.user
+    ) {
+
+        return tg.initDataUnsafe.user;
+
+    }
+
+    return null;
+}
+
+
+function updateHeaderUser(user) {
+
+    const nameElement = $("headerUserName");
+    const phoneElement = $("headerUserPhone");
+    const avatarElement = $("headerAvatar");
+
+    if (!user) {
+
+        if (nameElement) {
+            nameElement.textContent = "Foydalanuvchi";
         }
-    );
 
-    $$(".nav-item").forEach(
-        item => {
-            item.classList.toggle(
-                "active",
-                item.dataset.screen === screenName
-            );
+        if (phoneElement) {
+            phoneElement.textContent = "OPPER TAXI";
         }
-    );
+
+        return;
+    }
+
+
+    const fullName = [
+        user.first_name,
+        user.last_name
+    ]
+        .filter(Boolean)
+        .join(" ");
+
+
+    if (nameElement) {
+        nameElement.textContent =
+            fullName ||
+            user.username ||
+            "Foydalanuvchi";
+    }
+
+
+    if (phoneElement) {
+
+        phoneElement.textContent =
+            user.username
+                ? "@" + user.username
+                : "OPPER TAXI";
+
+    }
+
+
+    if (
+        avatarElement &&
+        user.photo_url
+    ) {
+
+        avatarElement.innerHTML = `
+            <img
+                src="${escapeHtml(user.photo_url)}"
+                alt="Avatar"
+            >
+        `;
+
+    }
+
+}
+
+
+/* =========================================================
+   PAGE NAVIGATION
+   ========================================================= */
+
+function openPage(page) {
+
+    const pages = document.querySelectorAll(".page");
+
+    pages.forEach(element => {
+
+        element.classList.remove("active");
+
+    });
+
+
+    const target = $(`page-${page}`);
+
+    if (!target) {
+
+        console.warn(
+            "Page topilmadi:",
+            page
+        );
+
+        return;
+
+    }
+
+
+    target.classList.add("active");
+
+
+    const navButtons =
+        document.querySelectorAll(".nav-btn");
+
+
+    navButtons.forEach(button => {
+
+        button.classList.toggle(
+            "active",
+            button.dataset.page === page
+        );
+
+    });
+
+
+    currentPage = page;
+
+
+    /*
+     Har bir sahifa ochilganda
+     kerakli ma'lumotlarni yangilaymiz.
+    */
+
+    if (page === "search") {
+
+        initSearchPage();
+
+    }
+
+
+    if (page === "driver") {
+
+        initDriverPage();
+
+    }
+
+
+    if (page === "orders") {
+
+        loadOrders();
+
+    }
+
+
+    if (page === "profile") {
+
+        loadProfile();
+
+    }
+
+
+    if (page === "notifications") {
+
+        loadNotifications();
+
+    }
+
+
+    if (tg) {
+
+        try {
+
+            tg.BackButton.hide();
+
+            if (page !== "home") {
+                tg.BackButton.show();
+            }
+
+        } catch (error) {}
+
+    }
+
 
     window.scrollTo({
         top: 0,
         behavior: "smooth"
     });
 
-    if (screenName === "home") {
-        loadHome();
-    }
-
-    if (screenName === "rides") {
-        loadRides();
-    }
-
-    if (screenName === "orders") {
-        loadOrders();
-    }
-
-    if (screenName === "notifications") {
-        loadNotifications();
-    }
-
-    if (screenName === "profile") {
-        loadProfile();
-    }
 }
 
 
-/* =========================
-   PROFILE
-========================= */
+/* =========================================================
+   REGIONS
+   ========================================================= */
 
-async function loadProfile() {
-    const container = $("#profile-content");
+function fillRegions(selectId) {
 
-    if (!container) {
+    const select = $(selectId);
+
+    if (!select) {
         return;
     }
 
-    showLoading(
-        container,
-        "Profil yuklanmoqda..."
-    );
 
-    try {
-        const data = await api(
-            "/api/profile"
+    const oldValue = select.value;
+
+
+    select.innerHTML = `
+        <option value="">
+            Viloyatni tanlang
+        </option>
+    `;
+
+
+    Object.keys(REGIONS).forEach(region => {
+
+        const option =
+            document.createElement("option");
+
+        option.value = region;
+        option.textContent = region;
+
+        select.appendChild(option);
+
+    });
+
+
+    if (oldValue) {
+
+        select.value = oldValue;
+
+    }
+
+}
+
+
+function fillDistricts(regionSelectId, districtSelectId) {
+
+    const regionSelect =
+        $(regionSelectId);
+
+    const districtSelect =
+        $(districtSelectId);
+
+
+    if (
+        !regionSelect ||
+        !districtSelect
+    ) {
+        return;
+    }
+
+
+    const region =
+        regionSelect.value;
+
+
+    districtSelect.innerHTML = `
+        <option value="">
+            Tuman / shaharni tanlang
+        </option>
+    `;
+
+
+    if (!region) {
+        return;
+    }
+
+
+    const districts =
+        REGIONS[region] || [];
+
+
+    districts.forEach(district => {
+
+        const option =
+            document.createElement("option");
+
+        option.value = district;
+        option.textContent = district;
+
+        districtSelect.appendChild(option);
+
+    });
+
+}
+
+
+/* =========================================================
+   INITIALIZE SELECTS
+   ========================================================= */
+
+function initializeAllRegions() {
+
+    const regionSelects = [
+
+        "searchFromRegion",
+        "searchToRegion",
+        "rideFromRegion",
+        "rideToRegion",
+        "driverRegion"
+
+    ];
+
+
+    regionSelects.forEach(id => {
+
+        fillRegions(id);
+
+    });
+
+
+    const driverRegion =
+        $("driverRegion");
+
+
+    if (driverRegion) {
+
+        driverRegion.addEventListener(
+            "change",
+            () => {
+                fillDistricts(
+                    "driverRegion",
+                    "driverDistrict"
+                );
+            }
         );
 
-        state.profile =
-            data.profile ||
-            data.user ||
-            null;
-
-        state.driver =
-            data.driver ||
-            null;
-
-        renderProfile();
-
-    } catch (error) {
-        container.innerHTML = `
-            <div class="alert alert-error">
-                ${escapeHtml(error.message)}
-            </div>
-        `;
     }
+
 }
 
 
-function renderProfile() {
-    const container =
-        $("#profile-content");
+/* =========================================================
+   SEARCH PAGE
+   ========================================================= */
 
-    if (!container) {
+function initSearchPage() {
+
+    fillRegions("searchFromRegion");
+    fillRegions("searchToRegion");
+
+
+    const dateInput =
+        $("searchDate");
+
+
+    if (
+        dateInput &&
+        !dateInput.value
+    ) {
+
+        const date =
+            new Date();
+
+
+        const year =
+            date.getFullYear();
+
+
+        const month =
+            String(
+                date.getMonth() + 1
+            ).padStart(2, "0");
+
+
+        const day =
+            String(
+                date.getDate()
+            ).padStart(2, "0");
+
+
+        dateInput.value =
+            `${year}-${month}-${day}`;
+
+    }
+
+}
+
+
+/* =========================================================
+   QUICK SEARCH
+   ========================================================= */
+
+function quickSearch(from, to) {
+
+    openPage("search");
+
+
+    setTimeout(() => {
+
+        const fromSelect =
+            $("searchFromRegion");
+
+        const toSelect =
+            $("searchToRegion");
+
+
+        if (fromSelect) {
+
+            fromSelect.value =
+                findRegionName(from);
+
+            fromSelect.dispatchEvent(
+                new Event("change")
+            );
+
+        }
+
+
+        if (toSelect) {
+
+            toSelect.value =
+                findRegionName(to);
+
+            toSelect.dispatchEvent(
+                new Event("change")
+            );
+
+        }
+
+    }, 100);
+
+}
+
+
+function findRegionName(name) {
+
+    if (REGIONS[name]) {
+        return name;
+    }
+
+
+    const normalized =
+        String(name)
+            .toLowerCase()
+            .replace(/‘/g, "'");
+
+
+    const key =
+        Object.keys(REGIONS)
+            .find(region =>
+                region
+                    .toLowerCase()
+                    .replace(/‘/g, "'")
+                    .includes(normalized)
+            );
+
+
+    return key || name;
+
+}
+
+
+/* =========================================================
+   SEARCH RIDES
+   ========================================================= */
+
+async function searchRides() {
+
+    const results =
+        $("searchResults");
+
+
+    if (!results) {
         return;
     }
 
-    const profile =
-        state.profile || {};
 
-    const firstName =
-        profile.first_name ||
-        state.user?.first_name ||
-        "";
+    const fromRegion =
+        $("searchFromRegion")?.value || "";
 
-    const lastName =
-        profile.last_name ||
-        state.user?.last_name ||
-        "";
 
-    const username =
-        profile.username ||
-        state.user?.username ||
-        "";
+    const fromDistrict =
+        $("searchFromDistrict")?.value || "";
 
-    const phone =
-        profile.phone ||
-        "";
 
-    const fullName =
-        `${firstName} ${lastName}`.trim() ||
-        "Foydalanuvchi";
+    const toRegion =
+        $("searchToRegion")?.value || "";
 
-    let driverStatus = "";
 
-    if (state.driver) {
-        const status =
-            state.driver.status;
+    const toDistrict =
+        $("searchToDistrict")?.value || "";
 
-        if (status === "approved") {
-            driverStatus = `
-                <span class="badge badge-green">
-                    🚕 Haydovchi tasdiqlangan
-                </span>
-            `;
-        } else if (status === "pending") {
-            driverStatus = `
-                <span class="badge badge-yellow">
-                    ⏳ Ariza ko'rib chiqilmoqda
-                </span>
-            `;
-        } else if (status === "rejected") {
-            driverStatus = `
-                <span class="badge badge-red">
-                    ❌ Ariza rad etilgan
-                </span>
-            `;
-        }
+
+    const date =
+        $("searchDate")?.value || "";
+
+
+    const seats =
+        $("searchSeats")?.value || "1";
+
+
+    if (!fromRegion) {
+
+        toast(
+            "Qayerdan yo‘nalishini tanlang.",
+            "warning"
+        );
+
+        return;
+
     }
 
-    container.innerHTML = `
 
-        <div class="card">
+    if (!toRegion) {
 
-            <div class="profile-card">
+        toast(
+            "Qayerga yo‘nalishini tanlang.",
+            "warning"
+        );
 
-                <div class="avatar">
+        return;
+
+    }
+
+
+    showLoading(
+        results,
+        "Safarlar qidirilmoqda..."
+    );
+
+
+    try {
+
+        const params =
+            new URLSearchParams();
+
+
+        params.set(
+            "from_region",
+            fromRegion
+        );
+
+
+        params.set(
+            "to_region",
+            toRegion
+        );
+
+
+        if (fromDistrict) {
+
+            params.set(
+                "from_district",
+                fromDistrict
+            );
+
+        }
+
+
+        if (toDistrict) {
+
+            params.set(
+                "to_district",
+                toDistrict
+            );
+
+        }
+
+
+        if (date) {
+
+            params.set(
+                "date",
+                date
+            );
+
+        }
+
+
+        params.set(
+            "seats",
+            seats
+        );
+
+
+        const data =
+            await api(
+                `/api/rides?${params.toString()}`
+            );
+
+
+        const rides =
+            Array.isArray(data)
+                ? data
+                : (
+                    data.rides ||
+                    data.data ||
+                    []
+                );
+
+
+        renderRides(
+            rides,
+            Number(seats)
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Search error:",
+            error
+        );
+
+
+        results.innerHTML = `
+            <div class="empty-state error-state">
+
+                <div class="empty-icon">
+                    ⚠️
+                </div>
+
+                <h3>
+                    Xatolik yuz berdi
+                </h3>
+
+                <p>
+                    ${escapeHtml(error.message)}
+                </p>
+
+                <button
+                    class="secondary-btn"
+                    onclick="searchRides()"
+                >
+                    Qayta urinish
+                </button>
+
+            </div>
+        `;
+
+    }
+
+}
+
+
+/* =========================================================
+   RENDER RIDES
+   ========================================================= */
+
+function renderRides(rides, requestedSeats = 1) {
+
+    const results =
+        $("searchResults");
+
+
+    if (!results) {
+        return;
+    }
+
+
+    if (
+        !Array.isArray(rides) ||
+        rides.length === 0
+    ) {
+
+        results.innerHTML = `
+            <div class="empty-state">
+
+                <div class="empty-icon">
+                    🚕
+                </div>
+
+                <h3>
+                    Safar topilmadi
+                </h3>
+
+                <p>
+                    Tanlangan yo‘nalish bo‘yicha
+                    hozircha faol safarlar mavjud emas.
+                </p>
+
+            </div>
+        `;
+
+        return;
+
+    }
+
+
+    results.innerHTML = rides
+        .map(ride =>
+            rideCard(
+                ride,
+                requestedSeats
+            )
+        )
+        .join("");
+
+}
+
+
+function rideCard(ride, requestedSeats = 1) {
+
+    const id =
+        ride.id;
+
+
+    const from =
+        ride.from_region ||
+        ride.fromRegion ||
+        "—";
+
+
+    const fromDistrict =
+        ride.from_district ||
+        ride.fromDistrict ||
+        "";
+
+
+    const to =
+        ride.to_region ||
+        ride.toRegion ||
+        "—";
+
+
+    const toDistrict =
+        ride.to_district ||
+        ride.toDistrict ||
+        "";
+
+
+    const date =
+        ride.travel_date ||
+        ride.date ||
+        "—";
+
+
+    const time =
+        ride.travel_time ||
+        ride.time ||
+        "—";
+
+
+    const price =
+        ride.price || 0;
+
+
+    const available =
+        ride.available_seats ??
+        ride.seats ??
+        0;
+
+
+    const driverName =
+        ride.driver_name ||
+        [
+            ride.first_name,
+            ride.last_name
+        ]
+            .filter(Boolean)
+            .join(" ") ||
+        "Haydovchi";
+
+
+    const car =
+        [
+            ride.brand,
+            ride.model
+        ]
+            .filter(Boolean)
+            .join(" ") ||
+        "Avtomobil";
+
+
+    const color =
+        ride.color || "";
+
+
+    const plate =
+        ride.plate || "";
+
+
+    const routeFrom =
+        fromDistrict
+            ? `${from}, ${fromDistrict}`
+            : from;
+
+
+    const routeTo =
+        toDistrict
+            ? `${to}, ${toDistrict}`
+            : to;
+
+
+    return `
+        <div class="ride-card">
+
+            <div class="ride-top">
+
+                <div class="ride-route">
+
+                    <div class="route-point">
+                        <span class="route-dot"></span>
+
+                        <div>
+                            <small>Qayerdan</small>
+                            <strong>
+                                ${escapeHtml(routeFrom)}
+                            </strong>
+                        </div>
+                    </div>
+
+
+                    <div class="route-line"></div>
+
+
+                    <div class="route-point">
+                        <span class="route-dot"></span>
+
+                        <div>
+                            <small>Qayerga</small>
+                            <strong>
+                                ${escapeHtml(routeTo)}
+                            </strong>
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <div class="ride-price">
+                    ${formatMoney(price)}
+                </div>
+
+            </div>
+
+
+            <div class="ride-details">
+
+                <div class="ride-detail">
+                    📅
+                    <span>
+                        ${escapeHtml(date)}
+                    </span>
+                </div>
+
+                <div class="ride-detail">
+                    🕐
+                    <span>
+                        ${escapeHtml(time)}
+                    </span>
+                </div>
+
+                <div class="ride-detail">
+                    💺
+                    <span>
+                        ${escapeHtml(available)} ta bo‘sh
+                    </span>
+                </div>
+
+            </div>
+
+
+            <div class="ride-driver">
+
+                <div class="driver-avatar">
                     👤
                 </div>
 
-                <div>
+                <div class="driver-info">
 
-                    <div class="profile-name">
-                        ${escapeHtml(fullName)}
-                    </div>
+                    <strong>
+                        ${escapeHtml(driverName)}
+                    </strong>
 
-                    <div class="profile-meta">
-                        ${
-                            username
-                                ? "@" + escapeHtml(username)
-                                : "Telegram foydalanuvchisi"
-                        }
-                    </div>
+                    <span>
+                        ${escapeHtml(car)}
+                        ${color ? " • " + escapeHtml(color) : ""}
+                        ${plate ? " • " + escapeHtml(plate) : ""}
+                    </span>
 
                 </div>
 
             </div>
 
+
+            <button
+                class="primary-btn"
+                type="button"
+                onclick="orderRide(${Number(id)}, ${Number(requestedSeats)})"
+            >
+                🚕 Shu safarga buyurtma berish
+            </button>
+
         </div>
+    `;
+
+}
 
 
-        ${
-            driverStatus
-                ? `
-                    <div class="card">
-                        ${driverStatus}
-                    </div>
-                `
-                : `
-                    <div class="card">
+/* =========================================================
+   ORDER RIDE
+   ========================================================= */
 
-                        <div class="card-title">
-                            🚕 Haydovchi bo'lish
-                        </div>
+async function orderRide(
+    rideId,
+    seats = 1
+) {
 
-                        <div class="card-text">
-                            O'z avtomobilingiz bilan
-                            shaharlararo yo'lovchi tashish
-                            uchun ariza yuboring.
-                        </div>
+    if (!rideId) {
 
-                        <br>
+        toast(
+            "Safar ma’lumoti topilmadi.",
+            "error"
+        );
 
-                        <button
-                            class="btn btn-primary"
-                            onclick="openDriverApplication()"
-                        >
-                            Haydovchi bo'lish
-                        </button>
+        return;
 
-                    </div>
-                `
+    }
+
+
+    const phone =
+        currentUser?.phone ||
+        "";
+
+
+    const note =
+        "";
+
+
+    try {
+
+        const result =
+            await api(
+                "/api/passenger/order",
+                {
+                    method: "POST",
+
+                    body: {
+                        ride_id: rideId,
+                        seats: Number(seats),
+                        phone: phone,
+                        note: note
+                    }
+
+                }
+            );
+
+
+        if (
+            result &&
+            result.success === false
+        ) {
+
+            throw new Error(
+                result.message ||
+                "Buyurtma berishda xatolik."
+            );
+
         }
 
 
-        <div class="card">
+        toast(
+            result?.message ||
+            "Buyurtma muvaffaqiyatli yuborildi.",
+            "success"
+        );
 
-            <div class="card-title">
-                📱 Telefon raqami
-            </div>
 
-            <div class="card-text">
-                ${
-                    phone
-                        ? escapeHtml(phone)
-                        : "Telefon raqami kiritilmagan"
-                }
-            </div>
+        setTimeout(() => {
 
-        </div>
+            openPage("orders");
 
-    `;
+        }, 500);
+
+
+    } catch (error) {
+
+        console.error(
+            "Order error:",
+            error
+        );
+
+
+        toast(
+            error.message ||
+            "Buyurtma berishda xatolik.",
+            "error"
+        );
+
+    }
+
 }
 
 
-/* =========================
-   DRIVER APPLICATION
-========================= */
+/* =========================================================
+   DRIVER PAGE
+   ========================================================= */
 
-function openDriverApplication() {
-    const phone =
-        state.profile?.phone ||
-        state.user?.phone ||
-        "";
+function initDriverPage() {
 
-    const modal =
-        $("#driver-modal");
+    fillRegions("rideFromRegion");
+    fillRegions("rideToRegion");
+    fillRegions("driverRegion");
 
-    if (!modal) {
-        showToast(
-            "Haydovchi ariza oynasi mavjud emas."
-        );
 
+    setDefaultDateTime();
+
+}
+
+
+function showDriverTab(tab) {
+
+    const rideTab =
+        $("driverRideTab");
+
+
+    const registerTab =
+        $("driverRegisterTab");
+
+
+    const rideButton =
+        $("driverTabRide");
+
+
+    const registerButton =
+        $("driverTabRegister");
+
+
+    if (
+        !rideTab ||
+        !registerTab
+    ) {
         return;
     }
 
-    const input =
-        $("#driver-phone");
 
-    if (input) {
-        input.value = phone;
+    if (tab === "register") {
+
+        rideTab.classList.add("hidden");
+        registerTab.classList.remove("hidden");
+
+
+        rideButton?.classList.remove("active");
+        registerButton?.classList.add("active");
+
+    } else {
+
+        registerTab.classList.add("hidden");
+        rideTab.classList.remove("hidden");
+
+
+        registerButton?.classList.remove("active");
+        rideButton?.classList.add("active");
+
     }
 
-    modal.classList.add("active");
 }
 
 
-function closeDriverApplication() {
-    const modal =
-        $("#driver-modal");
+/* =========================================================
+   DEFAULT DATE / TIME
+   ========================================================= */
 
-    if (modal) {
-        modal.classList.remove("active");
+function setDefaultDateTime() {
+
+    const dateInput =
+        $("rideDate");
+
+
+    const timeInput =
+        $("rideTime");
+
+
+    const now =
+        new Date();
+
+
+    if (
+        dateInput &&
+        !dateInput.value
+    ) {
+
+        const year =
+            now.getFullYear();
+
+
+        const month =
+            String(
+                now.getMonth() + 1
+            ).padStart(2, "0");
+
+
+        const day =
+            String(
+                now.getDate()
+            ).padStart(2, "0");
+
+
+        dateInput.value =
+            `${year}-${month}-${day}`;
+
     }
+
+
+    if (
+        timeInput &&
+        !timeInput.value
+    ) {
+
+        const hours =
+            String(
+                now.getHours()
+            ).padStart(2, "0");
+
+
+        const minutes =
+            String(
+                now.getMinutes()
+            ).padStart(2, "0");
+
+
+        timeInput.value =
+            `${hours}:${minutes}`;
+
+    }
+
 }
 
 
-async function submitDriverApplication() {
-    const input =
-        $("#driver-phone");
+/* =========================================================
+   CREATE RIDE
+   ========================================================= */
 
-    const phone =
-        input?.value?.trim() || "";
+async function createRide() {
 
-    if (!phone) {
-        showToast(
-            "Telefon raqamingizni kiriting."
+    const fromRegion =
+        $("rideFromRegion")?.value || "";
+
+
+    const fromDistrict =
+        $("rideFromDistrict")?.value || "";
+
+
+    const toRegion =
+        $("rideToRegion")?.value || "";
+
+
+    const toDistrict =
+        $("rideToDistrict")?.value || "";
+
+
+    const date =
+        $("rideDate")?.value || "";
+
+
+    const time =
+        $("rideTime")?.value || "";
+
+
+    const price =
+        Number(
+            $("ridePrice")?.value || 0
+        );
+
+
+    const seats =
+        Number(
+            $("rideSeats")?.value || 1
+        );
+
+
+    const note =
+        $("rideNote")?.value?.trim() || "";
+
+
+    if (!fromRegion) {
+
+        toast(
+            "Qayerdan yo‘nalishini tanlang.",
+            "warning"
         );
 
         return;
+
     }
+
+
+    if (!toRegion) {
+
+        toast(
+            "Qayerga yo‘nalishini tanlang.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    if (!date) {
+
+        toast(
+            "Safar sanasini tanlang.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    if (!time) {
+
+        toast(
+            "Safar vaqtini kiriting.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    if (price <= 0) {
+
+        toast(
+            "Narxni kiriting.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    if (
+        seats < 1 ||
+        seats > 4
+    ) {
+
+        toast(
+            "O‘rinlar soni 1–4 oralig‘ida bo‘lishi kerak.",
+            "warning"
+        );
+
+        return;
+
+    }
+
 
     try {
-        const data =
+
+        const result =
+            await api(
+                "/api/driver/ride",
+                {
+                    method: "POST",
+
+                    body: {
+                        from_region: fromRegion,
+                        from_district: fromDistrict,
+                        to_region: toRegion,
+                        to_district: toDistrict,
+                        date: date,
+                        time: time,
+                        price: price,
+                        seats: seats,
+                        note: note
+                    }
+
+                }
+            );
+
+
+        if (
+            result &&
+            result.success === false
+        ) {
+
+            throw new Error(
+                result.message ||
+                "Safar joylashda xatolik."
+            );
+
+        }
+
+
+        toast(
+            result?.message ||
+            "Safar muvaffaqiyatli joylandi.",
+            "success"
+        );
+
+
+        /*
+         Formani tozalaymiz.
+        */
+
+        $("ridePrice").value = "";
+        $("rideNote").value = "";
+
+
+        setTimeout(() => {
+
+            openPage("orders");
+
+        }, 700);
+
+
+    } catch (error) {
+
+        console.error(
+            "Create ride error:",
+            error
+        );
+
+
+        toast(
+            error.message ||
+            "Safar joylashda xatolik.",
+            "error"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   DRIVER REGISTER
+   ========================================================= */
+
+async function registerDriver() {
+
+    const fullName =
+        $("driverFullName")?.value?.trim() || "";
+
+
+    const phone =
+        $("driverPhone")?.value?.trim() || "";
+
+
+    const region =
+        $("driverRegion")?.value || "";
+
+
+    const district =
+        $("driverDistrict")?.value || "";
+
+
+    const passportInput =
+        $("driverPassport");
+
+
+    const licenseInput =
+        $("driverLicense");
+
+
+    if (!fullName) {
+
+        toast(
+            "F.I.Sh.ni kiriting.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    if (!phone) {
+
+        toast(
+            "Telefon raqamni kiriting.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    if (!region) {
+
+        toast(
+            "Viloyatni tanlang.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    if (!passportInput?.files?.length) {
+
+        toast(
+            "Pasport / ID faylini yuklang.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    if (!licenseInput?.files?.length) {
+
+        toast(
+            "Haydovchilik guvohnomasi faylini yuklang.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    try {
+
+        const formData =
+            new FormData();
+
+
+        formData.append(
+            "full_name",
+            fullName
+        );
+
+
+        formData.append(
+            "phone",
+            phone
+        );
+
+
+        formData.append(
+            "region",
+            region
+        );
+
+
+        formData.append(
+            "district",
+            district
+        );
+
+
+        formData.append(
+            "passport",
+            passportInput.files[0]
+        );
+
+
+        formData.append(
+            "driver_license",
+            licenseInput.files[0]
+        );
+
+
+        const result =
             await api(
                 "/api/driver/register",
                 {
                     method: "POST",
-
-                    body: JSON.stringify({
-                        phone
-                    })
+                    body: formData
                 }
             );
 
-        closeDriverApplication();
 
-        if (data.already_exists) {
-            if (data.status === "approved") {
-                showToast(
-                    "🚕 Siz allaqachon tasdiqlangan haydovchisiz."
+        /*
+         Duplicate application.
+        */
+
+        if (
+            result?.already_exists
+        ) {
+
+            const status =
+                result.status;
+
+
+            if (status === "approved") {
+
+                toast(
+                    "Siz allaqachon haydovchi sifatida tasdiqlangansiz.",
+                    "warning"
                 );
-            } else if (data.status === "pending") {
-                showToast(
-                    "⏳ Arizangiz hali ko'rib chiqilmoqda."
+
+            } else if (
+                status === "pending"
+            ) {
+
+                toast(
+                    "Arizangiz allaqachon ko‘rib chiqilmoqda.",
+                    "warning"
                 );
-            } else if (data.status === "rejected") {
-                showToast(
-                    "❌ Arizangiz avval rad etilgan."
-                );
+
             } else {
-                showToast(
-                    "Sizning haydovchi arizangiz mavjud."
+
+                toast(
+                    result.message ||
+                    "Ariza mavjud.",
+                    "warning"
                 );
+
             }
-        } else {
-            showToast(
-                "✅ Haydovchilik arizasi yuborildi."
-            );
+
+            return;
+
         }
 
-        await loadProfile();
+
+        if (
+            result &&
+            result.success === false
+        ) {
+
+            throw new Error(
+                result.message ||
+                "Ariza yuborishda xatolik."
+            );
+
+        }
+
+
+        toast(
+            result?.message ||
+            "Haydovchilik arizasi yuborildi.",
+            "success"
+        );
+
+
+        /*
+         Formani tozalaymiz.
+        */
+
+        $("driverFullName").value = "";
+        $("driverPhone").value = "";
+
+
+        if (passportInput) {
+            passportInput.value = "";
+        }
+
+
+        if (licenseInput) {
+            licenseInput.value = "";
+        }
+
+
+        setTimeout(() => {
+
+            showDriverTab("ride");
+
+        }, 700);
+
 
     } catch (error) {
-        showToast(
-            error.message
+
+        console.error(
+            "Driver register error:",
+            error
         );
+
+
+        toast(
+            error.message ||
+            "Ariza yuborishda xatolik.",
+            "error"
+        );
+
     }
+
 }
 
 
-/* =========================
-   RIDES
-========================= */
+/* =========================================================
+   ORDERS
+   ========================================================= */
 
-async function loadRides() {
+async function loadOrders() {
+
     const container =
-        $("#rides-list");
+        $("ordersList");
+
 
     if (!container) {
         return;
     }
+
 
     showLoading(
         container,
         "Safarlar yuklanmoqda..."
     );
 
-    try {
-        const data =
-            await api(
-                "/api/rides"
-            );
-
-        state.rides =
-            Array.isArray(data.rides)
-                ? data.rides
-                : [];
-
-        renderRides();
-
-    } catch (error) {
-        container.innerHTML = `
-            <div class="alert alert-error">
-                ${escapeHtml(error.message)}
-            </div>
-        `;
-    }
-}
-
-
-function renderRides() {
-    const container =
-        $("#rides-list");
-
-    if (!container) {
-        return;
-    }
-
-    if (!state.rides.length) {
-        showEmpty(
-            container,
-            "🚕",
-            "Hozircha safarlar yo'q",
-            "Yangi safarlar joylanganda shu yerda ko'rinadi."
-        );
-
-        return;
-    }
-
-    container.innerHTML =
-        state.rides.map(
-            ride => {
-
-                const availableSeats =
-                    ride.available_seats ??
-                    ride.seats ??
-                    0;
-
-                return `
-                    <div class="ride-card">
-
-                        <div class="ride-route">
-
-                            <span>
-                                ${escapeHtml(
-                                    ride.from_region ||
-                                    ride.from ||
-                                    ""
-                                )}
-                            </span>
-
-                            <span class="ride-arrow">
-                                →
-                            </span>
-
-                            <span>
-                                ${escapeHtml(
-                                    ride.to_region ||
-                                    ride.to ||
-                                    ""
-                                )}
-                            </span>
-
-                        </div>
-
-
-                        <div class="ride-info">
-
-                            <div class="ride-info-item">
-
-                                <div class="ride-info-label">
-                                    📅 Sana
-                                </div>
-
-                                <div class="ride-info-value">
-                                    ${escapeHtml(
-                                        formatDate(
-                                            ride.travel_date ||
-                                            ride.date
-                                        )
-                                    )}
-                                </div>
-
-                            </div>
-
-
-                            <div class="ride-info-item">
-
-                                <div class="ride-info-label">
-                                    🕐 Vaqt
-                                </div>
-
-                                <div class="ride-info-value">
-                                    ${escapeHtml(
-                                        formatTime(
-                                            ride.travel_time ||
-                                            ride.time
-                                        )
-                                    )}
-                                </div>
-
-                            </div>
-
-
-                            <div class="ride-info-item">
-
-                                <div class="ride-info-label">
-                                    💺 Bo'sh o'rin
-                                </div>
-
-                                <div class="ride-info-value">
-                                    ${Number(
-                                        availableSeats
-                                    )}
-                                </div>
-
-                            </div>
-
-
-                            <div class="ride-info-item">
-
-                                <div class="ride-info-label">
-                                    👤 Haydovchi
-                                </div>
-
-                                <div class="ride-info-value">
-                                    ${escapeHtml(
-                                        ride.driver_name ||
-                                        ride.full_name ||
-                                        "Haydovchi"
-                                    )}
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                        <div
-                            style="
-                                display:flex;
-                                align-items:center;
-                                justify-content:space-between;
-                                gap:10px;
-                            "
-                        >
-
-                            <div class="ride-price">
-                                ${formatPrice(
-                                    ride.price
-                                )}
-                                <span>so'm</span>
-                            </div>
-
-
-                            <button
-                                class="btn btn-primary btn-small"
-                                onclick="orderRide(${Number(
-                                    ride.id
-                                )})"
-                            >
-                                Buyurtma berish
-                            </button>
-
-                        </div>
-
-                    </div>
-                `;
-            }
-        ).join("");
-}
-
-
-/* =========================
-   ORDER RIDE
-========================= */
-
-async function orderRide(
-    rideId
-) {
-    const seats =
-        Number(
-            prompt(
-                "Nechta o'rin kerak?",
-                "1"
-            )
-        );
-
-    if (
-        !Number.isInteger(seats) ||
-        seats < 1 ||
-        seats > 4
-    ) {
-        showToast(
-            "O'rinlar soni 1 dan 4 gacha bo'lishi kerak."
-        );
-
-        return;
-    }
-
-    const phone =
-        state.profile?.phone ||
-        state.user?.phone ||
-        "";
-
-    if (!phone) {
-        showToast(
-            "Avval profilingizga telefon raqamingizni kiriting."
-        );
-
-        showScreen("profile");
-
-        return;
-    }
 
     try {
-        await api(
-            "/api/passenger/order",
-            {
-                method: "POST",
 
-                body: JSON.stringify({
-                    ride_id: rideId,
-                    seats,
-                    phone
-                })
-            }
-        );
-
-        showToast(
-            "✅ Buyurtma yuborildi."
-        );
-
-        await Promise.allSettled([
-            loadOrders(),
-            loadRides(),
-            loadNotifications()
-        ]);
-
-    } catch (error) {
-        showToast(
-            error.message
-        );
-    }
-}
-
-
-/* =========================
-   ORDERS
-========================= */
-
-async function loadOrders() {
-    const container =
-        $("#orders-list");
-
-    if (!container) {
-        return;
-    }
-
-    showLoading(
-        container,
-        "Buyurtmalar yuklanmoqda..."
-    );
-
-    try {
         const data =
             await api(
                 "/api/orders"
             );
 
-        state.orders =
-            Array.isArray(data.orders)
-                ? data.orders
-                : [];
 
-        renderOrders();
+        const orders =
+            Array.isArray(data)
+                ? data
+                : (
+                    data.orders ||
+                    data.data ||
+                    []
+                );
+
+
+        renderOrders(orders);
+
 
     } catch (error) {
-        container.innerHTML = `
-            <div class="alert alert-error">
-                ${escapeHtml(error.message)}
-            </div>
-        `;
-    }
-}
 
-
-function renderOrders() {
-    const container =
-        $("#orders-list");
-
-    if (!container) {
-        return;
-    }
-
-    if (!state.orders.length) {
-        showEmpty(
-            container,
-            "📦",
-            "Buyurtmalar yo'q",
-            "Sizning buyurtmalaringiz shu yerda ko'rinadi."
+        console.error(
+            "Orders error:",
+            error
         );
 
-        return;
+
+        container.innerHTML = `
+            <div class="empty-state">
+
+                <div class="empty-icon">
+                    ⚠️
+                </div>
+
+                <h3>
+                    Safarlar yuklanmadi
+                </h3>
+
+                <p>
+                    ${escapeHtml(error.message)}
+                </p>
+
+            </div>
+        `;
+
     }
 
-    container.innerHTML =
-        state.orders.map(
-            order => {
-
-                let statusText =
-                    "Kutilmoqda";
-
-                let statusClass =
-                    "badge-yellow";
-
-                if (
-                    order.status ===
-                    "accepted"
-                ) {
-                    statusText =
-                        "Qabul qilindi";
-
-                    statusClass =
-                        "badge-green";
-
-                } else if (
-                    order.status ===
-                    "rejected"
-                ) {
-                    statusText =
-                        "Rad etildi";
-
-                    statusClass =
-                        "badge-red";
-
-                } else if (
-                    order.status ===
-                    "cancelled"
-                ) {
-                    statusText =
-                        "Bekor qilindi";
-
-                    statusClass =
-                        "badge-red";
-
-                } else if (
-                    order.status ===
-                    "finished"
-                ) {
-                    statusText =
-                        "Tugallangan";
-
-                    statusClass =
-                        "badge-blue";
-                }
-
-                return `
-                    <div class="card">
-
-                        <div
-                            style="
-                                display:flex;
-                                justify-content:space-between;
-                                gap:10px;
-                                margin-bottom:12px;
-                            "
-                        >
-
-                            <div class="card-title">
-                                🚕 Safar #${Number(
-                                    order.ride_id
-                                )}
-                            </div>
-
-                            <span class="badge ${statusClass}">
-                                ${statusText}
-                            </span>
-
-                        </div>
-
-
-                        <div class="card-text">
-
-                            ${escapeHtml(
-                                order.from_region ||
-                                ""
-                            )}
-
-                            →
-
-                            ${escapeHtml(
-                                order.to_region ||
-                                ""
-                            )}
-
-                        </div>
-
-
-                        <div
-                            style="
-                                margin-top:10px;
-                                color:#6b7280;
-                                font-size:12px;
-                            "
-                        >
-
-                            📅 ${
-                                escapeHtml(
-                                    formatDate(
-                                        order.travel_date
-                                    )
-                                )
-                            }
-
-                            &nbsp;&nbsp;
-
-                            🕐 ${
-                                escapeHtml(
-                                    formatTime(
-                                        order.travel_time
-                                    )
-                                )
-                            }
-
-                            <br><br>
-
-                            💺 O'rin:
-                            ${Number(
-                                order.seats || 1
-                            )}
-
-                            <br>
-
-                            💰 Narx:
-                            ${formatPrice(
-                                order.price
-                            )}
-                            so'm
-
-                        </div>
-
-                    </div>
-                `;
-            }
-        ).join("");
 }
 
 
-/* =========================
-   NOTIFICATIONS
-========================= */
+/* =========================================================
+   RENDER ORDERS
+   ========================================================= */
 
-async function loadNotifications() {
+function renderOrders(orders) {
+
     const container =
-        $("#notifications-list");
+        $("ordersList");
+
 
     if (!container) {
         return;
     }
+
+
+    if (
+        !Array.isArray(orders) ||
+        orders.length === 0
+    ) {
+
+        container.innerHTML = `
+            <div class="empty-state">
+
+                <div class="empty-icon">
+                    📋
+                </div>
+
+                <h3>
+                    Hozircha safarlar yo‘q
+                </h3>
+
+                <p>
+                    Safar qidirishingiz yoki
+                    yangi safar joylashingiz mumkin.
+                </p>
+
+                <button
+                    class="primary-btn"
+                    onclick="openPage('search')"
+                >
+                    🔎 Safar qidirish
+                </button>
+
+            </div>
+        `;
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        orders
+            .map(order => orderCard(order))
+            .join("");
+
+}
+
+
+function orderCard(order) {
+
+    const id =
+        order.id;
+
+
+    const from =
+        order.from_region ||
+        order.fromRegion ||
+        "—";
+
+
+    const fromDistrict =
+        order.from_district ||
+        order.fromDistrict ||
+        "";
+
+
+    const to =
+        order.to_region ||
+        order.toRegion ||
+        "—";
+
+
+    const toDistrict =
+        order.to_district ||
+        order.toDistrict ||
+        "";
+
+
+    const date =
+        order.travel_date ||
+        order.date ||
+        "—";
+
+
+    const time =
+        order.travel_time ||
+        order.time ||
+        "—";
+
+
+    const price =
+        order.price || 0;
+
+
+    const seats =
+        order.seats || 1;
+
+
+    const status =
+        order.status ||
+        "pending";
+
+
+    const statusText =
+        getOrderStatusText(status);
+
+
+    const routeFrom =
+        fromDistrict
+            ? `${from}, ${fromDistrict}`
+            : from;
+
+
+    const routeTo =
+        toDistrict
+            ? `${to}, ${toDistrict}`
+            : to;
+
+
+    const canCancel =
+        [
+            "pending",
+            "accepted"
+        ].includes(status);
+
+
+    return `
+        <div class="order-card">
+
+            <div class="order-header">
+
+                <span class="order-id">
+                    #${escapeHtml(id)}
+                </span>
+
+                <span class="status-badge status-${escapeHtml(status)}">
+                    ${escapeHtml(statusText)}
+                </span>
+
+            </div>
+
+
+            <div class="order-route">
+
+                <div>
+                    📍
+                    <strong>
+                        ${escapeHtml(routeFrom)}
+                    </strong>
+                </div>
+
+                <div class="route-arrow">
+                    ↓
+                </div>
+
+                <div>
+                    📍
+                    <strong>
+                        ${escapeHtml(routeTo)}
+                    </strong>
+                </div>
+
+            </div>
+
+
+            <div class="order-details">
+
+                <span>
+                    📅 ${escapeHtml(date)}
+                </span>
+
+                <span>
+                    🕐 ${escapeHtml(time)}
+                </span>
+
+                <span>
+                    💺 ${escapeHtml(seats)}
+                </span>
+
+                <span>
+                    💰 ${formatMoney(price)}
+                </span>
+
+            </div>
+
+
+            ${
+                canCancel
+                    ? `
+                        <button
+                            class="danger-btn"
+                            type="button"
+                            onclick="cancelOrder(${Number(id)})"
+                        >
+                            ✕ Buyurtmani bekor qilish
+                        </button>
+                    `
+                    : ""
+            }
+
+        </div>
+    `;
+
+}
+
+
+function getOrderStatusText(status) {
+
+    const statuses = {
+
+        pending: "Kutilmoqda",
+
+        accepted: "Qabul qilindi",
+
+        rejected: "Rad etildi",
+
+        cancelled: "Bekor qilindi",
+
+        finished: "Yakunlandi"
+
+    };
+
+
+    return statuses[status] ||
+        status ||
+        "Noma’lum";
+
+}
+
+
+/* =========================================================
+   CANCEL ORDER
+   ========================================================= */
+
+async function cancelOrder(orderId) {
+
+    if (!orderId) {
+        return;
+    }
+
+
+    const confirmed =
+        window.confirm(
+            "Buyurtmani bekor qilmoqchimisiz?"
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    try {
+
+        const result =
+            await api(
+                "/api/order/cancel",
+                {
+                    method: "POST",
+
+                    body: {
+                        order_id: orderId
+                    }
+
+                }
+            );
+
+
+        if (
+            result &&
+            result.success === false
+        ) {
+
+            throw new Error(
+                result.message ||
+                "Buyurtmani bekor qilishda xatolik."
+            );
+
+        }
+
+
+        toast(
+            result?.message ||
+            "Buyurtma bekor qilindi.",
+            "success"
+        );
+
+
+        loadOrders();
+
+
+    } catch (error) {
+
+        console.error(
+            "Cancel order error:",
+            error
+        );
+
+
+        toast(
+            error.message ||
+            "Buyurtmani bekor qilishda xatolik.",
+            "error"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   PROFILE
+   ========================================================= */
+
+async function loadProfile() {
+
+    try {
+
+        const data =
+            await api(
+                "/api/profile"
+            );
+
+
+        const profile =
+            data?.user ||
+            data?.profile ||
+            data;
+
+
+        if (!profile) {
+            return;
+        }
+
+
+        renderProfile(profile);
+
+
+    } catch (error) {
+
+        console.error(
+            "Profile error:",
+            error
+        );
+
+
+        /*
+         Telegram ma'lumotlari bilan
+         hech bo‘lmaganda profilni ko‘rsatamiz.
+        */
+
+        if (currentUser) {
+
+            renderProfile({
+                first_name:
+                    currentUser.first_name,
+
+                last_name:
+                    currentUser.last_name,
+
+                username:
+                    currentUser.username
+            });
+
+        }
+
+    }
+
+}
+
+
+function renderProfile(profile) {
+
+    const name =
+        [
+            profile.first_name,
+            profile.last_name
+        ]
+            .filter(Boolean)
+            .join(" ") ||
+        profile.full_name ||
+        currentUser?.first_name ||
+        "Foydalanuvchi";
+
+
+    const username =
+        profile.username ||
+        currentUser?.username ||
+        "";
+
+
+    const phone =
+        profile.phone ||
+        "—";
+
+
+    const driverStatus =
+        profile.driver_status ||
+        profile.status ||
+        "Yo‘q";
+
+
+    const rating =
+        profile.rating ||
+        profile.average_rating ||
+        "—";
+
+
+    if ($("profileName")) {
+
+        $("profileName").textContent =
+            name;
+
+    }
+
+
+    if ($("profileUsername")) {
+
+        $("profileUsername").textContent =
+            username
+                ? "@" + username
+                : "";
+
+    }
+
+
+    if ($("profilePhone")) {
+
+        $("profilePhone").textContent =
+            phone;
+
+    }
+
+
+    if ($("profileDriverStatus")) {
+
+        $("profileDriverStatus").textContent =
+            getDriverStatusText(
+                driverStatus
+            );
+
+    }
+
+
+    if ($("profileRating")) {
+
+        $("profileRating").textContent =
+            rating !== "—"
+                ? `⭐ ${rating}`
+                : "—";
+
+    }
+
+
+    if ($("profileAvatar")) {
+
+        if (
+            currentUser?.photo_url
+        ) {
+
+            $("profileAvatar").innerHTML = `
+                <img
+                    src="${escapeHtml(currentUser.photo_url)}"
+                    alt="Avatar"
+                >
+            `;
+
+        } else {
+
+            $("profileAvatar").textContent =
+                "👤";
+
+        }
+
+    }
+
+}
+
+
+function getDriverStatusText(status) {
+
+    const values = {
+
+        approved: "Tasdiqlangan",
+
+        pending: "Tekshirilmoqda",
+
+        rejected: "Rad etilgan",
+
+        "Yo‘q": "Yo‘q"
+
+    };
+
+
+    return values[status] ||
+        status ||
+        "Yo‘q";
+
+}
+
+
+/* =========================================================
+   NOTIFICATIONS
+   ========================================================= */
+
+async function loadNotifications() {
+
+    const container =
+        $("notificationsList");
+
+
+    if (!container) {
+        return;
+    }
+
 
     showLoading(
         container,
         "Bildirishnomalar yuklanmoqda..."
     );
 
+
     try {
+
         const data =
             await api(
                 "/api/notifications"
             );
 
-        state.notifications =
-            Array.isArray(data.notifications)
-                ? data.notifications
-                : [];
 
-        state.unreadNotifications =
-            Number(
-                data.unread_count ??
-                data.unread ??
-                0
-            );
+        const notifications =
+            Array.isArray(data)
+                ? data
+                : (
+                    data.notifications ||
+                    data.data ||
+                    []
+                );
 
-        renderNotifications();
 
-        updateNotificationBadges();
+        renderNotifications(
+            notifications
+        );
+
+
+        updateNotificationBadge(
+            notifications
+        );
+
 
     } catch (error) {
+
+        console.error(
+            "Notifications error:",
+            error
+        );
+
+
         container.innerHTML = `
-            <div class="alert alert-error">
-                ${escapeHtml(error.message)}
+            <div class="empty-state">
+
+                <div class="empty-icon">
+                    🔔
+                </div>
+
+                <h3>
+                    Bildirishnomalar yuklanmadi
+                </h3>
+
+                <p>
+                    ${escapeHtml(error.message)}
+                </p>
+
             </div>
         `;
+
     }
+
 }
 
 
-function renderNotifications() {
+/* =========================================================
+   RENDER NOTIFICATIONS
+   ========================================================= */
+
+function renderNotifications(
+    notifications
+) {
+
     const container =
-        $("#notifications-list");
+        $("notificationsList");
+
 
     if (!container) {
         return;
     }
 
-    if (!state.notifications.length) {
-        showEmpty(
-            container,
-            "🔔",
-            "Bildirishnomalar yo'q",
-            "Yangi xabarlar shu yerda ko'rinadi."
-        );
 
+    if (
+        !Array.isArray(notifications) ||
+        notifications.length === 0
+    ) {
+
+        container.innerHTML = `
+            <div class="empty-state">
+
+                <div class="empty-icon">
+                    🔔
+                </div>
+
+                <h3>
+                    Bildirishnomalar yo‘q
+                </h3>
+
+                <p>
+                    Yangi xabarlar shu yerda ko‘rinadi.
+                </p>
+
+            </div>
+        `;
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        notifications
+            .map(notification =>
+                notificationCard(
+                    notification
+                )
+            )
+            .join("");
+
+}
+
+
+function notificationCard(notification) {
+
+    const id =
+        notification.id;
+
+
+    const title =
+        notification.title ||
+        "Bildirishnoma";
+
+
+    const message =
+        notification.message ||
+        "";
+
+
+    const createdAt =
+        notification.created_at ||
+        "";
+
+
+    const unread =
+        Number(
+            notification.is_read || 0
+        ) === 0;
+
+
+    return `
+        <div
+            class="notification-card ${unread ? "unread" : ""}"
+            onclick="markNotificationRead(${Number(id)})"
+        >
+
+            <div class="notification-icon">
+                🔔
+            </div>
+
+            <div class="notification-content">
+
+                <strong>
+                    ${escapeHtml(title)}
+                </strong>
+
+                <p>
+                    ${escapeHtml(message)}
+                </p>
+
+                ${
+                    createdAt
+                        ? `
+                            <small>
+                                ${escapeHtml(createdAt)}
+                            </small>
+                        `
+                        : ""
+                }
+
+            </div>
+
+        </div>
+    `;
+
+}
+
+
+/* =========================================================
+   NOTIFICATION BADGE
+   ========================================================= */
+
+function updateNotificationBadge(
+    notifications
+) {
+
+    const badge =
+        $("notificationBadge");
+
+
+    if (!badge) {
         return;
     }
 
-    container.innerHTML =
-        state.notifications.map(
-            notification => {
 
-                const unread =
+    const unreadCount =
+        Array.isArray(notifications)
+            ? notifications.filter(
+                item =>
                     Number(
-                        notification.is_read
-                    ) === 0;
-
-                return `
-                    <div
-                        class="
-                            notification
-                            ${
-                                unread
-                                    ? "unread"
-                                    : ""
-                            }
-                        "
-                        onclick="
-                            markNotificationRead(
-                                ${Number(
-                                    notification.id
-                                )}
-                            )
-                        "
-                    >
-
-                        <div class="notification-icon">
-                            🔔
-                        </div>
+                        item.is_read || 0
+                    ) === 0
+            ).length
+            : 0;
 
 
-                        <div>
+    if (unreadCount > 0) {
 
-                            <div class="notification-title">
-                                ${escapeHtml(
-                                    notification.title ||
-                                    "Bildirishnoma"
-                                )}
-                            </div>
+        badge.textContent =
+            unreadCount > 99
+                ? "99+"
+                : unreadCount;
 
-                            <div class="notification-message">
-                                ${escapeHtml(
-                                    notification.message ||
-                                    ""
-                                )}
-                            </div>
 
-                            <div class="notification-time">
-                                ${escapeHtml(
-                                    notification.created_at ||
-                                    ""
-                                )}
-                            </div>
+        badge.classList.remove(
+            "hidden"
+        );
 
-                        </div>
+    } else {
 
-                    </div>
-                `;
-            }
-        ).join("");
+        badge.classList.add(
+            "hidden"
+        );
+
+    }
+
 }
 
+
+/* =========================================================
+   MARK NOTIFICATION READ
+   ========================================================= */
 
 async function markNotificationRead(
     notificationId
 ) {
+
+    if (!notificationId) {
+        return;
+    }
+
+
     try {
+
+        /*
+         Backend hozir barcha
+         notificationlarni read qiladi.
+        */
+
         await api(
             "/api/notifications/read",
             {
                 method: "POST",
 
-                body: JSON.stringify({
+                body: {
                     notification_id:
                         notificationId
-                })
+                }
+
             }
         );
 
-        await loadNotifications();
+
+        loadNotifications();
+
 
     } catch (error) {
-        showToast(
-            error.message
+
+        console.error(
+            "Notification read error:",
+            error
         );
+
     }
+
 }
 
 
-function updateNotificationBadges() {
-    const badges =
-        $$(".nav-badge");
+/* =========================================================
+   HELP
+   ========================================================= */
 
-    badges.forEach(
-        badge => {
-
-            if (
-                badge.dataset.type ===
-                "notifications"
-            ) {
-
-                const count =
-                    state.unreadNotifications;
-
-                if (count > 0) {
-
-                    badge.textContent =
-                        count > 99
-                            ? "99+"
-                            : count;
-
-                    badge.style.display =
-                        "flex";
-
-                } else {
-
-                    badge.style.display =
-                        "none";
-                }
-            }
-        }
-    );
-}
-
-
-/* =========================
-   HOME
-========================= */
-
-async function loadHome() {
-    await Promise.allSettled([
-        loadProfile(),
-        loadNotifications()
-    ]);
-}
-
-
-/* =========================
-   NAV EVENTS
-========================= */
-
-function setupNavigation() {
-    $$(".nav-item").forEach(
-        item => {
-
-            item.addEventListener(
-                "click",
-                () => {
-
-                    const screen =
-                        item.dataset.screen;
-
-                    if (screen) {
-                        showScreen(screen);
-                    }
-
-                }
-            );
-        }
-    );
-
-
-    $$("[data-go]").forEach(
-        button => {
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    const screen =
-                        button.dataset.go;
-
-                    if (screen) {
-                        showScreen(screen);
-                    }
-
-                }
-            );
-        }
-    );
-}
-
-
-/* =========================
-   PROFILE UPDATE
-========================= */
-
-async function updateProfile() {
-    const firstName =
-        $("#profile-first-name")
-            ?.value
-            ?.trim() || "";
-
-    const lastName =
-        $("#profile-last-name")
-            ?.value
-            ?.trim() || "";
+function showHelp() {
 
     const username =
-        $("#profile-username")
-            ?.value
-            ?.trim() || "";
+        "Oppertaxibot";
 
-    const phone =
-        $("#profile-phone")
-            ?.value
-            ?.trim() ||
-        state.profile?.phone ||
-        "";
+
+    if (tg) {
+
+        try {
+
+            tg.openTelegramLink(
+                `https://t.me/${username}`
+            );
+
+            return;
+
+        } catch (error) {}
+
+    }
+
+
+    window.open(
+        `https://t.me/${username}`,
+        "_blank"
+    );
+
+}
+
+
+/* =========================================================
+   URL MODE
+   ========================================================= */
+
+function checkUrlMode() {
+
+    const params =
+        new URLSearchParams(
+            window.location.search
+        );
+
+
+    const mode =
+        params.get("mode");
+
+
+    if (mode === "driver") {
+
+        openPage("driver");
+
+        showDriverTab("ride");
+
+    }
+
+}
+
+
+/* =========================================================
+   TELEGRAM BACK BUTTON
+   ========================================================= */
+
+function setupTelegramBackButton() {
+
+    if (!tg) {
+        return;
+    }
+
 
     try {
-        await api(
-            "/api/profile/update",
-            {
-                method: "POST",
 
-                body: JSON.stringify({
-                    first_name: firstName,
-                    last_name: lastName,
-                    username,
-                    phone
-                })
-            }
+        tg.BackButton.onClick(() => {
+
+            openPage("home");
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "BackButton error:",
+            error
         );
 
-        showToast(
-            "✅ Profil saqlandi."
-        );
+    }
+
+}
+
+
+/* =========================================================
+   INITIALIZATION
+   ========================================================= */
+
+async function initializeApp() {
+
+    console.log(
+        "OPPER TAXI Mini App ishga tushmoqda..."
+    );
+
+
+    /*
+     Telegram user
+    */
+
+    currentUser =
+        getTelegramUser();
+
+
+    updateHeaderUser(
+        currentUser
+    );
+
+
+    /*
+     Selectlar
+    */
+
+    initializeAllRegions();
+
+
+    /*
+     Default date
+    */
+
+    setDefaultDateTime();
+
+
+    /*
+     Search date
+    */
+
+    initSearchPage();
+
+
+    /*
+     Telegram back button
+    */
+
+    setupTelegramBackButton();
+
+
+    /*
+     URL mode
+    */
+
+    checkUrlMode();
+
+
+    /*
+     Profilni oldindan yuklash.
+    */
+
+    try {
 
         await loadProfile();
 
     } catch (error) {
-        showToast(
-            error.message
+
+        console.log(
+            "Profile initial load:",
+            error
         );
+
     }
-}
 
 
-/* =========================
-   DRIVER RIDE
-========================= */
+    /*
+     Bildirishnomalarni oldindan yuklash.
+    */
 
-async function submitDriverRide(
-    payload
-) {
     try {
-        await api(
-            "/api/driver/ride",
-            {
-                method: "POST",
 
-                body: JSON.stringify(
-                    payload
-                )
-            }
+        const data =
+            await api(
+                "/api/notifications"
+            );
+
+
+        const notifications =
+            Array.isArray(data)
+                ? data
+                : (
+                    data.notifications ||
+                    data.data ||
+                    []
+                );
+
+
+        updateNotificationBadge(
+            notifications
         );
-
-        showToast(
-            "✅ Safar muvaffaqiyatli joylandi."
-        );
-
-        await Promise.allSettled([
-            loadRides(),
-            loadNotifications()
-        ]);
-
-        return true;
 
     } catch (error) {
 
-        showToast(
-            error.message
+        console.log(
+            "Notification initial load:",
+            error
         );
 
-        return false;
     }
+
+
+    console.log(
+        "OPPER TAXI Mini App tayyor."
+    );
+
 }
 
 
-/* =========================
-   INIT
-========================= */
+/* =========================================================
+   DOM READY
+   ========================================================= */
 
-async function initApp() {
-    initTelegram();
+if (
+    document.readyState ===
+    "loading"
+) {
 
-    setupNavigation();
+    document.addEventListener(
+        "DOMContentLoaded",
+        initializeApp
+    );
 
-    showScreen("home");
+} else {
 
-    await loadHome();
+    initializeApp();
+
 }
 
 
-document.addEventListener(
-    "DOMContentLoaded",
-    initApp
-);
-
-
-/* =========================
+/* =========================================================
    GLOBAL EXPORTS
-========================= */
+   =========================================================
+   HTML onclick ishlashi uchun.
+   ========================================================= */
 
-window.showScreen =
-    showScreen;
-
-window.loadRides =
-    loadRides;
-
-window.loadOrders =
-    loadOrders;
-
-window.loadNotifications =
-    loadNotifications;
-
-window.loadProfile =
-    loadProfile;
-
-window.orderRide =
-    orderRide;
-
-window.openDriverApplication =
-    openDriverApplication;
-
-window.closeDriverApplication =
-    closeDriverApplication;
-
-window.submitDriverApplication =
-    submitDriverApplication;
-
-window.markNotificationRead =
-    markNotificationRead;
-
-window.updateProfile =
-    updateProfile;
-
-window.submitDriverRide =
-    submitDriverRide;
+window.openPage = openPage;
+window.quickSearch = quickSearch;
+window.fillRegions = fillRegions;
+window.fillDistricts = fillDistricts;
+window.searchRides = searchRides;
+window.orderRide = orderRide;
+window.createRide = createRide;
+window.registerDriver = registerDriver;
+window.showDriverTab = showDriverTab;
+window.loadOrders = loadOrders;
+window.cancelOrder = cancelOrder;
+window.loadProfile = loadProfile;
+window.loadNotifications = loadNotifications;
+window.markNotificationRead = markNotificationRead;
+window.showHelp = showHelp;
+window.toast = toast;
+window.escapeHtml = escapeHtml;
