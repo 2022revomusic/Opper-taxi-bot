@@ -26,11 +26,12 @@
     --blue: #2563eb;
     --orange: #f97316;
 
-    --radius: 16px;
+    --radius: 18px;
 }
 
 html {
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -49,6 +50,8 @@ body {
 
     -webkit-font-smoothing: antialiased;
     -webkit-tap-highlight-color: transparent;
+
+    font-size: 16px;
 }
 
 button,
@@ -60,6 +63,7 @@ textarea {
 
 button {
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
 }
 
 button:disabled {
@@ -100,9 +104,9 @@ textarea {
     color: var(--white);
 
     padding:
-        calc(14px + env(safe-area-inset-top))
+        calc(16px + env(safe-area-inset-top))
         18px
-        14px;
+        16px;
 
     position: sticky;
     top: 0;
@@ -118,20 +122,20 @@ textarea {
     align-items: center;
     justify-content: space-between;
 
-    gap: 12px;
+    gap: 14px;
 }
 
 .brand {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 }
 
 .brand-logo {
-    width: 42px;
-    height: 42px;
+    width: 48px;
+    height: 48px;
 
-    border-radius: 12px;
+    border-radius: 14px;
 
     background: var(--yellow);
 
@@ -139,37 +143,39 @@ textarea {
     align-items: center;
     justify-content: center;
 
-    font-size: 21px;
+    font-size: 24px;
+
+    flex-shrink: 0;
 }
 
 .brand-text {
-    line-height: 1.1;
+    line-height: 1.15;
 }
 
 .brand-title {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 800;
 }
 
 .brand-subtitle {
-    margin-top: 4px;
+    margin-top: 5px;
 
-    font-size: 11px;
+    font-size: 13px;
     color: #9ca3af;
 }
 
 .header-actions {
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 8px;
 }
 
 .header-button {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
 
     border: 0;
-    border-radius: 12px;
+    border-radius: 13px;
 
     background: rgba(255, 255, 255, .09);
     color: white;
@@ -178,7 +184,7 @@ textarea {
     align-items: center;
     justify-content: center;
 
-    font-size: 18px;
+    font-size: 20px;
 }
 
 .header-button:active {
@@ -191,7 +197,7 @@ textarea {
 ========================= */
 
 .main {
-    padding: 16px 15px 100px;
+    padding: 20px 16px 110px;
 }
 
 .screen {
@@ -208,26 +214,28 @@ textarea {
 ========================= */
 
 .page-title {
-    font-size: 24px;
+    font-size: 28px;
     font-weight: 800;
 
-    margin-bottom: 5px;
+    margin-bottom: 7px;
+
+    line-height: 1.2;
 }
 
 .page-subtitle {
     color: var(--muted);
 
-    font-size: 14px;
-    line-height: 1.5;
+    font-size: 16px;
+    line-height: 1.55;
 
-    margin-bottom: 18px;
+    margin-bottom: 20px;
 }
 
 .section-title {
-    font-size: 18px;
+    font-size: 21px;
     font-weight: 800;
 
-    margin-bottom: 12px;
+    margin-bottom: 14px;
 }
 
 
@@ -242,26 +250,26 @@ textarea {
 
     border-radius: var(--radius);
 
-    padding: 17px;
+    padding: 20px;
 
-    margin-bottom: 14px;
+    margin-bottom: 16px;
 
     box-shadow:
-        0 4px 18px rgba(0, 0, 0, .04);
+        0 4px 18px rgba(0, 0, 0, .045);
 }
 
 .card-title {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 800;
 
-    margin-bottom: 6px;
+    margin-bottom: 8px;
 }
 
 .card-text {
-    font-size: 13px;
+    font-size: 15px;
     color: var(--muted);
 
-    line-height: 1.5;
+    line-height: 1.55;
 }
 
 
@@ -279,11 +287,11 @@ textarea {
 
     color: white;
 
-    border-radius: 22px;
+    border-radius: 24px;
 
-    padding: 22px;
+    padding: 26px 22px;
 
-    margin-bottom: 16px;
+    margin-bottom: 18px;
 
     position: relative;
 
@@ -298,14 +306,16 @@ textarea {
     right: -4px;
     bottom: -15px;
 
-    font-size: 105px;
+    font-size: 120px;
 
     opacity: .09;
 }
 
 .hero-title {
-    font-size: 25px;
+    font-size: 29px;
     font-weight: 800;
+
+    line-height: 1.2;
 
     position: relative;
     z-index: 1;
@@ -314,13 +324,13 @@ textarea {
 .hero-text {
     color: #d1d5db;
 
-    font-size: 13px;
+    font-size: 15px;
 
-    line-height: 1.5;
+    line-height: 1.55;
 
     max-width: 80%;
 
-    margin-top: 7px;
+    margin-top: 9px;
 
     position: relative;
     z-index: 1;
@@ -337,9 +347,9 @@ textarea {
     grid-template-columns:
         repeat(2, minmax(0, 1fr));
 
-    gap: 12px;
+    gap: 14px;
 
-    margin-bottom: 20px;
+    margin-bottom: 22px;
 }
 
 .quick-action {
@@ -347,9 +357,11 @@ textarea {
 
     border: 1px solid var(--border);
 
-    border-radius: 17px;
+    border-radius: 19px;
 
-    padding: 17px;
+    padding: 19px;
+
+    min-height: 145px;
 
     text-align: left;
 
@@ -366,10 +378,10 @@ textarea {
 }
 
 .quick-icon {
-    width: 42px;
-    height: 42px;
+    width: 48px;
+    height: 48px;
 
-    border-radius: 13px;
+    border-radius: 14px;
 
     background: #fef3c7;
 
@@ -377,23 +389,27 @@ textarea {
     align-items: center;
     justify-content: center;
 
-    font-size: 21px;
+    font-size: 24px;
 
-    margin-bottom: 11px;
+    margin-bottom: 13px;
 }
 
 .quick-title {
     font-weight: 800;
 
-    font-size: 14px;
+    font-size: 16px;
+
+    line-height: 1.25;
 }
 
 .quick-text {
     color: var(--muted);
 
-    font-size: 11px;
+    font-size: 13px;
 
-    margin-top: 4px;
+    line-height: 1.35;
+
+    margin-top: 5px;
 }
 
 
@@ -402,16 +418,16 @@ textarea {
 ========================= */
 
 .form-group {
-    margin-bottom: 14px;
+    margin-bottom: 17px;
 }
 
 .form-label {
     display: block;
 
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 700;
 
-    margin-bottom: 7px;
+    margin-bottom: 8px;
 }
 
 .form-input,
@@ -425,15 +441,22 @@ textarea {
 
     color: var(--text);
 
-    border-radius: 12px;
+    border-radius: 14px;
 
-    padding: 13px 14px;
+    padding: 15px 16px;
 
-    font-size: 14px;
+    font-size: 16px;
+
+    min-height: 52px;
 
     transition:
         border-color .15s ease,
         box-shadow .15s ease;
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+    color: #9ca3af;
 }
 
 .form-input:focus,
@@ -446,7 +469,7 @@ textarea {
 }
 
 .form-textarea {
-    min-height: 100px;
+    min-height: 120px;
 
     resize: vertical;
 }
@@ -462,7 +485,7 @@ textarea {
     grid-template-columns:
         repeat(2, minmax(0, 1fr));
 
-    gap: 10px;
+    gap: 12px;
 }
 
 
@@ -475,11 +498,13 @@ textarea {
 
     border: 0;
 
-    border-radius: 13px;
+    border-radius: 14px;
 
-    padding: 14px 16px;
+    padding: 16px 18px;
 
-    font-size: 14px;
+    min-height: 54px;
+
+    font-size: 16px;
 
     font-weight: 800;
 
@@ -532,11 +557,13 @@ textarea {
 .btn-small {
     width: auto;
 
-    padding: 9px 12px;
+    padding: 11px 15px;
 
-    font-size: 12px;
+    min-height: 44px;
 
-    border-radius: 9px;
+    font-size: 14px;
+
+    border-radius: 10px;
 }
 
 
@@ -549,11 +576,11 @@ textarea {
 
     border: 1px solid var(--border);
 
-    border-radius: 16px;
+    border-radius: 18px;
 
     overflow: hidden;
 
-    margin-bottom: 14px;
+    margin-bottom: 16px;
 }
 
 .route-item {
@@ -561,9 +588,9 @@ textarea {
 
     align-items: center;
 
-    gap: 12px;
+    gap: 14px;
 
-    padding: 15px;
+    padding: 18px;
 }
 
 .route-item + .route-item {
@@ -571,8 +598,8 @@ textarea {
 }
 
 .route-dot {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
 
     border-radius: 50%;
 
@@ -590,14 +617,14 @@ textarea {
 }
 
 .route-label {
-    font-size: 11px;
+    font-size: 13px;
     color: var(--muted);
 
-    margin-bottom: 3px;
+    margin-bottom: 4px;
 }
 
 .route-value {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 700;
 
     overflow: hidden;
@@ -617,11 +644,11 @@ textarea {
 
     border: 1px solid var(--border);
 
-    border-radius: 17px;
+    border-radius: 19px;
 
-    padding: 16px;
+    padding: 19px;
 
-    margin-bottom: 12px;
+    margin-bottom: 14px;
 
     box-shadow:
         0 4px 15px rgba(0, 0, 0, .04);
@@ -632,17 +659,21 @@ textarea {
 
     align-items: center;
 
-    gap: 10px;
+    gap: 11px;
 
-    font-size: 14px;
+    font-size: 17px;
 
     font-weight: 800;
 
-    margin-bottom: 13px;
+    margin-bottom: 15px;
+
+    line-height: 1.35;
 }
 
 .ride-arrow {
     color: var(--muted);
+
+    flex-shrink: 0;
 }
 
 .ride-info {
@@ -651,41 +682,43 @@ textarea {
     grid-template-columns:
         repeat(2, minmax(0, 1fr));
 
-    gap: 8px;
+    gap: 10px;
 
-    margin-bottom: 13px;
+    margin-bottom: 15px;
 }
 
 .ride-info-item {
     background: var(--bg);
 
-    border-radius: 10px;
+    border-radius: 12px;
 
-    padding: 10px;
+    padding: 12px;
 }
 
 .ride-info-label {
-    font-size: 10px;
+    font-size: 12px;
 
     color: var(--muted);
 
-    margin-bottom: 3px;
+    margin-bottom: 4px;
 }
 
 .ride-info-value {
-    font-size: 12px;
+    font-size: 14px;
 
     font-weight: 700;
+
+    line-height: 1.35;
 }
 
 .ride-price {
-    font-size: 18px;
+    font-size: 21px;
 
     font-weight: 900;
 }
 
 .ride-price span {
-    font-size: 11px;
+    font-size: 13px;
 
     font-weight: 600;
 
@@ -702,12 +735,12 @@ textarea {
 
     align-items: center;
 
-    gap: 13px;
+    gap: 15px;
 }
 
 .avatar {
-    width: 52px;
-    height: 52px;
+    width: 60px;
+    height: 60px;
 
     border-radius: 50%;
 
@@ -717,13 +750,13 @@ textarea {
     align-items: center;
     justify-content: center;
 
-    font-size: 22px;
+    font-size: 25px;
 
     flex-shrink: 0;
 }
 
 .profile-name {
-    font-size: 16px;
+    font-size: 19px;
 
     font-weight: 800;
 }
@@ -731,9 +764,9 @@ textarea {
 .profile-meta {
     color: var(--muted);
 
-    font-size: 12px;
+    font-size: 14px;
 
-    margin-top: 3px;
+    margin-top: 4px;
 }
 
 
@@ -746,11 +779,11 @@ textarea {
 
     align-items: center;
 
-    padding: 5px 9px;
+    padding: 7px 11px;
 
     border-radius: 20px;
 
-    font-size: 10px;
+    font-size: 12px;
 
     font-weight: 800;
 }
@@ -783,29 +816,29 @@ textarea {
 .notification {
     display: flex;
 
-    gap: 12px;
+    gap: 14px;
 
-    padding: 14px;
+    padding: 17px;
 
     background: white;
 
     border: 1px solid var(--border);
 
-    border-radius: 14px;
+    border-radius: 16px;
 
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
 
 .notification.unread {
     border-left:
-        4px solid var(--yellow);
+        5px solid var(--yellow);
 }
 
 .notification-icon {
-    width: 40px;
-    height: 40px;
+    width: 46px;
+    height: 46px;
 
-    border-radius: 11px;
+    border-radius: 13px;
 
     background: #fef3c7;
 
@@ -814,30 +847,32 @@ textarea {
     justify-content: center;
 
     flex-shrink: 0;
+
+    font-size: 21px;
 }
 
 .notification-title {
     font-weight: 800;
 
-    font-size: 13px;
+    font-size: 15px;
 
-    margin-bottom: 3px;
+    margin-bottom: 4px;
 }
 
 .notification-message {
-    font-size: 12px;
+    font-size: 14px;
 
     color: var(--muted);
 
-    line-height: 1.4;
+    line-height: 1.5;
 }
 
 .notification-time {
-    font-size: 10px;
+    font-size: 12px;
 
     color: #9ca3af;
 
-    margin-top: 5px;
+    margin-top: 6px;
 }
 
 
@@ -850,9 +885,9 @@ textarea {
 
     border: 1px dashed #d1d5db;
 
-    border-radius: 16px;
+    border-radius: 18px;
 
-    padding: 35px 20px;
+    padding: 42px 20px;
 
     text-align: center;
 
@@ -860,19 +895,19 @@ textarea {
 }
 
 .empty-icon {
-    font-size: 38px;
+    font-size: 44px;
 
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
 
 .empty-title {
     color: var(--text);
 
-    font-size: 15px;
+    font-size: 17px;
 
     font-weight: 800;
 
-    margin-bottom: 5px;
+    margin-bottom: 6px;
 }
 
 
@@ -887,18 +922,18 @@ textarea {
 
     justify-content: center;
 
-    gap: 9px;
+    gap: 10px;
 
-    padding: 30px;
+    padding: 34px;
 
     color: var(--muted);
 
-    font-size: 13px;
+    font-size: 15px;
 }
 
 .spinner {
-    width: 19px;
-    height: 19px;
+    width: 22px;
+    height: 22px;
 
     border-radius: 50%;
 
@@ -926,15 +961,15 @@ textarea {
 ========================= */
 
 .alert {
-    padding: 13px 14px;
+    padding: 15px 16px;
 
-    border-radius: 12px;
+    border-radius: 14px;
 
-    font-size: 13px;
+    font-size: 15px;
 
-    line-height: 1.4;
+    line-height: 1.5;
 
-    margin-bottom: 13px;
+    margin-bottom: 15px;
 }
 
 .alert-success {
@@ -973,16 +1008,16 @@ textarea {
     width: 100%;
     max-width: 720px;
 
-    background: rgba(255, 255, 255, .96);
+    background: rgba(255, 255, 255, .97);
 
     backdrop-filter: blur(14px);
 
     border-top: 1px solid var(--border);
 
     padding:
-        8px
+        9px
         10px
-        calc(8px + env(safe-area-inset-bottom));
+        calc(9px + env(safe-area-inset-bottom));
 
     display: grid;
 
@@ -1007,21 +1042,21 @@ textarea {
 
     justify-content: center;
 
-    gap: 3px;
+    gap: 5px;
 
-    min-height: 48px;
+    min-height: 58px;
 
     position: relative;
 }
 
 .nav-icon {
-    font-size: 19px;
+    font-size: 23px;
 
     line-height: 1;
 }
 
 .nav-label {
-    font-size: 9px;
+    font-size: 11px;
 
     font-weight: 700;
 }
@@ -1040,10 +1075,10 @@ textarea {
     top: 2px;
     right: 19%;
 
-    min-width: 16px;
-    height: 16px;
+    min-width: 19px;
+    height: 19px;
 
-    padding: 0 4px;
+    padding: 0 5px;
 
     border-radius: 20px;
 
@@ -1051,7 +1086,7 @@ textarea {
 
     color: white;
 
-    font-size: 9px;
+    font-size: 10px;
 
     font-weight: 800;
 
@@ -1093,17 +1128,17 @@ textarea {
     background: white;
 
     border-radius:
-        22px
-        22px
+        24px
+        24px
         0
         0;
 
     padding:
-        20px
-        16px
-        calc(20px + env(safe-area-inset-bottom));
+        24px
+        18px
+        calc(24px + env(safe-area-inset-bottom));
 
-    max-height: 90vh;
+    max-height: 92vh;
 
     overflow-y: auto;
 
@@ -1124,8 +1159,8 @@ textarea {
 }
 
 .modal-handle {
-    width: 42px;
-    height: 4px;
+    width: 46px;
+    height: 5px;
 
     border-radius: 20px;
 
@@ -1133,7 +1168,7 @@ textarea {
 
     margin:
         0 auto
-        17px;
+        19px;
 }
 
 .modal-header {
@@ -1143,18 +1178,18 @@ textarea {
 
     align-items: center;
 
-    margin-bottom: 15px;
+    margin-bottom: 18px;
 }
 
 .modal-title {
-    font-size: 18px;
+    font-size: 21px;
 
     font-weight: 800;
 }
 
 .modal-close {
-    width: 34px;
-    height: 34px;
+    width: 40px;
+    height: 40px;
 
     border: 0;
 
@@ -1162,7 +1197,7 @@ textarea {
 
     background: #f3f4f6;
 
-    font-size: 17px;
+    font-size: 19px;
 }
 
 
@@ -1174,7 +1209,7 @@ textarea {
     position: fixed;
 
     top:
-        calc(70px + env(safe-area-inset-top));
+        calc(78px + env(safe-area-inset-top));
 
     left: 50%;
 
@@ -1194,13 +1229,15 @@ textarea {
 
     color: white;
 
-    border-radius: 13px;
+    border-radius: 14px;
 
-    padding: 13px 15px;
+    padding: 15px 17px;
 
-    margin-bottom: 8px;
+    margin-bottom: 9px;
 
-    font-size: 13px;
+    font-size: 15px;
+
+    line-height: 1.4;
 
     box-shadow:
         0 8px 25px rgba(0, 0, 0, .2);
@@ -1249,24 +1286,36 @@ textarea {
 @media (max-width: 380px) {
 
     .main {
-        padding-left: 12px;
-        padding-right: 12px;
+        padding-left: 13px;
+        padding-right: 13px;
     }
 
     .quick-actions {
-        gap: 9px;
+        gap: 10px;
     }
 
     .quick-action {
-        padding: 14px;
+        padding: 16px;
+        min-height: 135px;
     }
 
     .page-title {
-        font-size: 22px;
+        font-size: 25px;
+    }
+
+    .page-subtitle {
+        font-size: 15px;
     }
 
     .form-row {
         grid-template-columns: 1fr;
     }
 
+    .nav-icon {
+        font-size: 21px;
+    }
+
+    .nav-label {
+        font-size: 10px;
+    }
 }
