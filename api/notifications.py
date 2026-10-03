@@ -1,7 +1,11 @@
 from datetime import datetime, timezone
 
-from database.database import execute, fetchone, fetchall
+from database.database import execute, fetchall, fetchone
 
+
+# =========================================================
+# NOTIFICATION TYPES
+# =========================================================
 
 NOTIFICATION_ORDER = "order"
 NOTIFICATION_RIDE = "ride"
@@ -10,51 +14,73 @@ NOTIFICATION_SYSTEM = "system"
 NOTIFICATION_RATING = "rating"
 
 
+# =========================================================
+# TIME
+# =========================================================
+
 def now_str():
     return datetime.now(timezone.utc).isoformat()
 
 
+# =========================================================
+# CREATE NOTIFICATION
+# =========================================================
+
 async def create_notification(
-    user_id: int,
-    notification_type: str,
+    telegram_id: int,
     title: str,
     message: str,
+    notification_type: str = NOTIFICATION_SYSTEM,
 ):
-    created_at = now_str()
+    """
+    Foydalanuvchiga yangi notification yaratadi.
+    """
 
     notification_id = await execute(
         """
         INSERT INTO notifications (
-            user_id,
-            type,
+            telegram_id,
             title,
             message,
+            type,
             is_read,
             created_at
         )
         VALUES (?, ?, ?, ?, 0, ?)
         """,
         (
-            user_id,
-            notification_type,
+            telegram_id,
             title,
             message,
-            created_at,
+            notification_type,
+            now_str(),
         ),
     )
 
-    return await get_notification_by_id(notification_id)
+    return await get_notification_by_id(
+        notification_id
+    )
 
 
-async def get_notification_by_id(notification_id: int):
+# =========================================================
+# GET NOTIFICATION
+# =========================================================
+
+async def get_notification_by_id(
+    notification_id: int,
+):
+    """
+    Bitta notification.
+    """
+
     return await fetchone(
         """
         SELECT
             id,
-            user_id,
-            type,
+            telegram_id,
             title,
             message,
+            type,
             is_read,
             created_at
         FROM notifications
@@ -64,292 +90,328 @@ async def get_notification_by_id(notification_id: int):
     )
 
 
+# =========================================================
+# GET USER NOTIFICATIONS
+# =========================================================
+
 async def get_user_notifications(
-    user_id: int,
+    telegram_id: int,
     limit: int = 50,
 ):
-    limit = max(1, min(int(limit), 100))
+    """
+    Foydalanuvchining notificationlari.
+    """
+
+    try:
+        limit = int(limit)
+    except (TypeError, ValueError):
+        limit = 50
+
+    limit = max(
+        1,
+        min(limit, 100),
+    )
 
     return await fetchall(
         f"""
         SELECT
             id,
-            user_id,
-            type,
+            telegram_id,
             title,
             message,
+            type,
             is_read,
             created_at
         FROM notifications
-        WHERE user_id = ?
+        WHERE telegram_id = ?
         ORDER BY id DESC
         LIMIT {limit}
         """,
-        (user_id,),
+        (telegram_id,),
     )
 
 
-async def get_unread_notifications(user_id: int):
+# =========================================================
+# GET UNREAD NOTIFICATIONS
+# =========================================================
+
+async def get_unread_notifications(
+    telegram_id: int,
+):
+    """
+    O'qilmagan notificationlar.
+    """
+
     return await fetchall(
         """
         SELECT
             id,
-            user_id,
-            type,
+            telegram_id,
             title,
             message,
+            type,
             is_read,
             created_at
         FROM notifications
-        WHERE user_id = ?
-          AND is_read = 0
+        WHERE
+            telegram_id = ?
+            AND is_read = 0
         ORDER BY id DESC
         """,
-        (user_id,),
+        (telegram_id,),
     )
 
 
-async def get_unread_count(user_id: int):
-    row = await fetchone(
+# =========================================================
+# UNREAD COUNT
+# =========================================================
+
+async def get_unread_count(
+    telegram_id: int,
+):
+    """
+    O'qilmagan notificationlar soni.
+    """
+
+    result = await fetchone(
         """
-        SELECT COUNT(*)
+        SELECT
+            COUNT(*) AS count
         FROM notifications
-        WHERE user_id = ?
-          AND is_read = 0
+        WHERE
+            telegram_id = ?
+            AND is_read = 0
         """,
-        (user_id,),
+        (telegram_id,),
     )
 
-    return row[0] if row else 0
+    if not result:
+        return 0
 
+    return int(
+        result.get("count") or 0
+    )
+
+
+# =========================================================
+# MARK ONE AS READ
+# =========================================================
 
 async def mark_notification_read(
     notification_id: int,
-    user_id: int,
+    telegram_id: int,
 ):
-    await execute(
+    """
+    Faqat shu foydalanuvchining
+    ko'rsatilgan notificationini o'qilgan qiladi.
+    """
+
+    notification = await fetchone(
         """
-        UPDATE notifications
-        SET is_read = 1
-        WHERE id = ?
-          AND user_id = ?
+        SELECT
+            id,
+            telegram_id,
+            is_read
+        FROM notifications
+        WHERE
+            id = ?
+            AND telegram_id = ?
         """,
         (
             notification_id,
-            user_id,
+            telegram_id,
         ),
     )
 
-    return await get_notification_by_id(notification_id)
+    if not notification:
+        return {
+            "success": False,
+            "error": "notification_not_found",
+        }
 
-
-async def mark_all_notifications_read(user_id: int):
     await execute(
         """
         UPDATE notifications
-        SET is_read = 1
-        WHERE user_id = ?
-          AND is_read = 0
+        SET
+            is_read = 1
+        WHERE
+            id = ?
+            AND telegram_id = ?
         """,
-        (user_id,),
+        (
+            notification_id,
+            telegram_id,
+        ),
     )
 
     return {
         "success": True,
-        "unread_count": await get_unread_count(user_id),
+        "notification": await get_notification_by_id(
+            notification_id
+        ),
     }
 
+
+# =========================================================
+# MARK ALL AS READ
+# =========================================================
+
+async def mark_all_notifications_read(
+    telegram_id: int,
+):
+    """
+    Foydalanuvchining barcha notificationlarini
+    o'qilgan qiladi.
+    """
+
+    await execute(
+        """
+        UPDATE notifications
+        SET
+            is_read = 1
+        WHERE
+            telegram_id = ?
+            AND is_read = 0
+        """,
+        (telegram_id,),
+    )
+
+    return {
+        "success": True,
+        "unread_count": 0,
+    }
+
+
+# =========================================================
+# DELETE NOTIFICATION
+# =========================================================
 
 async def delete_notification(
     notification_id: int,
-    user_id: int,
+    telegram_id: int,
 ):
-    await execute(
+    """
+    Faqat o'z notificationini o'chirish.
+    """
+
+    notification = await fetchone(
         """
-        DELETE FROM notifications
-        WHERE id = ?
-          AND user_id = ?
+        SELECT id
+        FROM notifications
+        WHERE
+            id = ?
+            AND telegram_id = ?
         """,
         (
             notification_id,
-            user_id,
+            telegram_id,
         ),
     )
 
-    return {
-        "success": True,
-        "unread_count": await get_unread_count(user_id),
-    }
+    if not notification:
+        return {
+            "success": False,
+            "error": "notification_not_found",
+        }
 
-
-async def delete_read_notifications(user_id: int):
     await execute(
         """
         DELETE FROM notifications
-        WHERE user_id = ?
-          AND is_read = 1
+        WHERE
+            id = ?
+            AND telegram_id = ?
         """,
-        (user_id,),
+        (
+            notification_id,
+            telegram_id,
+        ),
     )
 
     return {
         "success": True,
-        "unread_count": await get_unread_count(user_id),
     }
 
 
-async def notify_new_order(
-    driver_user_id: int,
-    passenger_name: str,
-    from_location: str,
-    to_location: str,
-):
-    return await create_notification(
-        user_id=driver_user_id,
-        notification_type=NOTIFICATION_ORDER,
-        title="🚕 Yangi buyurtma",
-        message=(
-            f"{passenger_name} sizning safaringizga buyurtma yubordi. "
-            f"{from_location} → {to_location}"
-        ),
-    )
+# =========================================================
+# SEND ORDER NOTIFICATION
+# =========================================================
 
-
-async def notify_order_accepted(
-    passenger_user_id: int,
-    driver_name: str,
-    from_location: str,
-    to_location: str,
-):
-    return await create_notification(
-        user_id=passenger_user_id,
-        notification_type=NOTIFICATION_ORDER,
-        title="✅ Buyurtma qabul qilindi",
-        message=(
-            f"{driver_name} buyurtmangizni qabul qildi. "
-            f"{from_location} → {to_location}"
-        ),
-    )
-
-
-async def notify_order_rejected(
-    passenger_user_id: int,
-    driver_name: str,
-):
-    return await create_notification(
-        user_id=passenger_user_id,
-        notification_type=NOTIFICATION_ORDER,
-        title="❌ Buyurtma rad etildi",
-        message=(
-            f"{driver_name} buyurtmangizni rad etdi."
-        ),
-    )
-
-
-async def notify_order_cancelled(
-    user_id: int,
-    message: str = "Buyurtma bekor qilindi.",
-):
-    return await create_notification(
-        user_id=user_id,
-        notification_type=NOTIFICATION_ORDER,
-        title="⚠️ Buyurtma bekor qilindi",
-        message=message,
-    )
-
-
-async def notify_driver_approved(
-    user_id: int,
-):
-    return await create_notification(
-        user_id=user_id,
-        notification_type=NOTIFICATION_DRIVER,
-        title="✅ Haydovchi tasdiqlandi",
-        message=(
-            "Tabriklaymiz! Haydovchilik arizangiz tasdiqlandi. "
-            "Endi safar joylashingiz mumkin."
-        ),
-    )
-
-
-async def notify_driver_rejected(
-    user_id: int,
-    reason: str = "",
-):
-    message = "Haydovchilik arizangiz rad etildi."
-
-    if reason:
-        message += f" Sabab: {reason}"
-
-    return await create_notification(
-        user_id=user_id,
-        notification_type=NOTIFICATION_DRIVER,
-        title="❌ Haydovchi arizasi rad etildi",
-        message=message,
-    )
-
-
-async def notify_ride_created(
-    user_id: int,
-    from_location: str,
-    to_location: str,
-    travel_date: str,
-    travel_time: str,
-):
-    return await create_notification(
-        user_id=user_id,
-        notification_type=NOTIFICATION_RIDE,
-        title="🚕 Safar joylandi",
-        message=(
-            f"Safaringiz muvaffaqiyatli joylandi: "
-            f"{from_location} → {to_location}. "
-            f"{travel_date} {travel_time}"
-        ),
-    )
-
-
-async def notify_ride_cancelled(
-    user_id: int,
-    from_location: str,
-    to_location: str,
-):
-    return await create_notification(
-        user_id=user_id,
-        notification_type=NOTIFICATION_RIDE,
-        title="⚠️ Safar bekor qilindi",
-        message=(
-            f"Sizning safaringiz bekor qilindi: "
-            f"{from_location} → {to_location}"
-        ),
-    )
-
-
-async def notify_rating_received(
-    user_id: int,
-    rating: int,
-    comment: str = "",
-):
-    message = f"Sizga ⭐ {rating}/5 baho berildi."
-
-    if comment:
-        message += f" Izoh: {comment}"
-
-    return await create_notification(
-        user_id=user_id,
-        notification_type=NOTIFICATION_RATING,
-        title="⭐ Yangi baho",
-        message=message,
-    )
-
-
-async def notify_system(
-    user_id: int,
+async def notify_order(
+    telegram_id: int,
     title: str,
     message: str,
 ):
     return await create_notification(
-        user_id=user_id,
-        notification_type=NOTIFICATION_SYSTEM,
+        telegram_id=telegram_id,
         title=title,
         message=message,
+        notification_type=NOTIFICATION_ORDER,
+    )
+
+
+# =========================================================
+# SEND RIDE NOTIFICATION
+# =========================================================
+
+async def notify_ride(
+    telegram_id: int,
+    title: str,
+    message: str,
+):
+    return await create_notification(
+        telegram_id=telegram_id,
+        title=title,
+        message=message,
+        notification_type=NOTIFICATION_RIDE,
+    )
+
+
+# =========================================================
+# SEND DRIVER NOTIFICATION
+# =========================================================
+
+async def notify_driver(
+    telegram_id: int,
+    title: str,
+    message: str,
+):
+    return await create_notification(
+        telegram_id=telegram_id,
+        title=title,
+        message=message,
+        notification_type=NOTIFICATION_DRIVER,
+    )
+
+
+# =========================================================
+# SEND SYSTEM NOTIFICATION
+# =========================================================
+
+async def notify_system(
+    telegram_id: int,
+    title: str,
+    message: str,
+):
+    return await create_notification(
+        telegram_id=telegram_id,
+        title=title,
+        message=message,
+        notification_type=NOTIFICATION_SYSTEM,
+    )
+
+
+# =========================================================
+# SEND RATING NOTIFICATION
+# =========================================================
+
+async def notify_rating(
+    telegram_id: int,
+    title: str,
+    message: str,
+):
+    return await create_notification(
+        telegram_id=telegram_id,
+        title=title,
+        message=message,
+        notification_type=NOTIFICATION_RATING,
     )
